@@ -1,8 +1,25 @@
-// Asset Detail section: companies operations table + Mill/Refinery pivot.
+// Asset Detail section: plantation operations table + Mill/Refinery pivot.
 import { state, ALL } from "../data.js";
-import { txt, fmtNumber, fmtPct } from "../format.js";
+import { txt, fmtNumber } from "../format.js";
 
 const ASSET_TYPES = ["Mill", "Kernel Crushing", "CPO Refinery", "PKO Refinery", "NPK Plant"];
+
+// Plantation Operations columns: [json_key, header label, fmt fn]
+const PLANTATION_COLS = [
+  ["planted_area_total_ha", "Planted Area Total (ha)", fmtNumber],
+  ["nucleus_area_ha", "Nucleus Area (ha)", fmtNumber],
+  ["plasma_area_ha", "Plasma Area (ha)", fmtNumber],
+  ["mature_area_ha", "Mature Area (ha)", fmtNumber],
+  ["immature_area_ha", "Immature Area (ha)", fmtNumber],
+  ["productive_age_area_ha", "Productive Age Area (ha)", fmtNumber],
+  ["old_age_area_ha", "Old Age Area (ha)", fmtNumber],
+  ["average_tree_age_years", "Average Tree Age (years)", (v) => fmtNumber(v, { decimals: 1 })],
+  ["replanting_area_ha", "Replanting Area (ha)", fmtNumber],
+  ["sumatra_area_ha", "Sumatra Area (ha)", fmtNumber],
+  ["kalimantan_area_ha", "Kalimantan Area (ha)", fmtNumber],
+  ["sulawesi_area_ha", "Sulawesi Area (ha)", fmtNumber],
+  ["other_region_area_ha", "Other Region Area (ha)", fmtNumber],
+];
 
 export function renderAssets() {
   const year = state.selectedYear;
@@ -18,35 +35,27 @@ export function renderAssets() {
     ? `Year ${year} · ${company}`
     : `Year ${year} · ${ops.length} companies`;
 
-  // ---- Companies operations table ----
+  // ---- Plantation Operations table ----
+  const totalCols = PLANTATION_COLS.length + 1; // +1 for Company column
   document.getElementById("asset-table").innerHTML = `
     <div class="table-wrap" style="max-height: 460px; overflow: auto;">
       <table class="data">
         <thead>
           <tr>
             <th>Company</th>
-            <th class="numeric">Planted (ha)</th>
-            <th class="numeric">Mature (ha)</th>
-            <th class="numeric">Mills</th>
-            <th class="numeric">CPO Refineries</th>
-            <th class="numeric">FFB Prod (t)</th>
-            <th class="numeric">CPO Prod (t)</th>
-            <th class="numeric">OER (%)</th>
+            ${PLANTATION_COLS.map(([, label]) => `<th class="numeric">${label}</th>`).join("")}
           </tr>
         </thead>
         <tbody>
-          ${ops.map((r) => `
-            <tr>
-              <td>${escapeHtml(txt(r.company))}</td>
-              <td class="numeric">${fmtNumber(r.planted_area_total_ha)}</td>
-              <td class="numeric">${fmtNumber(r.mature_area_ha)}</td>
-              <td class="numeric">${fmtNumber(r.mills_count)}</td>
-              <td class="numeric">${fmtNumber(r.cpo_refinery_count)}</td>
-              <td class="numeric">${fmtNumber(r.ffb_production_t)}</td>
-              <td class="numeric">${fmtNumber(r.cpo_production_t)}</td>
-              <td class="numeric">${fmtPct(r.oer_pct)}</td>
-            </tr>
-          `).join("") || `<tr><td colspan="8" class="muted-text">No data for ${year}</td></tr>`}
+          ${
+            ops.map((r) => `
+              <tr>
+                <td>${escapeHtml(txt(r.company))}</td>
+                ${PLANTATION_COLS.map(([key, , fmt]) => `<td class="numeric">${fmt(r[key])}</td>`).join("")}
+              </tr>
+            `).join("") ||
+            `<tr><td colspan="${totalCols}" class="muted-text">No data for ${year}</td></tr>`
+          }
         </tbody>
       </table>
     </div>
