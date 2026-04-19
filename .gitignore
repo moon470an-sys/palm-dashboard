@@ -17,3 +17,4 @@ desktop.ini
 
 data/processed/palm.duckdb
 data/processed/*.duckdb.wal
+data/parquet/

@@ -1,60 +1,75 @@
 # Indonesia Palm Listed Co. Dashboard
 
-Public-listed Indonesian palm-oil companies — operations, financials, screening.
+Single-page web dashboard for Indonesian palm-oil listed companies — Overview / Financials / Plantation Map / Asset Detail.
 
 **Live**: https://moon470an-sys.github.io/palm-dashboard/
 
 ## Stack
 
+- **Frontend**: Vanilla JS (ES Modules), Plotly.js, Leaflet.js, CSS Grid — pure static, no build step
 - **Data**: 34 companies × 1–4 years (2020, 2022–2025), sourced from `palm_longlist_*.xlsx` (Claude-extracted + NotebookLM verified)
-- **Storage**: DuckDB (local analyst use) + Parquet (browser load)
-- **App**: Streamlit, runs locally OR in browser via [stlite](https://github.com/whitphx/stlite) (Pyodide WASM)
+- **ETL**: Python (DuckDB) — Excel → JSON
 - **Hosting**: GitHub Pages (static), auto-deploy via GitHub Actions
 
-## Pages
+## Layout
 
-| # | Page | Source |
-|---|------|--------|
-| 1 | Overview | `app/Overview.py` |
-| 2 | Financials | `app/pages/2_Financials.py` |
-| 3 | Plantation Map | `app/pages/3_Plantation_Map.py` |
-| 4 | Asset Detail | `app/pages/4_Asset_Detail.py` |
-| 5 | Screening | `app/pages/5_Screening.py` |
-| 6 | Compare | `app/pages/6_Compare.py` |
-| 7 | Data Quality | `app/pages/7_Data_Quality.py` |
+```
+.
+├─ index.html                        # entry, sticky nav + 4 sections
+├─ assets/
+│  ├─ styles.css
+│  ├─ app.js                         # main entry — load + render
+│  ├─ data.js                        # JSON loaders, shared state, sample fallback
+│  ├─ format.js                      # number/text formatters (N/A handling)
+│  ├─ nav.js                         # anchor nav + scroll-spy
+│  └─ sections/
+│     ├─ overview.js                 # company identity cards + group note
+│     ├─ financials.js               # revenue/profit & assets/liab charts
+│     ├─ map.js                      # Leaflet Indonesia + region popup
+│     └─ assets.js                   # ops table + Mill/Refinery pivot
+├─ data/
+│  ├─ processed/palm.duckdb          # local only (gitignored)
+│  └─ json/                          # browser-loadable
+│     ├─ companies.json
+│     ├─ financials.json
+│     ├─ operations.json
+│     ├─ regions.json
+│     ├─ assets.json
+│     └─ region_geo.json
+├─ etl/
+│  ├─ build_db.py                    # Excel -> DuckDB
+│  ├─ export_json.py                 # DuckDB -> JSON for browser
+│  └─ region_geo.csv                 # 4 island centroids
+├─ .github/workflows/deploy.yml
+├─ palm_longlist_*.xlsx              # raw source
+└─ requirements.txt                  # ETL deps only
+```
+
+## Data Mapping
+
+| JSON | Source sheet | Use |
+|------|--------------|-----|
+| `companies.json` | Company_Master (latest year per company) | Overview cards, Group Structure |
+| `financials.json` | Financials | Revenue/Profit + Assets/Liabilities charts |
+| `operations.json` | Asset_Operations | Asset Detail ops table |
+| `regions.json` | Asset_Operations (unpivoted by region) | Map + Region summary |
+| `assets.json` | Asset_Operations (unpivoted by asset type) | Mill/Refinery pivot |
+| `region_geo.json` | `etl/region_geo.csv` | Map marker coordinates |
 
 ## Local Dev
 
 ```bash
 pip install -r requirements.txt
 python etl/build_db.py        # Excel -> DuckDB
-python etl/export_parquet.py  # DuckDB -> Parquet
-streamlit run app/Overview.py
+python etl/export_json.py     # DuckDB -> JSON
+
+# Serve static files
+python -m http.server 8000
+# open http://localhost:8000
 ```
 
 ## Update Data
 
 1. Replace `palm_longlist_*.xlsx`
-2. Re-run `build_db.py` and `export_parquet.py`
-3. Commit `data/parquet/*.parquet` and push — GitHub Actions auto-deploys
-
-## Layout
-
-```
-.
-├─ index.html                        # stlite entrypoint (GH Pages)
-├─ palm_longlist_*.xlsx              # raw source
-├─ etl/
-│  ├─ build_db.py                    # Excel -> DuckDB
-│  ├─ export_parquet.py              # DuckDB -> Parquet
-│  └─ region_geo.csv                 # 4 island centroids
-├─ app/
-│  ├─ Overview.py
-│  ├─ utils/db.py                    # in-memory DuckDB + parquet loader
-│  └─ pages/2..7_*.py
-├─ data/
-│  ├─ processed/palm.duckdb          # local only (gitignored)
-│  └─ parquet/*.parquet              # browser-loadable
-├─ .github/workflows/deploy.yml
-└─ requirements.txt
-```
+2. Re-run `build_db.py` and `export_json.py`
+3. Commit `data/json/*.json` and push — GitHub Actions auto-deploys

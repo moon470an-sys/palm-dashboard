@@ -4,67 +4,89 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Indonesia Palm Listed Co. Dashboard</title>
+  <link rel="stylesheet" href="assets/styles.css" />
   <link
     rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/@stlite/browser@0.80.5/build/style.css"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
   />
-  <style>
-    html, body, #root { margin: 0; padding: 0; height: 100%; }
-    #boot {
-      position: fixed; inset: 0; display: flex; align-items: center;
-      justify-content: center; flex-direction: column; gap: 12px;
-      font-family: system-ui, -apple-system, sans-serif; color: #555;
-      background: #fff;
-    }
-    #boot .spin {
-      width: 32px; height: 32px; border: 3px solid #ddd;
-      border-top-color: #2e7d32; border-radius: 50%;
-      animation: r 0.8s linear infinite;
-    }
-    @keyframes r { to { transform: rotate(360deg); } }
-  </style>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
 </head>
 <body>
-  <div id="boot">
+  <div class="boot">
     <div class="spin"></div>
-    <div>🌴 Loading dashboard… (first load: ~10s)</div>
+    <div class="msg">🌴 Loading dashboard…</div>
   </div>
-  <div id="root"></div>
-  <script type="module">
-    import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@0.80.5/build/stlite.js";
 
-    const APP_FILES = [
-      "app/Overview.py",
-      "app/utils/__init__.py",
-      "app/utils/db.py",
-    ];
+  <header class="topbar">
+    <div class="brand">🌴 Indonesia Palm Dashboard</div>
+    <nav class="anchor-nav" aria-label="Section navigation">
+      <a href="#overview" data-section="overview" class="active">Overview</a>
+      <a href="#financials" data-section="financials">Financials</a>
+      <a href="#plantation-map" data-section="plantation-map">Plantation Map</a>
+      <a href="#asset-detail" data-section="asset-detail">Asset Detail</a>
+    </nav>
+  </header>
 
-    const PARQUETS = [
-      "dim_company",
-      "fact_financials",
-      "fact_operations",
-      "fact_plantation_region",
-      "fact_assets",
-      "dim_region_geo",
-    ];
+  <aside class="sidebar">
+    <h3>Filters</h3>
+    <div class="filter-group">
+      <label for="company-select">Company</label>
+      <select id="company-select"></select>
+    </div>
+    <div class="filter-group">
+      <label for="year-select">Year</label>
+      <select id="year-select"></select>
+    </div>
+    <p class="muted-text" style="font-size: 11px; margin-top: 24px;">
+      Source: palm_longlist (Claude generated + NotebookLM verified)
+    </p>
+  </aside>
 
-    const files = {};
-    for (const p of APP_FILES) files[p] = { url: `./${p}` };
-    for (const t of PARQUETS) {
-      files[`data/parquet/${t}.parquet`] = { url: `./data/parquet/${t}.parquet` };
-    }
+  <main>
+    <section id="overview">
+      <h2>Overview</h2>
+      <p class="section-sub">Company identity & business profile.</p>
+      <div id="overview-cards" class="cards"></div>
+      <div id="overview-detail"></div>
+    </section>
 
-    mount(
-      {
-        entrypoint: "app/Overview.py",
-        requirements: ["duckdb", "plotly", "openpyxl"],
-        files,
-      },
-      document.getElementById("root")
-    ).then(() => {
-      const boot = document.getElementById("boot");
-      if (boot) boot.remove();
-    });
-  </script>
+    <section id="financials">
+      <h2>Financials</h2>
+      <p class="section-sub">Yearly revenue / profit and balance sheet structure.</p>
+      <div class="charts">
+        <div id="chart-revenue-profit" class="chart-card"></div>
+        <div id="chart-assets-liab" class="chart-card"></div>
+      </div>
+    </section>
+
+    <section id="plantation-map">
+      <h2>Plantation Map</h2>
+      <p class="section-sub">Aggregated planted area by Indonesian region.</p>
+      <div class="map-layout">
+        <div id="leaflet-map"></div>
+        <div id="region-summary" class="region-summary"></div>
+      </div>
+    </section>
+
+    <section id="asset-detail">
+      <h2>Asset Detail</h2>
+      <p class="section-sub">
+        <span id="asset-meta">—</span>
+      </p>
+      <h3 style="margin: 8px 0 10px; font-size: 14px;">Plantation Operations</h3>
+      <div id="asset-table"></div>
+      <h3 style="margin: 22px 0 10px; font-size: 14px;">Operating Assets — Mill / Refinery</h3>
+      <div id="asset-pivot"></div>
+    </section>
+  </main>
+
+  <script type="module" src="assets/app.js"></script>
 </body>
 </html>

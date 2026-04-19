@@ -26,11 +26,12 @@ jobs:
 
       - name: Stage site
         run: |
-          mkdir -p _site/app/utils _site/data/parquet
+          mkdir -p _site/assets/sections _site/data/json
           cp index.html _site/
-          cp app/Overview.py _site/app/
-          cp app/utils/__init__.py app/utils/db.py _site/app/utils/
-          cp data/parquet/*.parquet _site/data/parquet/
+          cp assets/styles.css _site/assets/
+          cp assets/*.js _site/assets/
+          cp assets/sections/*.js _site/assets/sections/
+          cp data/json/*.json _site/data/json/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
