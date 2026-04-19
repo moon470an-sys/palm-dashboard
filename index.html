@@ -33,34 +33,23 @@
   <script type="module">
     import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@0.80.5/build/stlite.js";
 
-    const PAGE_FILES = [
+    const APP_FILES = [
       "app/Overview.py",
       "app/utils/__init__.py",
       "app/utils/db.py",
-      "app/pages/2_Financials.py",
-      "app/pages/3_Plantation_Map.py",
-      "app/pages/4_Asset_Detail.py",
-      "app/pages/5_Screening.py",
-      "app/pages/6_Compare.py",
-      "app/pages/7_Data_Quality.py",
     ];
 
     const PARQUETS = [
-      "company_master_raw",
       "dim_company",
       "fact_financials",
       "fact_operations",
       "fact_plantation_region",
       "fact_assets",
-      "dim_screening",
       "dim_region_geo",
-      "audit_validation_summary",
-      "audit_review_required",
-      "audit_nlm_backfill_log",
     ];
 
     const files = {};
-    for (const p of PAGE_FILES) files[p] = { url: `./${p}` };
+    for (const p of APP_FILES) files[p] = { url: `./${p}` };
     for (const t of PARQUETS) {
       files[`data/parquet/${t}.parquet`] = { url: `./data/parquet/${t}.parquet` };
     }
