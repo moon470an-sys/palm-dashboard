@@ -191,6 +191,18 @@ table.data tr:hover td { background: var(--accent-soft); }
 }
 .muted-text { color: var(--muted); }
 
+/* Two-line table cells (count on top, capacity in small text below) */
+.th-sub {
+  font-size: 11px; font-weight: 400;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.cell-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
 /* ===== Leaflet popup ===== */
 .leaflet-popup-content { font-size: 12px; line-height: 1.5; margin: 10px 14px; }
 .leaflet-popup-content table { border-collapse: collapse; margin-top: 6px; }

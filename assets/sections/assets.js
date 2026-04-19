@@ -2,7 +2,14 @@
 import { state, ALL } from "../data.js";
 import { txt, fmtNumber } from "../format.js";
 
-const ASSET_TYPES = ["Mill", "Kernel Crushing", "CPO Refinery", "PKO Refinery", "NPK Plant"];
+// Operating Assets columns: count on top, capacity below as small subtext.
+const OPERATING_ASSET_COLS = [
+  { countLabel: "Mills Count (#)", capLabel: "Mill Capacity (tph)", countKey: "mills_count", capKey: "mill_capacity_tph", unit: "tph" },
+  { countLabel: "Kernel Crushing Count (#)", capLabel: "Kernel Crushing Capacity (tph)", countKey: "kernel_crushing_count", capKey: "kernel_crushing_capacity_tph", unit: "tph" },
+  { countLabel: "CPO Refinery Count (#)", capLabel: "CPO Refinery Capacity (tpa)", countKey: "cpo_refinery_count", capKey: "cpo_refinery_capacity_tpa", unit: "tpa" },
+  { countLabel: "PKO Refinery Count (#)", capLabel: "PKO Refinery Capacity (tpa)", countKey: "pko_refinery_count", capKey: "pko_refinery_capacity_tpa", unit: "tpa" },
+  { countLabel: "NPK Plant Count (#)", capLabel: null, countKey: "npk_plant_count", capKey: null, unit: null },
+];
 
 // Plantation Operations columns: [json_key, header label, fmt fn]
 const PLANTATION_COLS = [
@@ -61,32 +68,27 @@ export function renderAssets() {
     </div>
   `;
 
-  // ---- Asset pivot (Mill / Refinery / etc) ----
-  const byCo = new Map();
-  state.assets
-    .filter((r) => r.report_year === year && (r.asset_count || 0) > 0)
-    .filter((r) => !filterByCompany || r.company === company)
-    .forEach((r) => {
-      if (!byCo.has(r.company)) byCo.set(r.company, {});
-      byCo.get(r.company)[r.asset_type] = {
-        count: r.asset_count,
-        capacity: r.capacity,
-        unit: r.capacity_unit,
-      };
-    });
+  // ---- Operating Assets table (count on top / capacity below) ----
+  const opsForAssets = [...ops].sort((a, b) => a.company.localeCompare(b.company));
+  const opTotalCols = OPERATING_ASSET_COLS.length + 1;
 
-  const sortedCos = Array.from(byCo.entries()).sort((a, b) =>
-    a[0].localeCompare(b[0])
-  );
+  const headerCells = OPERATING_ASSET_COLS.map((c) => `
+    <th class="numeric">
+      <div>${c.countLabel}</div>
+      ${c.capLabel ? `<div class="th-sub">${c.capLabel}</div>` : ""}
+    </th>
+  `).join("");
 
-  const pivotRows = sortedCos.map(([co, data]) => `
+  const bodyRows = opsForAssets.map((r) => `
     <tr>
-      <td>${escapeHtml(co)}</td>
-      ${ASSET_TYPES.map((t) => {
-        const d = data[t];
-        if (!d) return `<td class="numeric muted-text">N/A</td>`;
-        const cap = d.capacity ? `<br/><span class="muted-text" style="font-size: 11px;">${fmtNumber(d.capacity)} ${d.unit || ""}</span>` : "";
-        return `<td class="numeric">${fmtNumber(d.count)}${cap}</td>`;
+      <td>${escapeHtml(txt(r.company))}</td>
+      ${OPERATING_ASSET_COLS.map((c) => {
+        const count = r[c.countKey];
+        const capValue = c.capKey ? r[c.capKey] : null;
+        const capLine = c.capKey
+          ? `<div class="cell-sub">${capValue == null || Number.isNaN(capValue) ? "N/A" : `${fmtNumber(capValue)} ${c.unit}`}</div>`
+          : "";
+        return `<td class="numeric"><div>${fmtNumber(count)}</div>${capLine}</td>`;
       }).join("")}
     </tr>
   `).join("");
@@ -94,13 +96,8 @@ export function renderAssets() {
   document.getElementById("asset-pivot").innerHTML = `
     <div class="table-wrap" style="max-height: 460px; overflow: auto;">
       <table class="data">
-        <thead>
-          <tr>
-            <th>Company</th>
-            ${ASSET_TYPES.map((t) => `<th class="numeric">${t}</th>`).join("")}
-          </tr>
-        </thead>
-        <tbody>${pivotRows || `<tr><td colspan="${ASSET_TYPES.length + 1}" class="muted-text">No data</td></tr>`}</tbody>
+        <thead><tr><th>Company</th>${headerCells}</tr></thead>
+        <tbody>${bodyRows || `<tr><td colspan="${opTotalCols}" class="muted-text">No data for ${year}</td></tr>`}</tbody>
       </table>
     </div>
   `;
