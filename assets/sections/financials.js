@@ -56,28 +56,28 @@ const Y_AXIS_BASE = {
 
 const CONFIG = { responsive: true, displayModeBar: false };
 
-function showFinancialPlaceholder(msg) {
+function hideFinancialCharts() {
   Plotly.purge("chart-revenue-profit");
   Plotly.purge("chart-assets-liab");
   const c1 = document.getElementById("chart-revenue-profit");
   const c2 = document.getElementById("chart-assets-liab");
-  c1.innerHTML = `<div class="chart-placeholder">${msg}</div>`;
-  c1.style.gridColumn = "1 / -1";
-  c2.style.display = "none";
+  c1.innerHTML = "";
   c2.innerHTML = "";
+  c1.style.display = "none";
+  c2.style.display = "none";
 }
 
-function clearFinancialPlaceholder() {
-  document.getElementById("chart-revenue-profit").style.gridColumn = "";
+function showFinancialCharts() {
+  document.getElementById("chart-revenue-profit").style.display = "";
   document.getElementById("chart-assets-liab").style.display = "";
 }
 
 export function renderFinancials() {
   if (state.selectedCompany === ALL) {
-    showFinancialPlaceholder("Select a specific company in the sidebar to view financial charts.");
+    hideFinancialCharts();
     return;
   }
-  clearFinancialPlaceholder();
+  showFinancialCharts();
 
   const rows = state.financials
     .filter((r) => r.company === state.selectedCompany)
@@ -89,6 +89,8 @@ export function renderFinancials() {
   const grossProfit = rows.map((r) => r.gross_profit_idr_bn);
   const netProfit = rows.map((r) => r.net_profit_idr_bn);
 
+  const fmtLabel = (v) => (v == null || Number.isNaN(v) ? "" : Number(v).toLocaleString("en-US"));
+
   // ============================ Chart 1: Revenue & Profit ============================
   Plotly.newPlot(
     "chart-revenue-profit",
@@ -97,24 +99,30 @@ export function renderFinancials() {
         type: "bar", name: "Revenue",
         x: years, y: revenue,
         marker: { color: COLORS.revenue },
+        text: revenue.map(fmtLabel),
+        textposition: "outside",
+        textfont: { size: 11 },
+        cliponaxis: false,
         hovertemplate: "Revenue: %{y:,.0f} IDR bn (%{x})<extra></extra>",
       },
       {
         type: "bar", name: "Gross Profit",
         x: years, y: grossProfit,
         marker: { color: COLORS.grossProfit },
+        text: grossProfit.map(fmtLabel),
+        textposition: "outside",
+        textfont: { size: 11 },
+        cliponaxis: false,
         hovertemplate: "Gross Profit: %{y:,.0f} IDR bn (%{x})<extra></extra>",
       },
       {
-        type: "scatter", mode: "lines+markers+text", name: "Net Profit",
+        type: "bar", name: "Net Profit",
         x: years, y: netProfit,
-        line: { color: COLORS.netProfit, width: 2.5 },
-        marker: { size: 9, color: COLORS.netProfit },
-        text: netProfit.map((v) => (v == null ? "" : Number(v).toLocaleString("en-US"))),
-        textposition: "top center",
-        textfont: { size: 11, color: COLORS.netProfit },
+        marker: { color: COLORS.netProfit },
+        text: netProfit.map(fmtLabel),
+        textposition: "outside",
+        textfont: { size: 11 },
         cliponaxis: false,
-        yaxis: "y2",
         hovertemplate: "Net Profit: %{y:,.0f} IDR bn (%{x})<extra></extra>",
       },
     ],
@@ -123,14 +131,7 @@ export function renderFinancials() {
       title: { text: "Revenue & Profit", font: { size: 14 }, x: 0.02, xanchor: "left" },
       barmode: "group",
       xaxis: X_AXIS,
-      yaxis: { ...Y_AXIS_BASE, title: { text: "Revenue / Gross Profit (IDR bn)" } },
-      yaxis2: {
-        ...Y_AXIS_BASE,
-        title: { text: "Net Profit (IDR bn)" },
-        overlaying: "y",
-        side: "right",
-        showgrid: false, // avoid double-grid on right axis
-      },
+      yaxis: { ...Y_AXIS_BASE, title: { text: "IDR bn" } },
     },
     CONFIG
   );
@@ -143,18 +144,24 @@ export function renderFinancials() {
         type: "bar", name: "Total Assets",
         x: years, y: rows.map((r) => r.total_assets_idr_bn),
         marker: { color: COLORS.assets },
+        text: rows.map((r) => fmtLabel(r.total_assets_idr_bn)),
+        textposition: "outside", textfont: { size: 11 }, cliponaxis: false,
         hovertemplate: "Total Assets: %{y:,.0f} IDR bn (%{x})<extra></extra>",
       },
       {
         type: "bar", name: "Total Liabilities",
         x: years, y: rows.map((r) => r.total_liabilities_idr_bn),
         marker: { color: COLORS.liabilities },
+        text: rows.map((r) => fmtLabel(r.total_liabilities_idr_bn)),
+        textposition: "outside", textfont: { size: 11 }, cliponaxis: false,
         hovertemplate: "Total Liabilities: %{y:,.0f} IDR bn (%{x})<extra></extra>",
       },
       {
         type: "bar", name: "Total Equity",
         x: years, y: rows.map((r) => r.total_equity_idr_bn),
         marker: { color: COLORS.equity },
+        text: rows.map((r) => fmtLabel(r.total_equity_idr_bn)),
+        textposition: "outside", textfont: { size: 11 }, cliponaxis: false,
         hovertemplate: "Total Equity: %{y:,.0f} IDR bn (%{x})<extra></extra>",
       },
     ],
