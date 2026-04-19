@@ -11,7 +11,7 @@ const OPERATING_ASSET_COLS = [
   { countLabel: "NPK Plant Count (#)", capLabel: null, countKey: "npk_plant_count", capKey: null, unit: null },
 ];
 
-// Plantation Operations columns: [json_key, header label, fmt fn]
+// Plantation Asset columns: [json_key, header label, fmt fn]
 const PLANTATION_COLS = [
   ["planted_area_total_ha", "Planted Area Total (ha)", fmtNumber],
   ["nucleus_area_ha", "Nucleus Area (ha)", fmtNumber],
@@ -42,7 +42,7 @@ export function renderAssets() {
     ? `Year ${year} · ${company}`
     : `Year ${year} · ${ops.length} companies`;
 
-  // ---- Plantation Operations table ----
+  // ---- Plantation Asset table ----
   const totalCols = PLANTATION_COLS.length + 1; // +1 for Company column
   document.getElementById("asset-table").innerHTML = `
     <div class="table-wrap" style="max-height: 460px; overflow: auto;">
