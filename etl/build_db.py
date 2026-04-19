@@ -117,6 +117,20 @@ def main() -> None:
         ["company", "report_year", "region", "area_ha"]
     ]
 
+    # Add "Other Indonesia" = planted_area_total - sum(4 regions) when positive.
+    # Catches plantations whose region wasn't broken out in the source filings.
+    if "planted_area_total_ha" in fact_operations.columns:
+        diff = fact_operations[["company", "report_year", "planted_area_total_ha", *region_cols]].copy()
+        for c in [*region_cols, "planted_area_total_ha"]:
+            diff[c] = pd.to_numeric(diff[c], errors="coerce").fillna(0)
+        diff["area_ha"] = diff["planted_area_total_ha"] - diff[region_cols].sum(axis=1)
+        diff = diff[diff["area_ha"] > 0.5][["company", "report_year", "area_ha"]].copy()
+        diff["region"] = "Other Indonesia"
+        diff = diff[["company", "report_year", "region", "area_ha"]]
+        fact_plantation_region = pd.concat(
+            [fact_plantation_region, diff], ignore_index=True
+        )
+
     asset_specs = [
         ("Mill", "mills_count", "mill_capacity_tph", "tph"),
         ("Kernel Crushing", "kernel_crushing_count", "kernel_crushing_capacity_tph", "tph"),

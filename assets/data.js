@@ -77,7 +77,37 @@ export async function loadAll() {
   state.regions = regions;
   state.assets = assets;
   state.regionGeo = region_geo;
+  ensureOtherIndonesia();
   return state;
+}
+
+// "Other Indonesia" = planted_area_total - sum(Sumatra + Kalimantan + Sulawesi + Other)
+// Catches plantation area whose region wasn't broken out in the source filings,
+// so the Plantation Map total matches the Plantation Asset total.
+// Skipped if ETL already produced the rows (future-proof against re-runs).
+function ensureOtherIndonesia() {
+  if (state.regionGeo.some((g) => g.region === "Other Indonesia")) return;
+
+  state.regionGeo.push({ region: "Other Indonesia", lat: -7.5, lon: 110.5 });
+
+  state.operations.forEach((op) => {
+    const total = Number(op.planted_area_total_ha) || 0;
+    if (total <= 0) return;
+    const allocated =
+      (Number(op.sumatra_area_ha) || 0) +
+      (Number(op.kalimantan_area_ha) || 0) +
+      (Number(op.sulawesi_area_ha) || 0) +
+      (Number(op.other_region_area_ha) || 0);
+    const diff = total - allocated;
+    if (diff > 0.5) {
+      state.regions.push({
+        company: op.company,
+        report_year: op.report_year,
+        region: "Other Indonesia",
+        area_ha: diff,
+      });
+    }
+  });
 }
 
 export function listCompanies() {
