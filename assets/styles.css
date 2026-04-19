@@ -177,7 +177,10 @@ table.data th {
   border-bottom: 1px solid var(--border);
   font-weight: 600;
   position: sticky; top: 0;
+  z-index: 2;
 }
+/* Second header row sits below the first when both are sticky (grouped headers) */
+table.data thead tr:nth-child(2) th { top: 36px; z-index: 1; }
 table.data td {
   padding: 9px 12px;
   border-bottom: 1px solid var(--border);
