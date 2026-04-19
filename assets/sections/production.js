@@ -97,7 +97,7 @@ export function renderProduction() {
 
   const bodyRows = rows.map((r) => `
     <tr>
-      <td>${escapeHtml(txt(r.company))}</td>
+      <td class="col-company">${escapeHtml(txt(r.company))}</td>
       ${ALL_COLS.map((c) => {
         const top = fmtNumber(r[c.topKey]);
         if (!c.subKey) return `<td class="numeric"><div>${top}</div></td>`;
@@ -116,7 +116,7 @@ export function renderProduction() {
       <table class="data">
         <thead>
           <tr>
-            <th rowspan="2">Company</th>
+            <th class="col-company" rowspan="2">Company</th>
             ${groupHeader}
           </tr>
           <tr>${colHeader}</tr>
@@ -129,7 +129,7 @@ export function renderProduction() {
   // ---- Sales table ----
   const salesBody = rows.map((r) => `
     <tr>
-      <td>${escapeHtml(txt(r.company))}</td>
+      <td class="col-company">${escapeHtml(txt(r.company))}</td>
       ${SALES_COLS.map((s) => `<td class="numeric">${s.fmt(r[s.key])}</td>`).join("")}
     </tr>
   `).join("");
@@ -139,7 +139,7 @@ export function renderProduction() {
       <table class="data">
         <thead>
           <tr>
-            <th>Company</th>
+            <th class="col-company">Company</th>
             ${SALES_COLS.map((s) => `<th class="numeric">${s.label}</th>`).join("")}
           </tr>
         </thead>
