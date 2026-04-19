@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Indonesia Palm Listed Co. Dashboard</title>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@stlite/browser@0.80.5/build/style.css"
+  />
+  <style>
+    html, body, #root { margin: 0; padding: 0; height: 100%; }
+    #boot {
+      position: fixed; inset: 0; display: flex; align-items: center;
+      justify-content: center; flex-direction: column; gap: 12px;
+      font-family: system-ui, -apple-system, sans-serif; color: #555;
+      background: #fff;
+    }
+    #boot .spin {
+      width: 32px; height: 32px; border: 3px solid #ddd;
+      border-top-color: #2e7d32; border-radius: 50%;
+      animation: r 0.8s linear infinite;
+    }
+    @keyframes r { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="boot">
+    <div class="spin"></div>
+    <div>🌴 Loading dashboard… (first load: ~10s)</div>
+  </div>
+  <div id="root"></div>
+  <script type="module">
+    import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@0.80.5/build/stlite.js";
+
+    const PAGE_FILES = [
+      "app/Overview.py",
+      "app/utils/__init__.py",
+      "app/utils/db.py",
+      "app/pages/2_Financials.py",
+      "app/pages/3_Plantation_Map.py",
+      "app/pages/4_Asset_Detail.py",
+      "app/pages/5_Screening.py",
+      "app/pages/6_Compare.py",
+      "app/pages/7_Data_Quality.py",
+    ];
+
+    const PARQUETS = [
+      "company_master_raw",
+      "dim_company",
+      "fact_financials",
+      "fact_operations",
+      "fact_plantation_region",
+      "fact_assets",
+      "dim_screening",
+      "dim_region_geo",
+      "audit_validation_summary",
+      "audit_review_required",
+      "audit_nlm_backfill_log",
+    ];
+
+    const files = {};
+    for (const p of PAGE_FILES) files[p] = { url: `./${p}` };
+    for (const t of PARQUETS) {
+      files[`data/parquet/${t}.parquet`] = { url: `./data/parquet/${t}.parquet` };
+    }
+
+    mount(
+      {
+        entrypoint: "app/Overview.py",
+        requirements: ["duckdb", "plotly", "openpyxl"],
+        files,
+      },
+      document.getElementById("root")
+    ).then(() => {
+      const boot = document.getElementById("boot");
+      if (boot) boot.remove();
+    });
+  </script>
+</body>
+</html>
