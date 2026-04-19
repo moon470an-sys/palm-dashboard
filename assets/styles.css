@@ -206,6 +206,13 @@ table.data tr:hover td { background: var(--accent-soft); }
   margin-top: 2px;
 }
 
+/* Wider Company column (long Indonesian PT names) */
+table.data th.col-company,
+table.data td.col-company {
+  min-width: 280px;
+  white-space: normal;
+}
+
 /* Grouped table headers (Plantation / Mill / Refinery / Kernel Plant) */
 table.data th.group-header {
   background: var(--accent-soft);

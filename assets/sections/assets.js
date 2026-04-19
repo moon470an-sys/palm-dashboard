@@ -49,7 +49,7 @@ export function renderAssets() {
       <table class="data">
         <thead>
           <tr>
-            <th>Company</th>
+            <th class="col-company">Company</th>
             ${PLANTATION_COLS.map(([, label]) => `<th class="numeric">${label}</th>`).join("")}
           </tr>
         </thead>
@@ -57,7 +57,7 @@ export function renderAssets() {
           ${
             ops.map((r) => `
               <tr>
-                <td>${escapeHtml(txt(r.company))}</td>
+                <td class="col-company">${escapeHtml(txt(r.company))}</td>
                 ${PLANTATION_COLS.map(([key, , fmt]) => `<td class="numeric">${fmt(r[key])}</td>`).join("")}
               </tr>
             `).join("") ||
