@@ -77,19 +77,36 @@ export async function loadAll() {
   state.regions = regions;
   state.assets = assets;
   state.regionGeo = region_geo;
-  ensureOtherIndonesia();
+  ensureOtherBucket();
   return state;
 }
 
-// "Other Indonesia" = planted_area_total - sum(Sumatra + Kalimantan + Sulawesi + Other)
-// Catches plantation area whose region wasn't broken out in the source filings,
-// so the Plantation Map total matches the Plantation Asset total.
-// Skipped if ETL already produced the rows (future-proof against re-runs).
-function ensureOtherIndonesia() {
-  if (state.regionGeo.some((g) => g.region === "Other Indonesia")) return;
+// Bucket logic:
+//  - Move the "Other" marker to the Java Sea so it sits clear of real regions.
+//  - Add the unallocated remainder
+//      (planted_area_total - Sumatra - Kalimantan - Sulawesi - Other)
+//    into the same "Other" bucket so map total reconciles with Plantation Asset.
+// Idempotent: skipped on re-invocation via _otherBucketMerged flag.
+function ensureOtherBucket() {
+  // Sit in the Java Sea (overrides the older Papua coord from earlier ETL runs).
+  const otherGeo = state.regionGeo.find((g) => g.region === "Other");
+  const SEA = { lat: -5.5, lon: 112.5 };
+  if (otherGeo) {
+    otherGeo.lat = SEA.lat;
+    otherGeo.lon = SEA.lon;
+  } else {
+    state.regionGeo.push({ region: "Other", ...SEA });
+  }
+  // Drop any leftover "Other Indonesia" geo from earlier deploys.
+  const idx = state.regionGeo.findIndex((g) => g.region === "Other Indonesia");
+  if (idx >= 0) state.regionGeo.splice(idx, 1);
+  // Re-route any pre-existing "Other Indonesia" rows into "Other".
+  state.regions.forEach((r) => {
+    if (r.region === "Other Indonesia") r.region = "Other";
+  });
 
-  // Sit in the Java Sea so it's visibly distinct from on-land regions.
-  state.regionGeo.push({ region: "Other Indonesia", lat: -5.5, lon: 112.5 });
+  if (state._otherBucketMerged) return;
+  state._otherBucketMerged = true;
 
   state.operations.forEach((op) => {
     const total = Number(op.planted_area_total_ha) || 0;
@@ -104,7 +121,7 @@ function ensureOtherIndonesia() {
       state.regions.push({
         company: op.company,
         report_year: op.report_year,
-        region: "Other Indonesia",
+        region: "Other",
         area_ha: diff,
       });
     }

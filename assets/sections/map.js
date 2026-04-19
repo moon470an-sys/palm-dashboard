@@ -5,11 +5,10 @@ import { fmtHa } from "../format.js";
 
 // Per-region marker palette
 const REGION_COLORS = {
-  Sumatra:           { fill: "#4caf50", stroke: "#1b5e20" }, // green
-  Kalimantan:        { fill: "#42a5f5", stroke: "#0d47a1" }, // blue
-  Sulawesi:          { fill: "#ff9800", stroke: "#e65100" }, // orange
-  Other:             { fill: "#ab47bc", stroke: "#4a148c" }, // purple
-  "Other Indonesia": { fill: "#78909c", stroke: "#37474f" }, // sea-like grey
+  Sumatra:    { fill: "#4caf50", stroke: "#1b5e20" }, // green
+  Kalimantan: { fill: "#42a5f5", stroke: "#0d47a1" }, // blue
+  Sulawesi:   { fill: "#ff9800", stroke: "#e65100" }, // orange
+  Other:      { fill: "#78909c", stroke: "#37474f" }, // grey (Java Sea bucket)
 };
 const DEFAULT_COLOR = { fill: "#9e9e9e", stroke: "#424242" };
 
