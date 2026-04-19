@@ -88,7 +88,8 @@ export async function loadAll() {
 function ensureOtherIndonesia() {
   if (state.regionGeo.some((g) => g.region === "Other Indonesia")) return;
 
-  state.regionGeo.push({ region: "Other Indonesia", lat: -7.5, lon: 110.5 });
+  // Sit in the Java Sea so it's visibly distinct from on-land regions.
+  state.regionGeo.push({ region: "Other Indonesia", lat: -5.5, lon: 112.5 });
 
   state.operations.forEach((op) => {
     const total = Number(op.planted_area_total_ha) || 0;
