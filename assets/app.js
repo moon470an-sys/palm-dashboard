@@ -1,5 +1,5 @@
 // Main entry: load data, wire sidebar selectors, render sections.
-import { loadAll, state, listCompanies, listYears } from "./data.js";
+import { loadAll, state, listCompanies, listYears, ALL } from "./data.js";
 import { initNav } from "./nav.js";
 import { renderOverview } from "./sections/overview.js";
 import { renderFinancials } from "./sections/financials.js";
@@ -11,11 +11,14 @@ function buildSelectors() {
   const years = listYears();
 
   const cSel = document.getElementById("company-select");
-  cSel.innerHTML = companies
-    .map((c) => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`)
-    .join("");
-  state.selectedCompany = companies[0] || null;
-  cSel.value = state.selectedCompany || "";
+  const allOption = `<option value="${ALL}">All Companies</option>`;
+  cSel.innerHTML =
+    allOption +
+    companies
+      .map((c) => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`)
+      .join("");
+  state.selectedCompany = companies[0] || ALL;
+  cSel.value = state.selectedCompany;
 
   const ySel = document.getElementById("year-select");
   ySel.innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join("");
@@ -26,6 +29,7 @@ function buildSelectors() {
     state.selectedCompany = e.target.value;
     renderOverview();
     renderFinancials();
+    renderMap();
   });
 
   ySel.addEventListener("change", (e) => {

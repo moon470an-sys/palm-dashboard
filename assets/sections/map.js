@@ -1,5 +1,6 @@
 // Plantation Map section: Leaflet map of Indonesia + region summary table.
-import { state } from "../data.js";
+// Filters by selected company; "All Companies" shows aggregate.
+import { state, ALL } from "../data.js";
 import { fmtHa } from "../format.js";
 
 let mapInstance = null;
@@ -18,7 +19,6 @@ function ensureMap() {
     attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(mapInstance);
   layerGroup = L.layerGroup().addTo(mapInstance);
-  // Enable scroll-zoom only when the map gets focus.
   mapInstance.on("focus", () => mapInstance.scrollWheelZoom.enable());
   mapInstance.on("blur", () => mapInstance.scrollWheelZoom.disable());
 }
@@ -28,9 +28,14 @@ export function renderMap() {
   layerGroup.clearLayers();
 
   const year = state.selectedYear;
+  const company = state.selectedCompany;
+  const filterByCompany = company !== ALL;
+
+  // Aggregate area per region (and per company within region)
   const byRegion = new Map();
   state.regions
     .filter((r) => r.report_year === year && (r.area_ha || 0) > 0)
+    .filter((r) => !filterByCompany || r.company === company)
     .forEach((r) => {
       const cur = byRegion.get(r.region) || { area: 0, companies: new Map() };
       cur.area += r.area_ha;
@@ -53,58 +58,71 @@ export function renderMap() {
       fillOpacity: 0.55,
     }).addTo(layerGroup);
 
-    const sortedCos = Array.from(agg.companies.entries()).sort((a, b) => b[1] - a[1]);
-    const top = sortedCos.slice(0, 8);
-    const more = sortedCos.length - top.length;
-
-    const popup = `
-      <strong>${escapeHtml(region)}</strong><br/>
-      Total Area: ${fmtHa(agg.area)}<br/>
-      Companies: ${agg.companies.size}
-      <hr style="margin: 6px 0; border: none; border-top: 1px solid #ddd;"/>
-      <table>
-        ${top.map(([co, area]) => `
-          <tr>
-            <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(co)}</td>
-            <td class="numeric" style="text-align: right; padding-left: 12px;">${fmtHa(area)}</td>
-          </tr>`).join("")}
-        ${more > 0 ? `<tr><td colspan="2"><em>+ ${more} more</em></td></tr>` : ""}
-      </table>
-    `;
-    marker.bindPopup(popup, { maxWidth: 360 });
+    let popupHtml;
+    if (filterByCompany) {
+      popupHtml = `
+        <strong>${escapeHtml(region)}</strong><br/>
+        <span style="color:#444;">${escapeHtml(company)}</span><br/>
+        Area: ${fmtHa(agg.area)}
+      `;
+    } else {
+      const sortedCos = Array.from(agg.companies.entries()).sort((a, b) => b[1] - a[1]);
+      const top = sortedCos.slice(0, 8);
+      const more = sortedCos.length - top.length;
+      popupHtml = `
+        <strong>${escapeHtml(region)}</strong><br/>
+        Total Area: ${fmtHa(agg.area)}<br/>
+        Companies: ${agg.companies.size}
+        <hr style="margin: 6px 0; border: none; border-top: 1px solid #ddd;"/>
+        <table>
+          ${top.map(([co, area]) => `
+            <tr>
+              <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(co)}</td>
+              <td class="numeric" style="text-align: right; padding-left: 12px;">${fmtHa(area)}</td>
+            </tr>`).join("")}
+          ${more > 0 ? `<tr><td colspan="2"><em>+ ${more} more</em></td></tr>` : ""}
+        </table>
+      `;
+    }
+    marker.bindPopup(popupHtml, { maxWidth: 360 });
   }
 
   // ---- Region summary table ----
-  const rows = Array.from(byRegion.entries())
+  const heading = filterByCompany
+    ? `${escapeHtml(company)} — ${year}`
+    : `Region Summary — ${year}`;
+
+  const summaryRows = Array.from(byRegion.entries())
     .sort((a, b) => b[1].area - a[1].area)
     .map(([region, agg]) => `
       <tr>
         <td>${escapeHtml(region)}</td>
         <td class="numeric">${fmtHa(agg.area)}</td>
-        <td class="numeric">${agg.companies.size}</td>
+        ${filterByCompany ? "" : `<td class="numeric">${agg.companies.size}</td>`}
       </tr>
     `).join("");
 
+  const colspan = filterByCompany ? 2 : 3;
+  const headerCols = filterByCompany
+    ? `<th>Region</th><th class="numeric">Area</th>`
+    : `<th>Region</th><th class="numeric">Total Area</th><th class="numeric">Companies</th>`;
+
   document.getElementById("region-summary").innerHTML = `
-    <h3 style="margin: 0 0 10px;">Region Summary — ${year}</h3>
+    <h3 style="margin: 0 0 10px;">${heading}</h3>
     <div class="table-wrap">
       <table class="data">
-        <thead>
-          <tr>
-            <th>Region</th>
-            <th class="numeric">Total Area</th>
-            <th class="numeric">Companies</th>
-          </tr>
-        </thead>
-        <tbody>${rows || `<tr><td colspan="3" class="muted-text">No data</td></tr>`}</tbody>
+        <thead><tr>${headerCols}</tr></thead>
+        <tbody>${summaryRows || `<tr><td colspan="${colspan}" class="muted-text">No plantation data for this selection</td></tr>`}</tbody>
       </table>
     </div>
     <p class="muted-text" style="font-size: 12px; margin-top: 10px;">
-      Click a circle to see top companies in that region.
+      ${filterByCompany
+        ? "Click a circle for details. Switch to <strong>All Companies</strong> to see aggregate."
+        : "Click a circle to see top companies in that region."}
     </p>
   `;
 
-  // Force a refresh so the map re-renders correctly after the section becomes visible.
+  // Re-render so map fits its container after section becomes visible.
   setTimeout(() => mapInstance.invalidateSize(), 50);
 }
 

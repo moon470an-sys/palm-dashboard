@@ -1,5 +1,5 @@
 // Financials section: Revenue/Profit chart + Balance Sheet chart.
-import { state } from "../data.js";
+import { state, ALL } from "../data.js";
 
 const COLORS = {
   revenue: "#2e7d32",
@@ -56,7 +56,29 @@ const Y_AXIS_BASE = {
 
 const CONFIG = { responsive: true, displayModeBar: false };
 
+function showFinancialPlaceholder(msg) {
+  Plotly.purge("chart-revenue-profit");
+  Plotly.purge("chart-assets-liab");
+  const c1 = document.getElementById("chart-revenue-profit");
+  const c2 = document.getElementById("chart-assets-liab");
+  c1.innerHTML = `<div class="chart-placeholder">${msg}</div>`;
+  c1.style.gridColumn = "1 / -1";
+  c2.style.display = "none";
+  c2.innerHTML = "";
+}
+
+function clearFinancialPlaceholder() {
+  document.getElementById("chart-revenue-profit").style.gridColumn = "";
+  document.getElementById("chart-assets-liab").style.display = "";
+}
+
 export function renderFinancials() {
+  if (state.selectedCompany === ALL) {
+    showFinancialPlaceholder("Select a specific company in the sidebar to view financial charts.");
+    return;
+  }
+  clearFinancialPlaceholder();
+
   const rows = state.financials
     .filter((r) => r.company === state.selectedCompany)
     .sort((a, b) => (a.report_year || 0) - (b.report_year || 0));

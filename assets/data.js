@@ -1,6 +1,9 @@
 // Loads JSON datasets, exposes shared mutable state.
 const DATA_BASE = "data/json/";
 
+// Sentinel for the "All Companies" option in the company filter.
+export const ALL = "__ALL__";
+
 export const state = {
   companies: [],
   financials: [],

@@ -141,6 +141,12 @@ section .section-sub {
   border-radius: 10px;
   padding: 12px;
 }
+.chart-placeholder {
+  text-align: center;
+  padding: 100px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
 
 /* ===== Map layout ===== */
 .map-layout {
