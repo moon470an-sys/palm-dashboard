@@ -30,6 +30,7 @@ function buildSelectors() {
     renderOverview();
     renderFinancials();
     renderMap();
+    renderAssets();
   });
 
   ySel.addEventListener("change", (e) => {

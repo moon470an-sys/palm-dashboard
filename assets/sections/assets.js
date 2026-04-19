@@ -1,17 +1,22 @@
 // Asset Detail section: companies operations table + Mill/Refinery pivot.
-import { state } from "../data.js";
+import { state, ALL } from "../data.js";
 import { txt, fmtNumber, fmtPct } from "../format.js";
 
 const ASSET_TYPES = ["Mill", "Kernel Crushing", "CPO Refinery", "PKO Refinery", "NPK Plant"];
 
 export function renderAssets() {
   const year = state.selectedYear;
+  const company = state.selectedCompany;
+  const filterByCompany = company !== ALL;
+
   const ops = state.operations
     .filter((r) => r.report_year === year)
+    .filter((r) => !filterByCompany || r.company === company)
     .sort((a, b) => (b.planted_area_total_ha || 0) - (a.planted_area_total_ha || 0));
 
-  document.getElementById("asset-meta").textContent =
-    `Year ${year} · ${ops.length} companies`;
+  document.getElementById("asset-meta").textContent = filterByCompany
+    ? `Year ${year} · ${company}`
+    : `Year ${year} · ${ops.length} companies`;
 
   // ---- Companies operations table ----
   document.getElementById("asset-table").innerHTML = `
@@ -51,6 +56,7 @@ export function renderAssets() {
   const byCo = new Map();
   state.assets
     .filter((r) => r.report_year === year && (r.asset_count || 0) > 0)
+    .filter((r) => !filterByCompany || r.company === company)
     .forEach((r) => {
       if (!byCo.has(r.company)) byCo.set(r.company, {});
       byCo.get(r.company)[r.asset_type] = {
