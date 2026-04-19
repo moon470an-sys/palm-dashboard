@@ -5,6 +5,7 @@ import { renderOverview } from "./sections/overview.js";
 import { renderFinancials } from "./sections/financials.js";
 import { renderMap } from "./sections/map.js";
 import { renderAssets } from "./sections/assets.js";
+import { renderProduction } from "./sections/production.js";
 
 function buildSelectors() {
   const companies = listCompanies();
@@ -31,12 +32,14 @@ function buildSelectors() {
     renderFinancials();
     renderMap();
     renderAssets();
+    renderProduction();
   });
 
   ySel.addEventListener("change", (e) => {
     state.selectedYear = Number(e.target.value);
     renderMap();
     renderAssets();
+    renderProduction();
   });
 }
 
@@ -45,6 +48,7 @@ function renderAll() {
   renderFinancials();
   renderMap();
   renderAssets();
+  renderProduction();
 }
 
 function escapeHtml(s) {

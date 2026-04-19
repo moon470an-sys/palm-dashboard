@@ -203,6 +203,20 @@ table.data tr:hover td { background: var(--accent-soft); }
   margin-top: 2px;
 }
 
+/* Grouped table headers (Plantation / Mill / Refinery / Kernel Plant) */
+table.data th.group-header {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+}
+
 /* ===== Leaflet popup ===== */
 .leaflet-popup-content { font-size: 12px; line-height: 1.5; margin: 10px 14px; }
 .leaflet-popup-content table { border-collapse: collapse; margin-top: 6px; }
