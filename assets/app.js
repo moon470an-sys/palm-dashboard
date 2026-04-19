@@ -18,12 +18,13 @@ function buildSelectors() {
     companies
       .map((c) => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`)
       .join("");
-  state.selectedCompany = companies[0] || ALL;
+  state.selectedCompany = ALL;
   cSel.value = state.selectedCompany;
 
   const ySel = document.getElementById("year-select");
   ySel.innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join("");
-  state.selectedYear = years[0] || null;
+  const DEFAULT_YEAR = 2024;
+  state.selectedYear = years.includes(DEFAULT_YEAR) ? DEFAULT_YEAR : (years[0] || null);
   ySel.value = state.selectedYear ?? "";
 
   cSel.addEventListener("change", (e) => {
