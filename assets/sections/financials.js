@@ -1,6 +1,14 @@
 // Financials section: Revenue/Profit chart + Balance Sheet chart.
 import { state, ALL } from "../data.js";
 
+// Sort years: annual "2024" then interim "2024 Q1" etc. yr*10 + (q||9)
+function yearKey(y) {
+  const s = String(y);
+  const m = s.match(/^(\d{4})(?:\s*Q([1-4]))?/);
+  if (!m) return -Infinity;
+  return parseInt(m[1], 10) * 10 + (m[2] ? parseInt(m[2], 10) : 9);
+}
+
 const COLORS = {
   revenue: "#2e7d32",
   grossProfit: "#81c784",
@@ -81,7 +89,7 @@ export function renderFinancials() {
 
   const rows = state.financials
     .filter((r) => r.company === state.selectedCompany)
-    .sort((a, b) => (a.report_year || 0) - (b.report_year || 0));
+    .sort((a, b) => yearKey(a.report_year) - yearKey(b.report_year));
 
   const years = rows.map((r) => String(r.report_year));
 

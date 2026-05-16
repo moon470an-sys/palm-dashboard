@@ -23,7 +23,7 @@ function buildSelectors() {
 
   const ySel = document.getElementById("year-select");
   ySel.innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join("");
-  const DEFAULT_YEAR = 2024;
+  const DEFAULT_YEAR = "2024";
   state.selectedYear = years.includes(DEFAULT_YEAR) ? DEFAULT_YEAR : (years[0] || null);
   ySel.value = state.selectedYear ?? "";
 
@@ -37,10 +37,11 @@ function buildSelectors() {
   });
 
   ySel.addEventListener("change", (e) => {
-    state.selectedYear = Number(e.target.value);
+    state.selectedYear = e.target.value;
     renderMap();
     renderAssets();
     renderProduction();
+    renderFinancials();
   });
 }
 

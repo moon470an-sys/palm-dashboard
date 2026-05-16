@@ -68,8 +68,21 @@ def main() -> None:
     if "latest_report_year" in screening.columns:
         screening = screening.rename(columns={"latest_report_year": "report_year"})
 
+    def _year_to_str_top(v):
+        if pd.isna(v):
+            return None
+        s = str(v).strip()
+        try:
+            f = float(s)
+            if f == int(f):
+                return str(int(f))
+        except ValueError:
+            pass
+        return s
+
     company_master = company_master.dropna(subset=["company"]).copy()
-    company_master["report_year"] = to_num(company_master["report_year"]).astype("Int64")
+    company_master["report_year"] = company_master["report_year"].map(_year_to_str_top)
+    company_master = company_master[company_master["report_year"].notna()]
 
     dim_company = (
         company_master.sort_values("report_year")
@@ -79,24 +92,27 @@ def main() -> None:
     )
 
     fact_financials = financials.dropna(subset=["company", "report_year"]).copy()
-    fact_financials["report_year"] = to_num(fact_financials["report_year"]).astype("Int64")
+    # Keep report_year as STRING (annual = "2024", interim = "2026 Q1")
+    fact_financials["report_year"] = fact_financials["report_year"].map(_year_to_str_top)
+    fact_financials = fact_financials[fact_financials["report_year"].notna()]
     for c in fact_financials.columns:
-        if c not in ("company",) and fact_financials[c].dtype == object:
+        if c not in ("company", "report_year") and fact_financials[c].dtype == object:
             converted = pd.to_numeric(fact_financials[c], errors="coerce")
             if converted.notna().sum() > 0:
                 fact_financials[c] = converted
 
     fact_operations = asset_ops.dropna(subset=["company", "report_year"]).copy()
-    fact_operations["report_year"] = to_num(fact_operations["report_year"]).astype("Int64")
+    fact_operations["report_year"] = fact_operations["report_year"].map(_year_to_str_top)
+    fact_operations = fact_operations[fact_operations["report_year"].notna()]
     for c in fact_operations.columns:
-        if c not in ("company",) and fact_operations[c].dtype == object:
+        if c not in ("company", "report_year") and fact_operations[c].dtype == object:
             converted = pd.to_numeric(fact_operations[c], errors="coerce")
             if converted.notna().sum() > 0:
                 fact_operations[c] = converted
 
     dim_screening = screening.dropna(subset=["company"]).copy()
     if "report_year" in dim_screening.columns:
-        dim_screening["report_year"] = to_num(dim_screening["report_year"]).astype("Int64")
+        dim_screening["report_year"] = dim_screening["report_year"].map(_year_to_str_top)
 
     region_map = {
         "sumatra_area_ha": "Sumatra",

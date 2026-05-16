@@ -132,9 +132,20 @@ export function listCompanies() {
   return [...new Set(state.companies.map((c) => c.company).filter(Boolean))].sort();
 }
 
+// Sort key: interim "2026 Q1" sits right above annual 2025 (newer than 2025, older than annual 2026).
+// Use yr*10 + qIdx where qIdx 1-4 for Q1-Q4, 9 for annual full year.
+function yearSortKey(y) {
+  const s = String(y);
+  const m = s.match(/^(\d{4})(?:\s*Q([1-4]))?/);
+  if (!m) return -Infinity;
+  const yr = parseInt(m[1], 10);
+  const q = m[2] ? parseInt(m[2], 10) : 9;
+  return yr * 10 + q;
+}
+
 export function listYears() {
   const ys = new Set();
-  state.financials.forEach((r) => r.report_year && ys.add(r.report_year));
-  state.operations.forEach((r) => r.report_year && ys.add(r.report_year));
-  return [...ys].sort((a, b) => b - a);
+  state.financials.forEach((r) => r.report_year && ys.add(String(r.report_year)));
+  state.operations.forEach((r) => r.report_year && ys.add(String(r.report_year)));
+  return [...ys].sort((a, b) => yearSortKey(b) - yearSortKey(a));
 }
