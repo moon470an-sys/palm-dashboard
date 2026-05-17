@@ -1,151 +1,86 @@
-// Loads JSON datasets, exposes shared mutable state.
-const DATA_BASE = "data/json/";
+// JSON 로더 — DB→export 결과 + Annual Report 원본
 
-// Sentinel for the "All Companies" option in the company filter.
-export const ALL = "__ALL__";
+const BASE = "data/json/";
+const AR_BASE = "data/json/ar/";
 
+// state: 모든 데이터 cache
 export const state = {
-  companies: [],
-  financials: [],
-  operations: [],
-  regions: [],
-  assets: [],
-  regionGeo: [],
-  selectedCompany: null,
-  selectedYear: null,
+  meta: null,
+  ispo: { companies: [], certificates: [], quarterly: [], ls: [] },
+  rspo: { members: [], global: [] },
+  bdsp: { nasional: [], provinsi: [], kabupaten: [] },
+  gapki: [],
+  idx: [],
+  cross: [],
+  prov_coords: {},
+  ar: { companies: [], financials: [], operations: [], regions: [], assets: [], region_geo: [] },
 };
 
-const FILES = ["companies", "financials", "operations", "regions", "assets", "region_geo"];
-
-// Minimal sample so the page renders even if fetch fails.
-const SAMPLE = {
-  companies: [
-    {
-      company: "PT Sample Tbk", ticker: "SMPL", hq: "Jakarta",
-      core_region: "Sumatra", primary_business: "Palm oil",
-      business_model: "Integrated", listed_status: "Listed",
-      group_structure_note: "Sample group structure for fallback display.",
-    },
-  ],
-  financials: [
-    {
-      company: "PT Sample Tbk", report_year: 2024,
-      revenue_idr_bn: 10000, gross_profit_idr_bn: 3000, net_profit_idr_bn: 1500,
-      total_assets_idr_bn: 25000, total_liabilities_idr_bn: 12000, total_equity_idr_bn: 13000,
-    },
-  ],
-  operations: [
-    {
-      company: "PT Sample Tbk", report_year: 2024,
-      planted_area_total_ha: 100000, mature_area_ha: 80000,
-      mills_count: 10, mill_capacity_tph: 500,
-      cpo_refinery_count: 1, cpo_refinery_capacity_tpa: 100000,
-      ffb_production_t: 1500000, cpo_production_t: 350000, oer_pct: 23.3,
-    },
-  ],
-  regions: [
-    { company: "PT Sample Tbk", report_year: 2024, region: "Sumatra", area_ha: 100000 },
-  ],
-  assets: [
-    { company: "PT Sample Tbk", report_year: 2024, asset_type: "Mill", asset_count: 10, capacity: 500, capacity_unit: "tph" },
-  ],
-  region_geo: [
-    { region: "Sumatra", lat: -0.5, lon: 101.5 },
-    { region: "Kalimantan", lat: -1.0, lon: 114.0 },
-    { region: "Sulawesi", lat: -2.0, lon: 120.5 },
-    { region: "Other", lat: -4.0, lon: 138.0 },
-  ],
-};
-
-async function loadOne(name) {
-  try {
-    const res = await fetch(`${DATA_BASE}${name}.json`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } catch (err) {
-    console.warn(`[data] ${name}: falling back to sample (${err.message})`);
-    return SAMPLE[name];
-  }
+async function j(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${url} -> ${r.status}`);
+  return r.json();
 }
 
 export async function loadAll() {
-  const [companies, financials, operations, regions, assets, region_geo] =
-    await Promise.all(FILES.map(loadOne));
-  state.companies = companies;
-  state.financials = financials;
-  state.operations = operations;
-  state.regions = regions;
-  state.assets = assets;
-  state.regionGeo = region_geo;
-  ensureOtherBucket();
-  return state;
+  const tasks = [
+    j(BASE + "meta.json").then((d) => state.meta = d),
+    j(BASE + "ispo_companies.json").then((d) => state.ispo.companies = d),
+    j(BASE + "ispo_certificates.json").then((d) => state.ispo.certificates = d),
+    j(BASE + "ispo_quarterly.json").then((d) => state.ispo.quarterly = d),
+    j(BASE + "ispo_ls.json").then((d) => state.ispo.ls = d),
+    j(BASE + "rspo_members.json").then((d) => state.rspo.members = d),
+    j(BASE + "rspo_global_country.json").then((d) => state.rspo.global = d),
+    j(BASE + "bdsp_nasional.json").then((d) => state.bdsp.nasional = d),
+    j(BASE + "bdsp_provinsi.json").then((d) => state.bdsp.provinsi = d),
+    j(BASE + "bdsp_kabupaten.json").then((d) => state.bdsp.kabupaten = d),
+    j(BASE + "gapki_members.json").then((d) => state.gapki = d),
+    j(BASE + "idx_companies.json").then((d) => state.idx = d),
+    j(BASE + "cross_matching.json").then((d) => state.cross = d),
+    j(BASE + "province_coords.json").then((d) => state.prov_coords = d),
+    // Annual Report (기존 원본)
+    j(AR_BASE + "companies.json").then((d) => state.ar.companies = d).catch(() => {}),
+    j(AR_BASE + "financials.json").then((d) => state.ar.financials = d).catch(() => {}),
+    j(AR_BASE + "operations.json").then((d) => state.ar.operations = d).catch(() => {}),
+    j(AR_BASE + "regions.json").then((d) => state.ar.regions = d).catch(() => {}),
+    j(AR_BASE + "assets.json").then((d) => state.ar.assets = d).catch(() => {}),
+    j(AR_BASE + "region_geo.json").then((d) => state.ar.region_geo = d).catch(() => {}),
+  ];
+  await Promise.all(tasks);
 }
 
-// Bucket logic:
-//  - Move the "Other" marker to the Java Sea so it sits clear of real regions.
-//  - Add the unallocated remainder
-//      (planted_area_total - Sumatra - Kalimantan - Sulawesi - Other)
-//    into the same "Other" bucket so map total reconciles with Plantation Asset.
-// Idempotent: skipped on re-invocation via _otherBucketMerged flag.
-function ensureOtherBucket() {
-  // Sit in the Java Sea (overrides the older Papua coord from earlier ETL runs).
-  const otherGeo = state.regionGeo.find((g) => g.region === "Other");
-  const SEA = { lat: -5.5, lon: 112.5 };
-  if (otherGeo) {
-    otherGeo.lat = SEA.lat;
-    otherGeo.lon = SEA.lon;
-  } else {
-    state.regionGeo.push({ region: "Other", ...SEA });
-  }
-  // Drop any leftover "Other Indonesia" geo from earlier deploys.
-  const idx = state.regionGeo.findIndex((g) => g.region === "Other Indonesia");
-  if (idx >= 0) state.regionGeo.splice(idx, 1);
-  // Re-route any pre-existing "Other Indonesia" rows into "Other".
-  state.regions.forEach((r) => {
-    if (r.region === "Other Indonesia") r.region = "Other";
-  });
+// --- 유틸 ---
+export const fmtInt = (n) => n == null ? "-" : Number(n).toLocaleString();
+export const fmtHa = (n) => n == null ? "-" : Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) + " ha";
+export const fmtNum = (n, d = 0) => n == null ? "-" : Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
 
-  if (state._otherBucketMerged) return;
-  state._otherBucketMerged = true;
+export function kpiHTML(label, value, delta = "", cls = "") {
+  return `<div class="kpi ${cls}">
+    <div class="label">${label}</div>
+    <div class="value">${value}</div>
+    ${delta ? `<div class="delta">${delta}</div>` : ""}
+  </div>`;
+}
 
-  state.operations.forEach((op) => {
-    const total = Number(op.planted_area_total_ha) || 0;
-    if (total <= 0) return;
-    const allocated =
-      (Number(op.sumatra_area_ha) || 0) +
-      (Number(op.kalimantan_area_ha) || 0) +
-      (Number(op.sulawesi_area_ha) || 0) +
-      (Number(op.other_region_area_ha) || 0);
-    const diff = total - allocated;
-    if (diff > 0.5) {
-      state.regions.push({
-        company: op.company,
-        report_year: op.report_year,
-        region: "Other",
-        area_ha: diff,
-      });
-    }
+export function makeTable(elId, columns, rows, opts = {}) {
+  const $el = document.getElementById(elId);
+  $el.innerHTML = `<table class="dt"><thead><tr>${columns.map(c =>
+    `<th>${c.title}</th>`).join("")}</tr></thead><tbody></tbody></table>`;
+  // datatables
+  // eslint-disable-next-line no-undef
+  new DataTable(`#${elId} table`, {
+    data: rows, columns, pageLength: opts.pageLength || 15,
+    order: opts.order || [], scrollX: true,
+    language: { search: "검색:", lengthMenu: "_MENU_ 행", info: "_TOTAL_ 행 중 _START_-_END_",
+                 paginate: { previous: "◀", next: "▶" }, zeroRecords: "결과 없음" },
   });
 }
 
-export function listCompanies() {
-  return [...new Set(state.companies.map((c) => c.company).filter(Boolean))].sort();
-}
-
-// Sort key: interim "2026 Q1" sits right above annual 2025 (newer than 2025, older than annual 2026).
-// Use yr*10 + qIdx where qIdx 1-4 for Q1-Q4, 9 for annual full year.
-function yearSortKey(y) {
-  const s = String(y);
-  const m = s.match(/^(\d{4})(?:\s*Q([1-4]))?/);
-  if (!m) return -Infinity;
-  const yr = parseInt(m[1], 10);
-  const q = m[2] ? parseInt(m[2], 10) : 9;
-  return yr * 10 + q;
-}
-
-export function listYears() {
-  const ys = new Set();
-  state.financials.forEach((r) => r.report_year && ys.add(String(r.report_year)));
-  state.operations.forEach((r) => r.report_year && ys.add(String(r.report_year)));
-  return [...ys].sort((a, b) => yearSortKey(b) - yearSortKey(a));
+export function plot(elId, traces, layout = {}) {
+  // eslint-disable-next-line no-undef
+  Plotly.newPlot(elId, traces, {
+    margin: { t: 20, b: 40, l: 60, r: 30 }, height: 320,
+    font: { size: 11 }, paper_bgcolor: "#fff", plot_bgcolor: "#fff",
+    ...layout,
+  }, { responsive: true, displayModeBar: false });
 }
