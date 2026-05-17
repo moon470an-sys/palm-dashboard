@@ -1,150 +1,155 @@
-// Annual Report — palm_longlist 기반 (Claude generated + NotebookLM verified)
-import { state, kpiHTML, fmtInt, fmtHa, fmtNum, plot, makeTable } from "../data.js";
+// Annual Report — 기존 사이트의 5 sub-section 그대로 복원
+// 출처: palm_longlist (Claude generated + NotebookLM verified)
+import { state, ALL, listCompanies, listYears } from "../data.js";
+import { renderOverview } from "./ar_sub/overview.js";
+import { renderFinancials } from "./ar_sub/financials.js";
+import { renderMap } from "./ar_sub/map.js";
+import { renderAssets } from "./ar_sub/assets.js";
+import { renderProduction } from "./ar_sub/production.js";
+
+const SUBS = [
+  { id: "ar-overview", label: "Overview", render: renderOverview },
+  { id: "ar-financials", label: "Financials", render: renderFinancials },
+  { id: "ar-map", label: "Plantation Map", render: renderMap },
+  { id: "ar-assets", label: "Asset Detail", render: renderAssets },
+  { id: "ar-production", label: "Production", render: renderProduction },
+];
 
 export function renderAnnual(root) {
-  const ar = state.ar;
-  if (!ar.companies || ar.companies.length === 0) {
-    root.innerHTML = `<div class="card"><b>Annual Report 데이터 없음</b><p>data/json/ar/ 폴더에 companies.json 등이 있어야 합니다.</p></div>`;
+  if (!state.ar.companies || state.ar.companies.length === 0) {
+    root.innerHTML = `<div class="card"><b>Annual Report 데이터 없음</b></div>`;
     return;
   }
-
-  const years = [...new Set(ar.financials.map(f => f.report_year))].sort();
-  const companies = ar.companies.map(c => c.company);
+  const companies = listCompanies();
+  const years = listYears();
+  const DEFAULT_YEAR = "2024";
 
   root.innerHTML = `
-    <h2>📊 Annual Report (IDX 상장 ${ar.companies.length}개사)</h2>
-    <p class="notice">출처: palm_longlist (Claude generated + NotebookLM verified) · IDR 십억 단위</p>
+    <h2>📊 Annual Report (IDX 상장 ${state.ar.companies.length}개사)</h2>
+    <p class="notice">출처: palm_longlist (Claude generated + NotebookLM verified) · IDR 십억 단위 · 5 sub-section 으로 분리</p>
 
     <div class="filter-bar">
-      <label>회사:</label>
-      <select id="ar-company">
-        <option value="__ALL__">전체</option>
-        ${companies.map(c => `<option value="${c}">${c}</option>`).join("")}
+      <label>회사 (Company):</label>
+      <select id="company-select">
+        <option value="${ALL}">All Companies</option>
+        ${companies.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join("")}
       </select>
-      <label>연도:</label>
-      <select id="ar-year">${years.map(y => `<option value="${y}" ${y === 2024 ? 'selected' : ''}>${y}</option>`).join("")}</select>
-      <span class="badge" id="ar-count">${ar.companies.length}개</span>
+      <label>연도 (Year):</label>
+      <select id="year-select">
+        ${years.map(y => `<option value="${y}" ${y === DEFAULT_YEAR ? "selected" : ""}>${y}</option>`).join("")}
+      </select>
+      <span class="badge">${state.ar.companies.length} 회사</span>
     </div>
 
-    <div class="kpis" id="ar-kpis"></div>
+    <nav class="sub-tabs" id="ar-sub-tabs">
+      ${SUBS.map((s, i) => `<a href="#" data-sub="${s.id}" class="${i===0 ? 'active' : ''}">${s.label}</a>`).join("")}
+    </nav>
 
-    <div class="grid-2">
-      <div class="card"><h3>매출/순이익 (IDR 십억) — 연도별</h3><div id="ar-rev" class="plot"></div></div>
-      <div class="card"><h3>OER (CPO Yield %) — 운영 효율</h3><div id="ar-oer" class="plot"></div></div>
-    </div>
+    <!-- Sub-section: Overview -->
+    <section id="ar-overview" class="ar-panel active">
+      <h3 style="margin-top:0">Overview</h3>
+      <p class="muted-text">Company identity & business profile.</p>
+      <div id="overview-cards" class="cards"></div>
+      <div id="overview-detail"></div>
+    </section>
 
-    <div class="grid-2">
-      <div class="card"><h3>식재 면적 vs CPO 생산</h3><div id="ar-area-prod" class="plot"></div></div>
-      <div class="card"><h3>주별 plantation 분포</h3><div id="ar-region" class="plot"></div></div>
-    </div>
+    <!-- Sub-section: Financials -->
+    <section id="ar-financials" class="ar-panel">
+      <h3 style="margin-top:0">Financials</h3>
+      <p class="muted-text">Yearly revenue / profit and balance sheet structure.</p>
+      <div class="charts">
+        <div id="chart-revenue-profit" class="chart-card"></div>
+        <div id="chart-assets-liab" class="chart-card"></div>
+      </div>
+    </section>
 
-    <div class="card">
-      <h3>회사 detail 표</h3>
-      <div id="ar-table"></div>
-    </div>
+    <!-- Sub-section: Plantation Map -->
+    <section id="ar-map" class="ar-panel">
+      <h3 style="margin-top:0">Plantation Map</h3>
+      <p class="muted-text">Aggregated planted area by Indonesian region.</p>
+      <div class="map-layout">
+        <div id="leaflet-map"></div>
+        <div id="region-summary" class="region-summary"></div>
+      </div>
+    </section>
 
-    <div class="card">
-      <h3>Asset list (Mill / Refinery)</h3>
-      <div id="ar-assets-table"></div>
-    </div>
+    <!-- Sub-section: Asset Detail -->
+    <section id="ar-assets" class="ar-panel">
+      <h3 style="margin-top:0">Asset Detail</h3>
+      <p class="muted-text"><span id="asset-meta">—</span></p>
+      <h4 style="margin: 8px 0 10px; font-size: 13px;">Plantation Asset</h4>
+      <div id="asset-table"></div>
+      <h4 style="margin: 22px 0 10px; font-size: 13px;">Mill / Refinery Assets</h4>
+      <div id="asset-pivot"></div>
+    </section>
+
+    <!-- Sub-section: Production -->
+    <section id="ar-production" class="ar-panel">
+      <h3 style="margin-top:0">Production</h3>
+      <p class="muted-text"><span id="production-meta">—</span></p>
+      <div id="production-table"></div>
+      <h4 style="margin: 22px 0 10px; font-size: 13px;">Sales</h4>
+      <div id="sales-table"></div>
+    </section>
   `;
 
-  function rerender() {
-    const sel = document.getElementById("ar-company").value;
-    const year = +document.getElementById("ar-year").value;
-    const fSel = sel === "__ALL__" ? null : sel;
+  // 초기 상태
+  state.selectedCompany = ALL;
+  state.selectedYear = years.includes(DEFAULT_YEAR) ? DEFAULT_YEAR : (years[0] || null);
+  document.getElementById("year-select").value = state.selectedYear ?? "";
 
-    const fin = ar.financials.filter(f => (!fSel || f.company === fSel) && f.report_year === year);
-    const ops = ar.operations.filter(o => (!fSel || o.company === fSel) && o.report_year === year);
-    const reg = ar.regions.filter(r => (!fSel || r.company === fSel) && r.report_year === year);
-    const ast = ar.assets.filter(a => (!fSel || a.company === fSel) && a.report_year === year);
-
-    const revSum = fin.reduce((s, f) => s + (f.revenue_idr_bn || 0), 0);
-    const profitSum = fin.reduce((s, f) => s + (f.net_profit_idr_bn || 0), 0);
-    const areaSum = ops.reduce((s, o) => s + (o.planted_area_total_ha || 0), 0);
-    const cpoSum = ops.reduce((s, o) => s + (o.cpo_production_t || 0), 0);
-    const oerAvg = ops.length ? ops.reduce((s, o) => s + (o.oer_pct || 0), 0) / ops.length : 0;
-
-    document.getElementById("ar-kpis").innerHTML =
-      kpiHTML("매출 합계", `${fmtInt(revSum)} bn IDR`, `${fin.length} 회사`, "blue") +
-      kpiHTML("순이익 합계", `${fmtInt(profitSum)} bn IDR`, `margin ${revSum ? (profitSum/revSum*100).toFixed(1) : 0}%`, profitSum < 0 ? "error" : "") +
-      kpiHTML("식재 면적", fmtHa(areaSum), `${ops.length} 회사`) +
-      kpiHTML("CPO 생산", `${fmtInt(cpoSum)} ton`, `OER ${oerAvg.toFixed(1)}%`, "warn") +
-      kpiHTML("주(region)", `${[...new Set(reg.map(r => r.region))].length}`, "총 plantation", "blue") +
-      kpiHTML("Mill/Refinery 수", `${ast.reduce((s, a) => s + (a.asset_count || 0), 0)}`, `${ast.length} 종류`);
-
-    // 연도별 매출 (선택 회사 또는 전체 평균)
-    const yearGroup = {};
-    ar.financials.filter(f => !fSel || f.company === fSel).forEach(f => {
-      yearGroup[f.report_year] = yearGroup[f.report_year] || { rev: 0, np: 0 };
-      yearGroup[f.report_year].rev += f.revenue_idr_bn || 0;
-      yearGroup[f.report_year].np += f.net_profit_idr_bn || 0;
+  function renderAllSubs() {
+    SUBS.forEach(s => {
+      try { s.render(); } catch (e) { console.error(`[${s.id}]`, e); }
     });
-    const yearsAll = Object.keys(yearGroup).sort();
-    plot("ar-rev", [
-      { x: yearsAll, y: yearsAll.map(y => yearGroup[y].rev), type: "bar", name: "Revenue", marker: { color: "#2ca02c" } },
-      { x: yearsAll, y: yearsAll.map(y => yearGroup[y].np), type: "scatter", mode: "lines+markers", name: "Net Profit", line: { color: "#d62728", width: 3 }, yaxis: "y2" },
-    ], {
-      yaxis: { title: "Revenue (IDR bn)" },
-      yaxis2: { title: "Net Profit (IDR bn)", overlaying: "y", side: "right" },
-      legend: { orientation: "h", y: -0.2 },
-    });
-
-    // OER 분포
-    const oerData = ar.operations.filter(o => !fSel || o.company === fSel)
-      .filter(o => o.oer_pct).map(o => o.oer_pct);
-    plot("ar-oer", [{ x: oerData, type: "histogram", nbinsx: 20, marker: { color: "#1f77b4" } }],
-      { xaxis: { title: "OER %" }, yaxis: { title: "회사 수" } });
-
-    // area vs cpo scatter
-    plot("ar-area-prod", [{
-      x: ops.map(o => o.planted_area_total_ha),
-      y: ops.map(o => o.cpo_production_t),
-      mode: "markers", type: "scatter",
-      text: ops.map(o => o.company),
-      marker: { size: 10, color: "#2ca02c", opacity: 0.7 },
-    }], { xaxis: { title: "Planted area (ha)" }, yaxis: { title: "CPO production (ton)" } });
-
-    // region bar
-    const regGroup = {};
-    reg.forEach(r => { regGroup[r.region] = (regGroup[r.region] || 0) + (r.area_ha || 0); });
-    const regSorted = Object.entries(regGroup).sort((a, b) => b[1] - a[1]);
-    plot("ar-region", [{
-      x: regSorted.map(r => r[1]), y: regSorted.map(r => r[0]),
-      type: "bar", orientation: "h", marker: { color: "#8B4513" },
-    }], { yaxis: { autorange: "reversed" }, xaxis: { title: "Area (ha)" } });
-
-    // table 재생성
-    const rows = ar.companies.map(c => {
-      const f = fin.find(x => x.company === c.company);
-      const o = ops.find(x => x.company === c.company);
-      return {
-        회사: c.company, ticker: c.ticker, HQ: c.hq,
-        revenue: f?.revenue_idr_bn || 0, net_profit: f?.net_profit_idr_bn || 0,
-        planted: o?.planted_area_total_ha || 0, cpo: o?.cpo_production_t || 0,
-        mills: o?.mills_count || 0,
-      };
-    }).filter(r => !fSel || r.회사 === fSel);
-    makeTable("ar-table", [
-      { data: "회사", title: "회사" }, { data: "ticker", title: "Ticker" },
-      { data: "HQ", title: "HQ" },
-      { data: "revenue", title: "매출 (bn IDR)", render: (d) => Number(d).toLocaleString() },
-      { data: "net_profit", title: "순이익", render: (d) => Number(d).toLocaleString() },
-      { data: "planted", title: "Planted (ha)", render: (d) => Number(d).toLocaleString() },
-      { data: "cpo", title: "CPO (ton)", render: (d) => Number(d).toLocaleString() },
-      { data: "mills", title: "Mills" },
-    ], rows, { order: [[3, "desc"]], pageLength: 15 });
-
-    // assets table
-    makeTable("ar-assets-table", [
-      { data: "company", title: "회사" }, { data: "asset_type", title: "자산 종류" },
-      { data: "asset_count", title: "수" },
-      { data: "capacity", title: "용량", render: (d) => Number(d || 0).toLocaleString() },
-      { data: "capacity_unit", title: "단위" },
-    ], ast, { pageLength: 20 });
   }
 
-  document.getElementById("ar-company").addEventListener("change", rerender);
-  document.getElementById("ar-year").addEventListener("change", rerender);
-  rerender();
+  // 필터 변경 → 모든 sub render
+  document.getElementById("company-select").addEventListener("change", (e) => {
+    state.selectedCompany = e.target.value;
+    renderAllSubs();
+  });
+  document.getElementById("year-select").addEventListener("change", (e) => {
+    state.selectedYear = e.target.value;
+    renderAllSubs();
+  });
+
+  // sub-nav 클릭 → panel 전환 (map은 리사이즈 필요)
+  document.querySelectorAll("#ar-sub-tabs a").forEach(a => {
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      const sub = a.dataset.sub;
+      document.querySelectorAll("#ar-sub-tabs a").forEach(x => x.classList.toggle("active", x.dataset.sub === sub));
+      document.querySelectorAll(".ar-panel").forEach(p => p.classList.toggle("active", p.id === sub));
+      // Leaflet 지도는 보일 때 invalidate (window resize event 으로 모든 Leaflet 인스턴스 refresh)
+      if (sub === "ar-map") {
+        setTimeout(() => {
+          window.dispatchEvent(new Event("resize"));
+          // 기존 map.js 의 Leaflet 인스턴스를 #leaflet-map 에서 찾아 invalidate
+          const mapDiv = document.getElementById("leaflet-map");
+          if (mapDiv && mapDiv._leaflet_id != null) {
+            // try to find Leaflet map by iterating L._maps if available
+            for (const k in window) {
+              try {
+                if (window[k] && window[k]._container === mapDiv && typeof window[k].invalidateSize === "function") {
+                  window[k].invalidateSize();
+                }
+              } catch (e) {}
+            }
+          }
+          // fallback: 직접 re-render
+          renderAllSubs();
+        }, 150);
+      }
+    });
+  });
+
+  renderAllSubs();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function escapeAttr(s) {
+  return String(s).replace(/"/g, "&quot;");
 }

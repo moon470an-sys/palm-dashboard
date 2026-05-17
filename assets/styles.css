@@ -120,3 +120,59 @@ table.dt thead th { background: #f0f5ec; }
 .flag { display: inline-block; padding: 1px 6px; font-size: 11px; border-radius: 8px; background: #e8f0e8; color: var(--c-accent); margin-right: 3px; }
 .flag.rspo { background: #e8eef5; color: #1f77b4; }
 .flag.gapki { background: #fff0e0; color: var(--c-warn); }
+
+/* ========== Annual Report sub-nav + sub-panels (기존 5섹션 복원) ========== */
+.sub-tabs { display: flex; gap: 2px; margin: 8px 0 14px; border-bottom: 1px solid var(--c-border); flex-wrap: wrap; }
+.sub-tabs a {
+  padding: 8px 14px; color: var(--c-muted); text-decoration: none;
+  font-weight: 500; font-size: 13px; border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.sub-tabs a.active { color: var(--c-accent-2); border-bottom-color: var(--c-accent-2); font-weight: 600; }
+.sub-tabs a:hover { color: var(--c-text); }
+.ar-panel { display: none; padding: 8px 0; }
+.ar-panel.active { display: block; }
+
+/* AR overview cards (scoped — 우리의 일반 .card 와 분리) */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.cards > .card {
+  background: #f6f8f4; border-radius: 8px; padding: 12px 14px;
+  border: 1px solid var(--c-border); border-left: 4px solid var(--c-accent);
+  margin: 0;
+}
+.cards > .card .label { font-size: 11px; color: var(--c-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 600; }
+.cards > .card .value { font-size: 15px; font-weight: 600; word-break: break-word; color: var(--c-text); }
+.cards > .card .value.big { font-size: 18px; color: var(--c-accent); }
+
+/* detail block */
+.detail-block { margin-top: 14px; }
+.detail-block h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+.detail-block .note {
+  background: #f6f8f4; padding: 12px 14px; border-radius: 8px;
+  border-left: 3px solid var(--c-accent-2);
+  white-space: pre-wrap; color: var(--c-text); font-size: 13px; line-height: 1.6;
+}
+.detail-block .na { color: var(--c-muted); font-style: italic; }
+
+/* AR charts */
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 14px; }
+.chart-card { background: #f6f8f4; border-radius: 8px; padding: 10px; border: 1px solid var(--c-border); min-height: 360px; }
+.chart-placeholder { text-align: center; padding: 80px 20px; color: var(--c-muted); font-size: 13px; }
+
+/* AR map */
+.map-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+@media (max-width: 900px) { .map-layout { grid-template-columns: 1fr; } }
+#leaflet-map { height: 480px; border-radius: 8px; border: 1px solid var(--c-border); background: #fff; }
+.region-summary { padding: 4px; }
+
+/* AR data tables */
+.table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--c-border); margin-bottom: 12px; background: #fff; }
+table.data { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+table.data th { background: #f0f5ec; text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--c-border); font-weight: 600; position: sticky; top: 0; z-index: 2; color: var(--c-text); }
+table.data thead tr:nth-child(2) th { top: 34px; z-index: 1; }
+table.data td { padding: 8px 11px; border-bottom: 1px solid var(--c-border); color: var(--c-text); }
+table.data tr:last-child td { border-bottom: none; }
+table.data tr:hover td { background: #f6f8f4; }
+.numeric { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.muted-text { color: var(--c-muted); }
+.th-sub, .cell-sub { font-size: 11px; color: var(--c-muted); font-weight: normal; }

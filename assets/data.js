@@ -1,9 +1,14 @@
 // JSON 로더 — DB→export 결과 + Annual Report 원본
+// Annual Report 5 sub-sections 호환: state.companies/financials/operations/regions/assets/regionGeo
+// + state.selectedCompany/selectedYear, ALL sentinel, listCompanies/listYears 함수
 
 const BASE = "data/json/";
 const AR_BASE = "data/json/ar/";
 
-// state: 모든 데이터 cache
+// Sentinel for "All Companies"
+export const ALL = "__ALL__";
+
+// state: 모든 데이터 cache (AR 호환 alias 포함 — 기존 5 sections는 state.companies 등을 직접 사용)
 export const state = {
   meta: null,
   ispo: { companies: [], certificates: [], quarterly: [], ls: [] },
@@ -14,7 +19,20 @@ export const state = {
   cross: [],
   prov_coords: {},
   ar: { companies: [], financials: [], operations: [], regions: [], assets: [], region_geo: [] },
+  // AR 호환 alias (loadAll 후 ar.* 와 동일 참조)
+  companies: [], financials: [], operations: [], regions: [], assets: [], regionGeo: [],
+  selectedCompany: ALL, selectedYear: null,
 };
+
+export function listCompanies() {
+  return state.companies.map(c => c.company).sort();
+}
+export function listYears() {
+  const yrs = new Set();
+  state.financials.forEach(f => yrs.add(String(f.report_year)));
+  state.operations.forEach(o => yrs.add(String(o.report_year)));
+  return [...yrs].sort();
+}
 
 async function j(url) {
   const r = await fetch(url);
@@ -47,6 +65,13 @@ export async function loadAll() {
     j(AR_BASE + "region_geo.json").then((d) => state.ar.region_geo = d).catch(() => {}),
   ];
   await Promise.all(tasks);
+  // AR alias 채우기 (5 sub-sections는 state.companies 등을 직접 참조)
+  state.companies = state.ar.companies;
+  state.financials = state.ar.financials;
+  state.operations = state.ar.operations;
+  state.regions = state.ar.regions;
+  state.assets = state.ar.assets;
+  state.regionGeo = state.ar.region_geo;
 }
 
 // --- 유틸 ---
