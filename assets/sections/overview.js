@@ -713,7 +713,17 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>EBIT vs NP scatter (이상: y=x 라인 가까이, 멀수록 부담 큼)</h3><div id="ov-ebit-np" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㊺ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊺ Net Debt 다년 변화</h3>
+    <p class="notice">
+      Net Debt 시계열로 부채 축소(deleveraging) vs 누적(releveraging) 회사 식별. 분모로 매출 사용 ratio도 함께.
+    </p>
+    <div class="card"><h3>Top 12 Net Debt 회사 시계열</h3><div id="ov-nd-trend" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Net Debt Δ (latest − first, IDR bn) — 부채 변화 폭</h3><div id="ov-nd-delta" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Net Debt / Revenue 다년 평균 (%) — 부채 부담 강도</h3><div id="ov-nd-rev" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㊻ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -2217,6 +2227,53 @@ export function renderOverview(root) {
     marker: { color: nmD.map(r => r.nm_delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
     text: nmD.map(r => (r.nm_delta >= 0 ? "+" : "") + r.nm_delta.toFixed(1) + "pp").reverse(), textposition: "outside",
   }], { xaxis: { title: "Net Margin Δ (pp, latest − first)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, nmD.length * 24 + 60) });
+
+  // ── ㊺ Net Debt 다년
+  const ndSeries = companies.map(co => {
+    const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.net_debt != null).sort((a, b) => a.yr.localeCompare(b.yr));
+    return { short: co, region: s[s.length - 1]?.region, s };
+  }).filter(r => r.s.length > 0);
+
+  const ndTop12 = [...ndSeries].map(r => ({ ...r, last: r.s[r.s.length - 1].net_debt })).sort((a, b) => b.last - a.last).slice(0, 12);
+  plot("ov-nd-trend", ndTop12.map(s => ({
+    x: s.s.map(r => r.yr), y: s.s.map(r => r.net_debt),
+    name: s.short, type: "scatter", mode: "lines+markers",
+    line: { color: colorMap[s.short], width: 2 }, marker: { color: colorMap[s.short], size: 6 },
+  })), {
+    yaxis: { title: "Net Debt (IDR bn)", zeroline: true },
+    legend: { orientation: "h", y: -0.18, font: { size: 9 } },
+    margin: { l: 70, r: 20, t: 10, b: 80 }, height: 480,
+  });
+
+  const ndDelta = ndSeries.filter(r => r.s.length >= 2).map(r => {
+    const first = r.s[0].net_debt, last = r.s[r.s.length - 1].net_debt;
+    return { short: r.short, region: r.region, delta: last - first, first, last };
+  }).sort((a, b) => b.delta - a.delta);
+
+  plot("ov-nd-delta", [{
+    x: ndDelta.map(r => r.delta).reverse(), y: ndDelta.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: ndDelta.map(r => r.delta >= 0 ? "#d62728" : "#2ca02c").reverse() },
+    text: ndDelta.map(r => (r.delta >= 0 ? "+" : "") + Math.round(r.delta).toLocaleString()).reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>Δ %{x:+,.0f} bn<br>%{customdata[0]:,.0f} → %{customdata[1]:,.0f}<extra></extra>",
+    customdata: ndDelta.map(r => [r.first, r.last]).reverse(),
+  }], { xaxis: { title: "Net Debt Δ (latest − first, IDR bn)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, ndDelta.length * 24 + 60) });
+
+  // Net Debt / Revenue 평균
+  const ndRev = companies.map(co => {
+    const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.net_debt != null && r.revenue);
+    if (s.length === 0) return null;
+    const ratios = s.map(r => r.net_debt / r.revenue * 100);
+    const m = ratios.reduce((sum, v) => sum + v, 0) / ratios.length;
+    return { short: co, region: s[s.length - 1].region, avg_ratio: m };
+  }).filter(Boolean).sort((a, b) => b.avg_ratio - a.avg_ratio);
+
+  plot("ov-nd-rev", [{
+    x: ndRev.map(r => Math.max(-100, Math.min(500, r.avg_ratio))).reverse(), y: ndRev.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: ndRev.map(r => r.avg_ratio < 0 ? "#2ca02c" : r.avg_ratio < 50 ? "#1f77b4" : r.avg_ratio < 100 ? "#ffbb78" : "#d62728").reverse() },
+    text: ndRev.map(r => r.avg_ratio.toFixed(0) + "%").reverse(), textposition: "outside",
+  }], { xaxis: { title: "다년 평균 Net Debt / Revenue (%)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, ndRev.length * 24 + 60) });
 
   // ── ㊵ Market Cap 다년
   const mcapSeries = companies.map(co => {
