@@ -99,9 +99,14 @@ export function renderOverview(root) {
       yr: r.report_year,
     };
   });
-  // net_debt/EBITDA leverage + risk_score (derive after fin is built)
+  // net_debt/EBITDA leverage + risk_score + DuPont (derive after fin is built)
   fin.forEach(r => {
     r.nd_ebitda = (r.net_debt != null && r.ebitda && r.ebitda > 0) ? r.net_debt / r.ebitda : null;
+    // DuPont 3-factor: ROE = Net Margin × Asset Turnover × Equity Multiplier
+    r.dp_margin = (r.net_profit != null && r.revenue) ? r.net_profit / r.revenue : null;  // ratio (0.10 = 10%)
+    r.dp_turnover = (r.revenue != null && r.assets) ? r.revenue / r.assets : null;  // x
+    r.dp_leverage = (r.assets != null && r.equity && r.equity > 0) ? r.assets / r.equity : null;  // x
+    r.dp_roe_calc = (r.dp_margin != null && r.dp_turnover != null && r.dp_leverage != null) ? r.dp_margin * r.dp_turnover * r.dp_leverage * 100 : null;  // % (재현된 ROE)
     // Risk Score 0-100 (높을수록 위험)
     let s = 0;
     if (r.net_profit != null && r.net_profit < 0) s += 30;
@@ -307,7 +312,19 @@ export function renderOverview(root) {
     <div class="card"><h3>지표별 회사 값 vs Peer 중앙값 (% 차이)</h3><div id="ov-peer-delta" class="plot plot-tall"></div></div>
     <div class="card"><h3>지표별 절대값 비교 (회사 vs peer 중앙값 vs peer Top quartile)</h3><div id="ov-peer-abs" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑯ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑯ DuPont 분해 — ROE = 마진 × 자산회전 × 레버리지</h3>
+    <p class="notice">
+      DuPont: ROE = (Net Profit / Revenue) × (Revenue / Assets) × (Assets / Equity)
+      = 순이익률 × 자산회전율 × 자본승수. 같은 ROE라도 분해 패턴이 다르면 비즈니스 성격이 다름.
+    </p>
+    <div class="grid-3">
+      <div class="card"><h3>① Net Margin (NP/Rev %)</h3><div id="ov-dp-margin" class="plot"></div></div>
+      <div class="card"><h3>② Asset Turnover (Rev/Assets x)</h3><div id="ov-dp-turn" class="plot"></div></div>
+      <div class="card"><h3>③ Equity Multiplier (Assets/Eq x)</h3><div id="ov-dp-lev" class="plot"></div></div>
+    </div>
+    <div class="card"><h3>Margin × Turnover scatter (색=레버리지, 크기=ROE) — 효율 vs 회전</h3><div id="ov-dp-scatter" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">⑰ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -835,6 +852,57 @@ export function renderOverview(root) {
       barmode: "stack", yaxis: { title: "IDR bn" },
       xaxis: { tickangle: -45, automargin: true },
       legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
+    });
+
+    // ── ⑯ DuPont 3-factor
+    // 3 ranking bar (margin / turnover / leverage), 정렬 by 각 지표 desc
+    const dpRows = rows.filter(r => r.dp_margin != null && r.dp_turnover != null && r.dp_leverage != null);
+    const sortedByMargin = [...dpRows].sort((a, b) => b.dp_margin - a.dp_margin);
+    const sortedByTurnover = [...dpRows].sort((a, b) => b.dp_turnover - a.dp_turnover);
+    const sortedByLev = [...dpRows].sort((a, b) => b.dp_leverage - a.dp_leverage);
+
+    plot("ov-dp-margin", [{
+      x: sortedByMargin.map(r => r.dp_margin * 100).reverse(),
+      y: sortedByMargin.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: sortedByMargin.map(r => r.dp_margin >= 0 ? "#2ca02c" : "#d62728").reverse() },
+      text: sortedByMargin.map(r => (r.dp_margin * 100).toFixed(1) + "%").reverse(), textposition: "outside",
+    }], { xaxis: { title: "Net Margin (%)", zeroline: true }, margin: { l: 180, r: 60, t: 10, b: 40 }, height: Math.max(400, sortedByMargin.length * 22 + 60) });
+
+    plot("ov-dp-turn", [{
+      x: sortedByTurnover.map(r => r.dp_turnover).reverse(),
+      y: sortedByTurnover.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: sortedByTurnover.map(r => r.dp_turnover).reverse(), colorscale: "Blues" },
+      text: sortedByTurnover.map(r => r.dp_turnover.toFixed(2) + "x").reverse(), textposition: "outside",
+    }], { xaxis: { title: "Asset Turnover (x)" }, margin: { l: 180, r: 60, t: 10, b: 40 }, height: Math.max(400, sortedByTurnover.length * 22 + 60) });
+
+    plot("ov-dp-lev", [{
+      x: sortedByLev.map(r => r.dp_leverage).reverse(),
+      y: sortedByLev.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: sortedByLev.map(r => r.dp_leverage > 3 ? "#d62728" : r.dp_leverage > 2 ? "#ffbb78" : "#2ca02c").reverse() },
+      text: sortedByLev.map(r => r.dp_leverage.toFixed(2) + "x").reverse(), textposition: "outside",
+    }], { xaxis: { title: "Equity Multiplier (x)" }, margin: { l: 180, r: 60, t: 10, b: 40 }, height: Math.max(400, sortedByLev.length * 22 + 60) });
+
+    // Margin × Turnover scatter, color=leverage, size=ROE
+    const dpScRows = dpRows.filter(r => r.roe != null);
+    plot("ov-dp-scatter", [{
+      x: dpScRows.map(r => r.dp_margin * 100),
+      y: dpScRows.map(r => r.dp_turnover),
+      mode: "markers+text", type: "scatter",
+      text: dpScRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: dpScRows.map(r => Math.max(8, Math.min(48, Math.abs(r.roe) / 2 + 8))),
+        color: dpScRows.map(r => r.dp_leverage),
+        colorscale: "RdYlGn_r", showscale: true, colorbar: { title: "Leverage (x)" },
+        opacity: 0.85, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>Margin %{x:.2f}%<br>Turnover %{y:.2f}x<br>크기=|ROE|<extra></extra>",
+    }], {
+      xaxis: { title: "Net Margin (%) — 효율", zeroline: true },
+      yaxis: { title: "Asset Turnover (x) — 회전", zeroline: true },
+      margin: { l: 70, r: 50, t: 10, b: 50 }, height: 520, showlegend: false,
     });
 
     // ── 종합 ranking 테이블
