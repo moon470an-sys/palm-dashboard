@@ -70,6 +70,10 @@ export function renderOverview(root) {
       pko_t: num(op.pko_production_t) || 0, pke_t: num(op.pke_production_t) || 0,
       cpo_refinery: num(op.cpo_refinery_count) || 0, pko_refinery: num(op.pko_refinery_count) || 0,
       domestic_pct: num(op.domestic_sales_pct), export_pct: num(op.export_sales_pct),
+      mature_ha: num(op.mature_area_ha), immature_ha: num(op.immature_area_ha),
+      productive_ha: num(op.productive_age_area_ha), old_ha: num(op.old_age_area_ha),
+      avg_tree_age: num(op.average_tree_age_years), replanting_ha: num(op.replanting_area_ha),
+      nucleus_ha: num(op.nucleus_area_ha), plasma_ha: num(op.plasma_area_ha),
       oer_pct: num(op.oer_reported_pct), cpo_price_kg: num(op.average_cpo_selling_price_local_per_kg),
       rev_per_ha: (revenue && planted) ? revenue * 1e9 / planted : null,  // IDR per ha
       cpo_per_ha: (cpo && planted) ? cpo / planted : null,  // ton/ha CPO
@@ -136,6 +140,13 @@ export function renderOverview(root) {
       + (r.stearin_t > 0 ? 1 : 0) + (r.pfad_t > 0 ? 1 : 0);
     r.refined_total_t = (r.rbdpo_t || 0) + (r.olein_t || 0) + (r.stearin_t || 0) + (r.pfad_t || 0);
     r.refined_per_cpo = (r.refined_total_t > 0 && r.cpo_t > 0) ? r.refined_total_t / r.cpo_t * 100 : null;
+    // Tree maturity ratios
+    const mTot = (r.mature_ha || 0) + (r.immature_ha || 0);
+    r.mature_share = mTot > 0 ? r.mature_ha / mTot * 100 : null;
+    r.immature_share = mTot > 0 ? r.immature_ha / mTot * 100 : null;
+    // Nucleus vs Plasma
+    const npTot = (r.nucleus_ha || 0) + (r.plasma_ha || 0);
+    r.plasma_share = npTot > 0 ? r.plasma_ha / npTot * 100 : null;
     // Risk Score 0-100 (높을수록 위험)
     let s = 0;
     if (r.net_profit != null && r.net_profit < 0) s += 30;
@@ -415,7 +426,17 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Domestic vs Export 매출 비중 (operations 보고된 회사)</h3><div id="ov-dom-exp" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉒ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉒ Tree Age & Replanting Profile</h3>
+    <p class="notice">
+      Mature(생산기) vs Immature(미성숙기) 비중 + 평균 수령(years) + Plasma(외부 smallholder) 비중. Mature 비중↑이면 단기 생산↑ 하지만 노후 위험↑.
+    </p>
+    <div class="card"><h3>Mature vs Immature 비중 (회사별)</h3><div id="ov-maturity" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>평균 Tree Age (years) — 노화 ranking</h3><div id="ov-tree-age" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Nucleus vs Plasma 비중 — Smallholder 통합도</h3><div id="ov-nuc-plasma" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㉓ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1037,6 +1058,36 @@ export function renderOverview(root) {
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
+
+    // ── ㉒ Tree Age & Replanting
+    const mrRows = rows.filter(r => r.mature_share != null).sort((a, b) => b.mature_share - a.mature_share);
+    plot("ov-maturity", [
+      { x: mrRows.map(r => r.short), y: mrRows.map(r => r.mature_share), type: "bar", name: "Mature %", marker: { color: "#2ca02c" } },
+      { x: mrRows.map(r => r.short), y: mrRows.map(r => r.immature_share), type: "bar", name: "Immature %", marker: { color: "#ffbb78" } },
+    ], {
+      barmode: "stack", yaxis: { title: "% of (mature + immature) area", range: [0, 105] },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.35 },
+      margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
+    });
+
+    const taRows = rows.filter(r => r.avg_tree_age != null).sort((a, b) => b.avg_tree_age - a.avg_tree_age);
+    plot("ov-tree-age", [{
+      x: taRows.map(r => r.avg_tree_age).reverse(), y: taRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: taRows.map(r => r.avg_tree_age > 20 ? "#d62728" : r.avg_tree_age > 15 ? "#ffbb78" : r.avg_tree_age > 8 ? "#1f77b4" : "#2ca02c").reverse() },
+      text: taRows.map(r => r.avg_tree_age.toFixed(1) + " yrs").reverse(), textposition: "outside",
+    }], { xaxis: { title: "평균 Tree Age (years) — Palm 수령 25yr+ replanting 권장" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, taRows.length * 22 + 60) });
+
+    const npRows = rows.filter(r => r.plasma_share != null).sort((a, b) => b.plasma_share - a.plasma_share);
+    plot("ov-nuc-plasma", [{
+      x: npRows.map(r => r.plasma_share).reverse(), y: npRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: npRows.map(r => r.plasma_share).reverse(), colorscale: "Oranges" },
+      text: npRows.map(r => r.plasma_share.toFixed(1) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Plasma %{x:.1f}% (Nucleus %{customdata:.1f}%)<extra></extra>",
+      customdata: npRows.map(r => 100 - r.plasma_share).reverse(),
+    }], { xaxis: { title: "Plasma 비중 (%) — 외부 smallholder farmer 의존도" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, npRows.length * 22 + 60) });
 
     // ── ㉑ Downstream Integration
     const dsRows = [...rows].sort((a, b) => b.downstream_score - a.downstream_score);
