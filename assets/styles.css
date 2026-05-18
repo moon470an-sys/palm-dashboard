@@ -96,6 +96,12 @@ table.dt thead th { background: #f0f5ec; }
 .plot-tall { min-height: 480px; }
 .plot-short { min-height: 220px; }
 
+.section-h {
+  margin: 22px 0 10px; padding: 6px 10px; font-size: 14px;
+  background: #f0f5ec; color: var(--c-accent); border-radius: 4px;
+  border-left: 4px solid var(--c-accent); font-weight: 600;
+}
+
 .map { height: 460px; border-radius: var(--r); border: 1px solid var(--c-border); }
 
 .footer {
