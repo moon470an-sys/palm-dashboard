@@ -56,7 +56,7 @@ export function renderBdsp(root) {
   root.innerHTML = `
     <h2>📈 BDSP (Basis Data Statistik Pertanian)</h2>
     <p class="notice">
-      출처: bdsp2.pertanian.go.id/bdsp (Pusdatin Kementan, 자동 Playwright 수집)
+      출처: <a href="https://bdsp2.pertanian.go.id/bdsp/" target="_blank" rel="noopener">bdsp2.pertanian.go.id/bdsp</a> (Pusdatin Kementan, 자동 Playwright 수집)
       · 기간 ${fy}–${ly} · 지표 3종(면적·생산·생산성) × 국가/주(29)/군(104) 다층
     </p>
 

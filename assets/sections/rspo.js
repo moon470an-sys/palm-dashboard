@@ -28,7 +28,7 @@ export function renderRspo(root) {
 
   root.innerHTML = `
     <h2>🌐 RSPO (Roundtable on Sustainable Palm Oil)</h2>
-    <p class="notice">출처: PRISMA REST API (api-platform.cert-and-license.prismabyrspo.org) · 글로벌 ${fmtInt(globalTotal)} · Indonesia ${fmtInt(idMembers.length)}</p>
+    <p class="notice">출처: <a href="https://rspo.org/" target="_blank" rel="noopener">RSPO</a> PRISMA REST API (<a href="https://api-platform.cert-and-license.prismabyrspo.org/" target="_blank" rel="noopener">api-platform.cert-and-license.prismabyrspo.org</a>) · 글로벌 ${fmtInt(globalTotal)} · Indonesia ${fmtInt(idMembers.length)}</p>
 
     <div class="kpis">
       ${kpiHTML("Indonesia RSPO 회원", fmtInt(idMembers.length), `Active ${active} · Expired ${expired}`, "blue")}
