@@ -261,10 +261,16 @@ export function renderBdsp(root) {
   });
 
   // Treemap (기준연도 = ly, 면적)
+  // branchvalues:"total" 은 parent value = children sum 강제. root/region/prov 합산을 정확히 계산.
+  // kab_name 은 prov 다르더라도 중복 가능 → "kab (prov)" 로 unique label.
   const renderTreemap = () => {
     const yr = Number(yearSel.value);
     const kabYr = kab.filter(k => k.indikator === "luas_areal" && k.tahun === yr && k.nilai > 0);
-    const labels = ["Indonesia"], parents = [""], values = [0];
+    if (kabYr.length === 0) {
+      plot("bdsp-treemap", [], { margin: { t: 10, l: 0, r: 0, b: 0 }, height: 520,
+        annotations: [{ text: `${yr}년 군(kabupaten) 면적 데이터 없음`, showarrow: false, font: { size: 14 } }] });
+      return;
+    }
     const provSums = {};
     const regionSums = {};
     kabYr.forEach(k => {
@@ -272,9 +278,15 @@ export function renderBdsp(root) {
       provSums[k.prov_name] = (provSums[k.prov_name] || 0) + k.nilai;
       regionSums[r] = (regionSums[r] || 0) + k.nilai;
     });
+    const totalSum = Object.values(regionSums).reduce((s, v) => s + v, 0);
+    const labels = ["Indonesia"], parents = [""], values = [totalSum];
     Object.entries(regionSums).forEach(([r, v]) => { labels.push(r); parents.push("Indonesia"); values.push(v); });
     Object.entries(provSums).forEach(([p, v]) => { labels.push(p); parents.push(regionOf(p)); values.push(v); });
-    kabYr.forEach(k => { labels.push(`${k.kab_name}`); parents.push(k.prov_name); values.push(k.nilai); });
+    kabYr.forEach(k => {
+      labels.push(`${k.kab_name} (${k.prov_name})`);
+      parents.push(k.prov_name);
+      values.push(k.nilai);
+    });
     plot("bdsp-treemap", [{
       type: "treemap", labels, parents, values, branchvalues: "total",
       textinfo: "label+value", hovertemplate: "%{label}<br>%{value:,.0f} ha<extra></extra>",
