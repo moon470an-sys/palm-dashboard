@@ -95,9 +95,11 @@ export function renderOverview(root) {
       ffb_per_ha: (ffb && planted) ? ffb / planted : null,
       revenue, net_profit: np,
       gross_profit: num(r.gross_profit_idr_bn), ebit: num(r.ebit_idr_bn),
-      ebitda: num(r.ebitda_reported_idr_bn ?? r.ebitda_calculated_idr_bn),
+      ebitda: num(r.ebitda_reported_idr_bn ?? r.ebitda_calculated_idr_bn) ?? num(r.ebit_idr_bn),
       assets: num(r.total_assets_idr_bn), liab: num(r.total_liabilities_idr_bn),
       equity: num(r.total_equity_idr_bn), debt: num(r.gross_debt_idr_bn),
+      // EBITDA reported는 9/31뿐 — calculated 없으면 EBIT을 fallback (D&A 누락 시 EBITDA 과소평가)
+      ebitda_src: num(r.ebitda_reported_idr_bn) != null ? "reported" : (num(r.ebitda_calculated_idr_bn) != null ? "calculated" : (num(r.ebit_idr_bn) != null ? "ebit_proxy" : null)),
       net_debt: num(r.net_debt_reported_idr_bn ?? r.net_debt_calculated_idr_bn) ??
                 ((num(r.gross_debt_idr_bn) != null && num(r.cash_and_cash_equivalents_idr_bn) != null)
                   ? num(r.gross_debt_idr_bn) - num(r.cash_and_cash_equivalents_idr_bn) : null),
