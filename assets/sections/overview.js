@@ -528,7 +528,17 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>FCF / Dividend Coverage (x) — 배당 지속 가능성</h3><div id="ov-fcf-cov" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉙ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉙ Profitability Stability — 흑자 지속성 & 변동 계수</h3>
+    <p class="notice">
+      전 기간 회사별 흑자/적자 연수 카운트 + Net Profit 변동 계수(CV = StdDev / |Mean|). CV ↑이면 변동 큰 회사.
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>흑자/적자 연수 (전 기간)</h3><div id="ov-profit-years" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Net Profit 변동 계수 (CV) — 변동성 ranking</h3><div id="ov-np-cv" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>흑자 지속률 vs 평균 NP (영구 흑자 유지하면서 큰 이익 = 우량주)</h3><div id="ov-profit-quad" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㉚ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1698,6 +1708,58 @@ export function renderOverview(root) {
   };
   wfSel.addEventListener("change", renderWaterfall);
   renderWaterfall();
+
+  // ── ㉙ Profitability Stability (전 기간 NP 변동성)
+  const profitStab = companies.map(co => {
+    const series = fin.filter(r => r.short === co && r.net_profit != null);
+    if (series.length === 0) return null;
+    const profitYears = series.filter(r => r.net_profit > 0).length;
+    const lossYears = series.filter(r => r.net_profit <= 0).length;
+    const nps = series.map(r => r.net_profit);
+    const m = nps.reduce((s, v) => s + v, 0) / nps.length;
+    const sd = nps.length > 1 ? Math.sqrt(nps.reduce((s, v) => s + (v - m) ** 2, 0) / (nps.length - 1)) : null;
+    const cv = (sd != null && Math.abs(m) > 0.01) ? sd / Math.abs(m) : null;
+    const profit_share = (profitYears + lossYears > 0) ? profitYears / (profitYears + lossYears) * 100 : null;
+    return { short: co, region: series[series.length - 1].region, profitYears, lossYears, mean_np: m, cv, profit_share, revenue: series[series.length - 1].revenue };
+  }).filter(Boolean);
+
+  const pyRows = [...profitStab].sort((a, b) => b.profit_share - a.profit_share);
+  plot("ov-profit-years", [
+    { x: pyRows.map(r => r.short), y: pyRows.map(r => r.profitYears), type: "bar", name: "흑자 연수", marker: { color: "#2ca02c" } },
+    { x: pyRows.map(r => r.short), y: pyRows.map(r => r.lossYears), type: "bar", name: "적자 연수", marker: { color: "#d62728" } },
+  ], {
+    barmode: "stack", yaxis: { title: "보고 연수" },
+    xaxis: { tickangle: -45, automargin: true },
+    legend: { orientation: "h", y: -0.35 },
+    margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
+  });
+
+  const cvRows = profitStab.filter(r => r.cv != null && r.cv < 50).sort((a, b) => b.cv - a.cv);
+  plot("ov-np-cv", [{
+    x: cvRows.map(r => r.cv).reverse(), y: cvRows.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: cvRows.map(r => r.cv > 3 ? "#d62728" : r.cv > 1.5 ? "#ffbb78" : r.cv > 0.5 ? "#1f77b4" : "#2ca02c").reverse() },
+    text: cvRows.map(r => r.cv.toFixed(2)).reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>CV %{x:.2f}<br>(낮을수록 안정)<extra></extra>",
+  }], { xaxis: { title: "Net Profit 변동 계수 (CV) — 낮을수록 안정", range: [0, Math.max(...cvRows.map(r => r.cv)) * 1.2] }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cvRows.length * 24 + 60) });
+
+  // 흑자 지속률 × 평균 NP 4분면
+  const psQuad = profitStab.filter(r => r.profit_share != null && r.mean_np != null);
+  plot("ov-profit-quad", [{
+    x: psQuad.map(r => r.profit_share), y: psQuad.map(r => r.mean_np),
+    mode: "markers+text", type: "scatter",
+    text: psQuad.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+    marker: {
+      size: psQuad.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
+      color: psQuad.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+      opacity: 0.8, line: { color: "#fff", width: 1 },
+    },
+    hovertemplate: "%{text}<br>흑자율 %{x:.0f}%<br>평균 NP %{y:,.0f} bn<extra></extra>",
+  }], {
+    xaxis: { title: "흑자 지속률 (%)", range: [-5, 105] },
+    yaxis: { title: "평균 Net Profit (IDR bn)", zeroline: true },
+    margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+  });
 
   // FCF Conversion (FCF / Revenue %) — 전사 비교 (한 번만)
   const fcRowsConv = fin.filter(r => r.yr === ly && r.fcf != null && r.revenue).map(r => ({
