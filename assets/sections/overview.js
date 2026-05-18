@@ -349,13 +349,19 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>배당 분석 — Payout % / Div Total bn / FCF Coverage (3축 grouped)</h3><div id="ov-val-div" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑧ 권역(Region) 분석 — Sumatra · Kalimantan · Java · Sulawesi · Papua · Diversified</h3>
+    <h3 class="section-h">⑧ Industry Structure — 권역·BM·집중도·IPO Vintage 통합</h3>
+    <p class="notice">
+      산업 구조 4축: 권역(Sumatra/Kalimantan/Java/etc) × Business Model(Upstream/Integrated/Downstream) × 매출 집중도 × IPO 시점.
+    </p>
     <div class="grid-2">
-      <div class="card"><h3>권역별 회사 수 + 매출 합 (기준연도)</h3><div id="ov-region-bar" class="plot plot-tall"></div></div>
-      <div class="card"><h3>권역별 평균 ROE & 순이익률 (효율성)</h3><div id="ov-region-eff" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Region × Business Model — 회사 수 매트릭스 (stacked)</h3><div id="ov-ind-matrix" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Region·BM 평균 효율 (ROE / Margin / Quality)</h3><div id="ov-ind-eff" class="plot plot-tall"></div></div>
     </div>
-    <div class="card"><h3>권역별 매출 시계열 (stacked area)</h3><div id="ov-region-ts" class="plot plot-tall"></div></div>
-    <div class="card"><h3>회사 → 권역 → 매출 Treemap (기준연도)</h3><div id="ov-region-tree" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>매출 집중도 — Cumulative Share Curve + Top5/10 reference</h3><div id="ov-ind-conc" class="plot plot-tall"></div></div>
+      <div class="card"><h3>IPO 연도 × ROE × Revenue (회사 vintage)</h3><div id="ov-ind-ipo" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>권역별 매출 시계열 (stacked area)</h3><div id="ov-ind-ts" class="plot plot-tall"></div></div>
 
     <h3 class="section-h">⑨ 성장률 (Growth) — YoY 매출·순이익 변화</h3>
     <div class="filter-bar">
@@ -485,14 +491,14 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Margin × Turnover scatter (색=레버리지, 크기=ROE) — 효율 vs 회전</h3><div id="ov-dp-scatter" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑱ Margin Cascade — Gross → EBITDA → EBIT → Net</h3>
+    <h3 class="section-h">⑱ Margin 분석 통합 (Cascade · Compression · Operating Leverage)</h3>
     <p class="notice">
-      매출 100%에서 각 단계까지의 잔존률. Gross → EBITDA 차이 = SG&A · EBITDA → EBIT 차이 = 감가상각(D&A) · EBIT → Net 차이 = 이자·세금.
+      4단계 마진 분해 + 다년 압축 detector + Operating Leverage 통합. Gross→EBITDA→EBIT→Net 각 단계 + 시간에 따른 마진 변화.
     </p>
-    <div class="card"><h3>회사별 4-단계 마진 동시 비교 (정렬: Net Margin desc)</h3><div id="ov-margin-cascade" class="plot plot-tall"></div></div>
+    <div class="card"><h3>4-단계 마진 동시 비교 (Gross/EBITDA/EBIT/Net % grouped)</h3><div id="ov-mrg-cascade" class="plot plot-tall"></div></div>
     <div class="grid-2">
-      <div class="card"><h3>Gross → Net 변환율 (회사별 마진 손실 폭)</h3><div id="ov-margin-loss" class="plot plot-tall"></div></div>
-      <div class="card"><h3>EBITDA Margin × EBIT Margin scatter (operating leverage proxy)</h3><div id="ov-eb-scatter" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Margin Compression: Gross Δ × Net Δ (좌하단=동시 압축)</h3><div id="ov-mrg-compress" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Operating Leverage: Revenue CAGR × EBITDA CAGR (대각선 위=positive)</h3><div id="ov-mrg-opl" class="plot plot-tall"></div></div>
     </div>
 
     <h3 class="section-h">⑲ Multi-Year 평균 (최근 3년) — Consistency 분석</h3>
@@ -506,16 +512,6 @@ export function renderOverview(root) {
     <div class="card"><h3>3yr 평균 vs 변동성(StdDev) — Consistency Map</h3><div id="ov-consistency" class="plot plot-tall"></div></div>
 
 
-    <h3 class="section-h">㉕ Business Model Cluster — Upstream / Integrated / Downstream / Other</h3>
-    <p class="notice">
-      회사 메타 business_model 필드 기준 4그룹: Upstream(plantation+mill), Integrated(+downstream refinery), Downstream(가공/유통 중심), Other(다업종/지원사업).
-    </p>
-    <div class="grid-2">
-      <div class="card"><h3>Cluster별 회사 수 + 매출 합 (기준연도)</h3><div id="ov-bm-bar" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Cluster별 평균 ROE / Net Margin / Quality</h3><div id="ov-bm-eff" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>Cluster × Region 매트릭스 — 회사 수 (양방향 분포)</h3><div id="ov-bm-region" class="plot plot-tall"></div></div>
-
     <h3 class="section-h">㉙ Profitability Stability — 흑자 지속성 & 변동 계수</h3>
     <p class="notice">
       전 기간 회사별 흑자/적자 연수 카운트 + Net Profit 변동 계수(CV = StdDev / |Mean|). CV ↑이면 변동 큰 회사.
@@ -525,16 +521,6 @@ export function renderOverview(root) {
       <div class="card"><h3>Net Profit 변동 계수 (CV) — 변동성 ranking</h3><div id="ov-np-cv" class="plot plot-tall"></div></div>
     </div>
     <div class="card"><h3>흑자 지속률 vs 평균 NP (영구 흑자 유지하면서 큰 이익 = 우량주)</h3><div id="ov-profit-quad" class="plot plot-tall"></div></div>
-
-    <h3 class="section-h">㊱ Industry Concentration — Top 5 vs Long Tail</h3>
-    <p class="notice">
-      매출 누적 % 곡선으로 산업 집중도 시각화. Top 5 vs 나머지 share, 분위별 분포로 IDX 팜 산업 구조 파악.
-    </p>
-    <div class="card"><h3>Cumulative Revenue Share Curve — Top → Bottom</h3><div id="ov-conc-curve" class="plot plot-tall"></div></div>
-    <div class="grid-2">
-      <div class="card"><h3>Top 5 / Top 10 / Long Tail share</h3><div id="ov-conc-pie" class="plot plot-tall"></div></div>
-      <div class="card"><h3>매출 분위별 평균 (5분위)</h3><div id="ov-conc-quintile" class="plot plot-tall"></div></div>
-    </div>
 
     <h3 class="section-h">㊴ Quarterly Snapshot — 2026 Q1 가장 최신 데이터</h3>
     <p class="notice">
@@ -546,16 +532,6 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>2026 Q1 Annualized (×4) vs 2025 Full-Year — 가속/감속</h3><div id="ov-q1-annualized" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㊶ Margin Compression Detector</h3>
-    <p class="notice">
-      Gross + Net margin 동시 감소 회사 = 비용 압박 + 마진 saved 등 구조적 문제. 양쪽 모두 −pp 큰 회사 위험.
-    </p>
-    <div class="card"><h3>Gross Δ × Net Δ scatter — 4분면 (좌하단=동시 압축)</h3><div id="ov-compr-quad" class="plot plot-tall"></div></div>
-    <div class="grid-2">
-      <div class="card"><h3>Gross Margin Δ ranking (latest − first pp)</h3><div id="ov-gm-delta" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Net Margin Δ ranking (latest − first pp)</h3><div id="ov-nm-delta" class="plot plot-tall"></div></div>
-    </div>
-
     <h3 class="section-h">㊹ Tax & Interest Burden — EBIT → NP 전환율</h3>
     <p class="notice">
       NP/EBIT 비율 = EBIT 100원이 NP로 얼마나 남는가. 80%+ 효율 · 50-80% 정상 · 50%↓ 세금/이자 부담 큼. 음수 = 적자.
@@ -566,28 +542,12 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>EBIT vs NP scatter (이상: y=x 라인 가까이, 멀수록 부담 큼)</h3><div id="ov-ebit-np" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㊻ EBITDA vs Revenue Growth — Operating Leverage</h3>
-    <p class="notice">
-      EBITDA CAGR > Revenue CAGR = positive operating leverage (효율 개선). 반대면 비용 압박 진행.
-    </p>
-    <div class="card"><h3>EBITDA CAGR vs Revenue CAGR scatter (대각선 위 = positive leverage)</h3><div id="ov-opl" class="plot plot-tall"></div></div>
-    <div class="card"><h3>Operating Leverage ratio (EBITDA CAGR − Revenue CAGR pp) ranking</h3><div id="ov-opl-rank" class="plot plot-tall"></div></div>
-
     <h3 class="section-h">㊽ Best in Class Awards — 카테고리별 1위 회사</h3>
     <p class="notice">
       8개 핵심 카테고리에서 기준연도 1위 회사 + Top 3 시각 카드. 각 카테고리별 강자 한눈에.
     </p>
     <div class="card"><h3>Award Cards</h3><div id="ov-awards" class="awards"></div></div>
 
-    <h3 class="section-h">⓪ IPO Vintage & Company Age</h3>
-    <p class="notice">
-      listed_status 텍스트에서 추출한 IPO 연도. 회사 나이(2026 − IPO yr)별 매출/ROE 비교 — 신생 vs 노포 성과 차이.
-    </p>
-    <div class="grid-2">
-      <div class="card"><h3>IPO 연도 분포 (histogram)</h3><div id="ov-ipo-hist" class="plot plot-tall"></div></div>
-      <div class="card"><h3>회사 나이 구간별 평균 매출 / ROE</h3><div id="ov-age-bucket" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>IPO 연도 × ROE scatter (vintage vs 수익성)</h3><div id="ov-ipo-roe" class="plot plot-tall"></div></div>
 
     <h3 class="section-h">⑴ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
@@ -853,58 +813,70 @@ export function renderOverview(root) {
     renderValRank();
     renderValQuad();
 
-    // ── ⑧ Region analysis
+    // ── ⑧ Industry Structure 통합 (Region + BM + Concentration + IPO Vintage)
     const REGIONS = ["Sumatra", "Kalimantan", "Java", "Sulawesi", "Papua", "Diversified", "Other"];
-    const regionAgg = {};
-    REGIONS.forEach(rg => { regionAgg[rg] = { n: 0, rev: 0, np: 0, assets: 0, roeSum: 0, roeN: 0, marginSum: 0, marginN: 0 }; });
-    rows.forEach(r => {
-      const a = regionAgg[r.region] || regionAgg.Other;
-      a.n++;
-      a.rev += r.revenue || 0; a.np += r.net_profit || 0; a.assets += r.assets || 0;
-      if (r.roe != null) { a.roeSum += r.roe; a.roeN++; }
-      if (r.net_margin != null) { a.marginSum += r.net_margin; a.marginN++; }
-    });
-    const regionsActive = REGIONS.filter(rg => regionAgg[rg].n > 0);
+    const BM_LIST_LOCAL = ["Upstream", "Integrated", "Downstream", "Other"];
+    const BM_COLOR_LOCAL = { Upstream: "#2ca02c", Integrated: "#1f77b4", Downstream: "#ff7f0e", Other: "#7f7f7f" };
 
-    plot("ov-region-bar", [
-      { x: regionsActive, y: regionsActive.map(rg => regionAgg[rg].rev), type: "bar", name: "매출 합 (bn)", marker: { color: regionsActive.map(rg => REGION_COLOR[rg]) }, yaxis: "y" },
-      { x: regionsActive, y: regionsActive.map(rg => regionAgg[rg].n), type: "scatter", mode: "lines+markers", name: "회사 수", line: { color: "#333", width: 2 }, yaxis: "y2" },
-    ], {
-      yaxis: { title: "매출 합 (IDR bn)" },
-      yaxis2: { title: "회사 수", overlaying: "y", side: "right" },
-      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 60, t: 10, b: 50 }, height: 480,
+    // 1. Region × BM 매트릭스 (회사 수 stacked)
+    const crMatrix = {};
+    REGIONS.forEach(rg => { crMatrix[rg] = {}; BM_LIST_LOCAL.forEach(b => { crMatrix[rg][b] = 0; }); });
+    rows.forEach(r => { (crMatrix[r.region] = crMatrix[r.region] || {})[r.bm_class] = (crMatrix[r.region]?.[r.bm_class] || 0) + 1; });
+    const regionsActive = REGIONS.filter(rg => Object.values(crMatrix[rg] || {}).some(v => v > 0));
+    plot("ov-ind-matrix", BM_LIST_LOCAL.map(b => ({
+      x: regionsActive, y: regionsActive.map(rg => crMatrix[rg][b] || 0),
+      type: "bar", name: b, marker: { color: BM_COLOR_LOCAL[b] },
+    })), { barmode: "stack", yaxis: { title: "회사 수" }, legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 20, t: 10, b: 60 }, height: 480 });
+
+    // 2. Region/BM 평균 효율 (Region + BM 모두 grouped)
+    const groupLabel = (g) => g;
+    const regionAvgRoe = REGIONS.map(rg => { const rs = rows.filter(r => r.region === rg && r.roe != null); return rs.length ? rs.reduce((s, r) => s + r.roe, 0) / rs.length : null; });
+    const regionAvgMrg = REGIONS.map(rg => { const rs = rows.filter(r => r.region === rg && r.net_margin != null); return rs.length ? rs.reduce((s, r) => s + r.net_margin, 0) / rs.length : null; });
+    const regionAvgQ = REGIONS.map(rg => { const rs = rows.filter(r => r.region === rg && r.quality_score != null); return rs.length ? rs.reduce((s, r) => s + r.quality_score, 0) / rs.length : null; });
+    plot("ov-ind-eff", [
+      { x: REGIONS, y: regionAvgRoe, type: "bar", name: "평균 ROE %", marker: { color: "#1f77b4" } },
+      { x: REGIONS, y: regionAvgMrg, type: "bar", name: "평균 Net Margin %", marker: { color: "#2ca02c" } },
+      { x: REGIONS, y: regionAvgQ, type: "bar", name: "평균 Quality", marker: { color: "#ff7f0e" } },
+    ], { barmode: "group", yaxis: { title: "값 (% 또는 score)", zeroline: true }, legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 20, t: 10, b: 60 }, height: 480 });
+
+    // 3. Cumulative Revenue Concentration Curve
+    const concRows = rows.filter(r => r.revenue > 0).sort((a, b) => b.revenue - a.revenue);
+    const totalRev = concRows.reduce((s, r) => s + r.revenue, 0);
+    let cum = 0;
+    const cumPoints = concRows.map((r, i) => { cum += r.revenue; return { idx: i + 1, short: r.short, cumPct: cum / totalRev * 100 }; });
+    plot("ov-ind-conc", [{
+      x: cumPoints.map(p => p.idx), y: cumPoints.map(p => p.cumPct),
+      type: "scatter", mode: "lines+markers", line: { color: "#1f77b4", width: 3 }, marker: { color: "#1f77b4", size: 6 },
+      text: cumPoints.map(p => p.short), hovertemplate: "#%{x}: %{text}<br>누적 %{y:.1f}%<extra></extra>",
+    }], {
+      xaxis: { title: "회사 순위 (매출 큰 순)" }, yaxis: { title: "누적 매출 점유 (%)", range: [0, 105] },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+      shapes: [
+        { type: "line", x0: 5, y0: 0, x1: 5, y1: 105, line: { color: "#d62728", dash: "dash", width: 1 } },
+        { type: "line", x0: 10, y0: 0, x1: 10, y1: 105, line: { color: "#ff7f0e", dash: "dash", width: 1 } },
+      ],
     });
 
-    plot("ov-region-eff", [
-      { x: regionsActive, y: regionsActive.map(rg => regionAgg[rg].roeN ? regionAgg[rg].roeSum / regionAgg[rg].roeN : null), type: "bar", name: "평균 ROE %", marker: { color: "#1f77b4" } },
-      { x: regionsActive, y: regionsActive.map(rg => regionAgg[rg].marginN ? regionAgg[rg].marginSum / regionAgg[rg].marginN : null), type: "bar", name: "평균 순이익률 %", marker: { color: "#2ca02c" } },
-    ], {
-      barmode: "group", yaxis: { title: "%", zeroline: true },
-      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480,
-    });
+    // 4. IPO Vintage scatter
+    const ipoRows = rows.filter(r => r.ipo_year != null && r.ipo_year >= 1990 && r.ipo_year <= 2026 && r.roe != null);
+    plot("ov-ind-ipo", [{
+      x: ipoRows.map(r => r.ipo_year), y: ipoRows.map(r => r.roe),
+      mode: "markers+text", type: "scatter",
+      text: ipoRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: ipoRows.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
+        color: ipoRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>IPO %{x}<br>ROE %{y:.2f}%<extra></extra>",
+    }], { xaxis: { title: "IPO 연도" }, yaxis: { title: "ROE (%)", zeroline: true }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false });
 
-    // 권역별 매출 시계열 (모든 연도)
+    // 5. 권역별 매출 시계열 (살림)
     const regionTsTraces = REGIONS.map(rg => {
       const y = allYears.map(yr => fin.filter(r => r.region === rg && r.yr === yr).reduce((s, r) => s + (r.revenue || 0), 0));
       return { x: allYears, y, name: rg, type: "scatter", mode: "lines", stackgroup: "rev", line: { color: REGION_COLOR[rg], width: 0 }, fillcolor: REGION_COLOR[rg] };
     }).filter(t => t.y.some(v => v > 0));
-    plot("ov-region-ts", regionTsTraces, { yaxis: { title: "매출 합 (IDR bn)" }, legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480 });
-
-    // Treemap: region → company
-    const tmRows = rows.filter(r => r.revenue > 0);
-    const tmLabels = [], tmParents = [], tmValues = [], tmColors = [];
-    regionsActive.forEach(rg => {
-      tmLabels.push(rg); tmParents.push(""); tmValues.push(0); tmColors.push(REGION_COLOR[rg]);
-    });
-    tmRows.forEach(r => {
-      tmLabels.push(r.short); tmParents.push(r.region); tmValues.push(r.revenue); tmColors.push(REGION_COLOR[r.region]);
-    });
-    plot("ov-region-tree", [{
-      type: "treemap", labels: tmLabels, parents: tmParents, values: tmValues, branchvalues: "total",
-      textinfo: "label+value+percent parent",
-      hovertemplate: "%{label}<br>%{value:,.0f} bn<extra></extra>",
-      marker: { colors: tmColors },
-    }], { margin: { t: 10, l: 0, r: 0, b: 0 }, height: 520 });
+    plot("ov-ind-ts", regionTsTraces, { yaxis: { title: "매출 합 (IDR bn)" }, legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480 });
 
     // ── ⑪ Balance Sheet Deep Dive (통합)
     // 1. 자본구조 stacked: Equity / Short-term Liab / Long-term Liab
@@ -1148,60 +1120,6 @@ export function renderOverview(root) {
       margin: { l: 70, r: 50, t: 10, b: 50 }, height: 520, showlegend: false,
     });
 
-    // ── ⓪ IPO Vintage
-    const ipoRows = rows.filter(r => r.ipo_year != null && r.ipo_year >= 1990 && r.ipo_year <= 2026);
-    const ipoYrs = ipoRows.map(r => r.ipo_year);
-    plot("ov-ipo-hist", [{
-      x: ipoYrs, type: "histogram", xbins: { start: 1995, end: 2027, size: 2 },
-      marker: { color: "#1f77b4" },
-    }], { xaxis: { title: "IPO 연도" }, yaxis: { title: "회사 수" }, margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480 });
-
-    // Age buckets (2026 기준)
-    const buckets = [
-      { label: "0-5yr (신생)", min: 0, max: 5 },
-      { label: "6-10yr", min: 6, max: 10 },
-      { label: "11-15yr", min: 11, max: 15 },
-      { label: "16-20yr", min: 16, max: 20 },
-      { label: "20yr+ (노포)", min: 21, max: 100 },
-    ];
-    const ageData = buckets.map(b => {
-      const rs = ipoRows.filter(r => {
-        const age = 2026 - r.ipo_year;
-        return age >= b.min && age <= b.max;
-      });
-      const validRev = rs.filter(r => r.revenue != null);
-      const validRoe = rs.filter(r => r.roe != null);
-      return {
-        label: `${b.label} (n=${rs.length})`,
-        rev: validRev.length ? validRev.reduce((s, r) => s + r.revenue, 0) / validRev.length : null,
-        roe: validRoe.length ? validRoe.reduce((s, r) => s + r.roe, 0) / validRoe.length : null,
-      };
-    });
-    plot("ov-age-bucket", [
-      { x: ageData.map(d => d.label), y: ageData.map(d => d.rev), type: "bar", name: "평균 매출 (bn)", marker: { color: "#1f77b4" } },
-      { x: ageData.map(d => d.label), y: ageData.map(d => d.roe), type: "scatter", mode: "lines+markers", name: "평균 ROE %", line: { color: "#d62728", width: 2 }, marker: { size: 10 }, yaxis: "y2" },
-    ], {
-      yaxis: { title: "평균 매출 (IDR bn)" },
-      yaxis2: { title: "평균 ROE (%)", overlaying: "y", side: "right", zeroline: true },
-      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 60, t: 10, b: 50 }, height: 480, barmode: "group",
-    });
-
-    const irRows = ipoRows.filter(r => r.roe != null);
-    plot("ov-ipo-roe", [{
-      x: irRows.map(r => r.ipo_year), y: irRows.map(r => r.roe),
-      mode: "markers+text", type: "scatter",
-      text: irRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: irRows.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
-        color: irRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
-        opacity: 0.8, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>IPO %{x}<br>ROE %{y:.2f}%<extra></extra>",
-    }], {
-      xaxis: { title: "IPO 연도" }, yaxis: { title: "ROE (%)", zeroline: true },
-      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
-    });
-
     // ── ㊽ Best in Class Awards
     const AWARDS = [
       { key: "revenue", label: "매출 (Revenue)", icon: "💰", fmt: (v) => `${Math.round(v).toLocaleString()} bn`, higher: true },
@@ -1272,121 +1190,6 @@ export function renderOverview(root) {
     });
 
 
-    // ── ㊱ Industry Concentration
-    const concRows = rows.filter(r => r.revenue > 0).sort((a, b) => b.revenue - a.revenue);
-    const totalRev = concRows.reduce((s, r) => s + r.revenue, 0);
-    let cum = 0;
-    const cumPoints = concRows.map((r, i) => {
-      cum += r.revenue;
-      return { idx: i + 1, short: r.short, rev: r.revenue, cum, cumPct: cum / totalRev * 100 };
-    });
-    plot("ov-conc-curve", [{
-      x: cumPoints.map(p => p.idx), y: cumPoints.map(p => p.cumPct),
-      type: "scatter", mode: "lines+markers",
-      line: { color: "#1f77b4", width: 3 }, marker: { color: "#1f77b4", size: 6 },
-      text: cumPoints.map(p => p.short), hovertemplate: "#%{x}: %{text}<br>누적 %{y:.1f}%<extra></extra>",
-    }], {
-      xaxis: { title: "회사 순위 (매출 큰 순)" },
-      yaxis: { title: "누적 매출 점유 (%)", range: [0, 105] },
-      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
-      shapes: [
-        { type: "line", x0: 5, y0: 0, x1: 5, y1: 105, line: { color: "#d62728", dash: "dash", width: 1 } },
-        { type: "line", x0: 10, y0: 0, x1: 10, y1: 105, line: { color: "#ff7f0e", dash: "dash", width: 1 } },
-      ],
-      annotations: [
-        { x: 5, y: 50, text: "Top 5", showarrow: false, font: { color: "#d62728" } },
-        { x: 10, y: 30, text: "Top 10", showarrow: false, font: { color: "#ff7f0e" } },
-      ],
-    });
-
-    // Top 5 / Top 6-10 / Long Tail pie
-    const top5Sum = cumPoints.slice(0, 5).reduce((s, p) => s + p.rev, 0);
-    const top10Sum = cumPoints.slice(0, 10).reduce((s, p) => s + p.rev, 0);
-    const next5 = top10Sum - top5Sum;
-    const longTail = totalRev - top10Sum;
-    plot("ov-conc-pie", [{
-      labels: ["Top 5", "Top 6-10", `Long Tail (나머지 ${concRows.length - 10}사)`],
-      values: [top5Sum, next5, longTail],
-      type: "pie", hole: 0.45,
-      marker: { colors: ["#d62728", "#ff7f0e", "#9ca3af"] },
-      text: [
-        `${(top5Sum/totalRev*100).toFixed(1)}%`,
-        `${(next5/totalRev*100).toFixed(1)}%`,
-        `${(longTail/totalRev*100).toFixed(1)}%`,
-      ],
-      textinfo: "label+text", hoverinfo: "label+value+percent",
-    }], { margin: { t: 20, b: 20, l: 0, r: 0 }, height: 480 });
-
-    // Quintile bars (5 분위, 가장 큰 → 작은)
-    const n = concRows.length;
-    const quintileSize = Math.ceil(n / 5);
-    const quintiles = [];
-    for (let i = 0; i < 5; i++) {
-      const chunk = concRows.slice(i * quintileSize, (i + 1) * quintileSize);
-      if (chunk.length === 0) continue;
-      quintiles.push({
-        label: `Q${i + 1}`,
-        n: chunk.length,
-        sum: chunk.reduce((s, r) => s + r.revenue, 0),
-        avg: chunk.reduce((s, r) => s + r.revenue, 0) / chunk.length,
-      });
-    }
-    plot("ov-conc-quintile", [
-      { x: quintiles.map(q => `${q.label} (${q.n}사)`), y: quintiles.map(q => q.avg), type: "bar", name: "평균 매출 (bn)", marker: { color: "#1f77b4" } },
-      { x: quintiles.map(q => `${q.label} (${q.n}사)`), y: quintiles.map(q => q.sum), type: "scatter", mode: "lines+markers", name: "총 매출 (bn)", line: { color: "#d62728", width: 2 }, yaxis: "y2" },
-    ], {
-      yaxis: { title: "분위 평균 매출 (IDR bn)" },
-      yaxis2: { title: "분위 총 매출 (IDR bn)", overlaying: "y", side: "right" },
-      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 60, t: 10, b: 50 }, height: 480,
-    });
-
-    // ── ㉕ Business Model Cluster
-    const BM_LIST = ["Upstream", "Integrated", "Downstream", "Other"];
-    const bmAgg = {};
-    BM_LIST.forEach(b => { bmAgg[b] = { n: 0, rev: 0, roeSum: 0, roeN: 0, marginSum: 0, marginN: 0, qSum: 0, qN: 0 }; });
-    rows.forEach(r => {
-      const a = bmAgg[r.bm_class] || bmAgg.Other;
-      a.n++;
-      a.rev += r.revenue || 0;
-      if (r.roe != null) { a.roeSum += r.roe; a.roeN++; }
-      if (r.net_margin != null) { a.marginSum += r.net_margin; a.marginN++; }
-      if (r.quality_score != null) { a.qSum += r.quality_score; a.qN++; }
-    });
-    const bmActive = BM_LIST.filter(b => bmAgg[b].n > 0);
-
-    plot("ov-bm-bar", [
-      { x: bmActive, y: bmActive.map(b => bmAgg[b].rev), type: "bar", name: "매출 합 (bn)", marker: { color: bmActive.map(b => BM_COLOR[b]) }, yaxis: "y" },
-      { x: bmActive, y: bmActive.map(b => bmAgg[b].n), type: "scatter", mode: "lines+markers", name: "회사 수", line: { color: "#333", width: 2 }, yaxis: "y2" },
-    ], {
-      yaxis: { title: "매출 합 (IDR bn)" },
-      yaxis2: { title: "회사 수", overlaying: "y", side: "right" },
-      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 60, t: 10, b: 50 }, height: 480,
-    });
-
-    plot("ov-bm-eff", [
-      { x: bmActive, y: bmActive.map(b => bmAgg[b].roeN ? bmAgg[b].roeSum / bmAgg[b].roeN : null), type: "bar", name: "평균 ROE %", marker: { color: "#1f77b4" } },
-      { x: bmActive, y: bmActive.map(b => bmAgg[b].marginN ? bmAgg[b].marginSum / bmAgg[b].marginN : null), type: "bar", name: "평균 순이익률 %", marker: { color: "#2ca02c" } },
-      { x: bmActive, y: bmActive.map(b => bmAgg[b].qN ? bmAgg[b].qSum / bmAgg[b].qN : null), type: "bar", name: "평균 Quality", marker: { color: "#ff7f0e" } },
-    ], {
-      barmode: "group", yaxis: { title: "값 (%/score)", zeroline: true },
-      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480,
-    });
-
-    // Cluster × Region grouped bar (region별 BM 회사 수)
-    const REGIONS_BM = ["Sumatra", "Kalimantan", "Java", "Sulawesi", "Papua", "Diversified", "Other"];
-    const crMatrix = {};
-    REGIONS_BM.forEach(rg => { crMatrix[rg] = {}; BM_LIST.forEach(b => { crMatrix[rg][b] = 0; }); });
-    rows.forEach(r => { crMatrix[r.region] = crMatrix[r.region] || {}; crMatrix[r.region][r.bm_class] = (crMatrix[r.region][r.bm_class] || 0) + 1; });
-    const regionsActiveBM = REGIONS_BM.filter(rg => Object.values(crMatrix[rg] || {}).some(v => v > 0));
-    plot("ov-bm-region", BM_LIST.map(b => ({
-      x: regionsActiveBM, y: regionsActiveBM.map(rg => crMatrix[rg][b] || 0),
-      type: "bar", name: b, marker: { color: BM_COLOR[b] },
-    })), {
-      barmode: "stack", yaxis: { title: "회사 수" },
-      legend: { orientation: "h", y: -0.18 },
-      margin: { l: 70, r: 20, t: 10, b: 60 }, height: 480,
-    });
-
     // ── ⑲ Multi-Year Average (3yr) — 회사별, 최근 3 annual year
     const last3 = annualYears.slice(-3);
     const mean = (a) => { const x = a.filter(v => v != null); return x.length ? x.reduce((s, v) => s + v, 0) / x.length : null; };
@@ -1451,48 +1254,63 @@ export function renderOverview(root) {
       ],
     });
 
-    // ── ⑱ Margin Cascade
+    // ── ⑱ Margin 분석 통합 (Cascade + Compression + Operating Leverage)
+    // 1. 4단계 마진 cascade
     const mcRows = rows.filter(r => r.m_net != null).sort((a, b) => b.m_net - a.m_net);
-    plot("ov-margin-cascade", [
+    plot("ov-mrg-cascade", [
       { x: mcRows.map(r => r.short), y: mcRows.map(r => r.m_gross), type: "bar", name: "Gross %", marker: { color: "#2ca02c" } },
       { x: mcRows.map(r => r.short), y: mcRows.map(r => r.m_ebitda), type: "bar", name: "EBITDA %", marker: { color: "#1f77b4" } },
       { x: mcRows.map(r => r.short), y: mcRows.map(r => r.m_ebit), type: "bar", name: "EBIT %", marker: { color: "#ff7f0e" } },
       { x: mcRows.map(r => r.short), y: mcRows.map(r => r.m_net), type: "bar", name: "Net %", marker: { color: "#d62728" } },
-    ], {
-      barmode: "group", yaxis: { title: "Margin (%)", zeroline: true },
-      xaxis: { tickangle: -45, automargin: true },
-      legend: { orientation: "h", y: -0.3 },
-      margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
-    });
+    ], { barmode: "group", yaxis: { title: "Margin (%)", zeroline: true }, xaxis: { tickangle: -45, automargin: true }, legend: { orientation: "h", y: -0.3 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480 });
 
-    // Gross → Net 손실 폭 (Gross - Net) = SG&A + D&A + Interest + Tax 총합
-    const lossRows = rows.filter(r => r.m_gross != null && r.m_net != null).sort((a, b) => (b.m_gross - b.m_net) - (a.m_gross - a.m_net));
-    plot("ov-margin-loss", [{
-      x: lossRows.map(r => r.m_gross - r.m_net).reverse(), y: lossRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: "#8c564b" },
-      text: lossRows.map(r => (r.m_gross - r.m_net).toFixed(1) + "pp").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Gross %{customdata[0]:.1f}% → Net %{customdata[1]:.1f}%<br>손실 %{x:.1f}pp<extra></extra>",
-      customdata: lossRows.map(r => [r.m_gross, r.m_net]).reverse(),
-    }], { xaxis: { title: "Gross − Net Margin (pp) — SG&A·D&A·이자·세금 누적" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, lossRows.length * 22 + 60) });
-
-    // EBITDA vs EBIT scatter (operating leverage = D&A 비중)
-    const ebRows = rows.filter(r => r.m_ebitda != null && r.m_ebit != null);
-    plot("ov-eb-scatter", [{
-      x: ebRows.map(r => r.m_ebitda), y: ebRows.map(r => r.m_ebit),
+    // 2. Margin Compression Detector: Gross Δ × Net Δ
+    const mdRows = companies.map(co => {
+      const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.m_gross != null && r.m_net != null).sort((a, b) => a.yr.localeCompare(b.yr));
+      if (s.length < 2) return null;
+      return {
+        short: co, region: s[s.length - 1].region,
+        gm_delta: s[s.length - 1].m_gross - s[0].m_gross,
+        nm_delta: s[s.length - 1].m_net - s[0].m_net,
+        revenue: s[s.length - 1].revenue,
+      };
+    }).filter(Boolean);
+    plot("ov-mrg-compress", [{
+      x: mdRows.map(r => r.gm_delta), y: mdRows.map(r => r.nm_delta),
       mode: "markers+text", type: "scatter",
-      text: ebRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      text: mdRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
       marker: {
-        size: ebRows.map(r => Math.max(10, Math.min(48, Math.sqrt(r.assets || 100) / 4))),
-        color: ebRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        size: mdRows.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
+        color: mdRows.map(r => (r.gm_delta < 0 && r.nm_delta < 0) ? "#d62728" : (r.gm_delta >= 0 && r.nm_delta >= 0) ? "#2ca02c" : "#ffbb78"),
         opacity: 0.8, line: { color: "#fff", width: 1 },
       },
-      hovertemplate: "%{text}<br>EBITDA %{x:.2f}%<br>EBIT %{y:.2f}%<br>차이=D&A 비중<extra></extra>",
+      hovertemplate: "%{text}<br>Gross Δ %{x:+.2f}pp<br>Net Δ %{y:+.2f}pp<extra></extra>",
+    }], { xaxis: { title: "Gross Margin Δ (pp)", zeroline: true }, yaxis: { title: "Net Margin Δ (pp)", zeroline: true }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false });
+
+    // 3. Operating Leverage: Revenue CAGR × EBITDA CAGR
+    const opLev = companies.map(co => {
+      const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.revenue > 0 && r.ebitda != null && r.ebitda > 0).sort((a, b) => a.yr.localeCompare(b.yr));
+      if (s.length < 2) return null;
+      const years = s.length - 1;
+      const revCagr = (Math.pow(s[s.length-1].revenue / s[0].revenue, 1/years) - 1) * 100;
+      const ebCagr = (Math.pow(s[s.length-1].ebitda / s[0].ebitda, 1/years) - 1) * 100;
+      return { short: co, region: s[s.length-1].region, revCagr, ebCagr, revenue: s[s.length-1].revenue };
+    }).filter(Boolean).filter(r => isFinite(r.revCagr) && isFinite(r.ebCagr));
+    const opMax = Math.max(...opLev.map(r => Math.max(Math.abs(r.revCagr), Math.abs(r.ebCagr))));
+    plot("ov-mrg-opl", [{
+      x: opLev.map(r => r.revCagr), y: opLev.map(r => r.ebCagr),
+      mode: "markers+text", type: "scatter",
+      text: opLev.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: opLev.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
+        color: opLev.map(r => (r.ebCagr - r.revCagr) >= 0 ? "#2ca02c" : "#d62728"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>Rev CAGR %{x:+.1f}%<br>EBITDA CAGR %{y:+.1f}%<extra></extra>",
     }], {
-      xaxis: { title: "EBITDA Margin (%)", zeroline: true },
-      yaxis: { title: "EBIT Margin (%)", zeroline: true },
+      xaxis: { title: "Revenue CAGR (%/yr)", zeroline: true }, yaxis: { title: "EBITDA CAGR (%/yr)", zeroline: true },
       margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
-      shapes: [{ type: "line", x0: -50, y0: -50, x1: 100, y1: 100, line: { color: "#ccc", dash: "dot", width: 1 } }],
+      shapes: [{ type: "line", x0: -opMax, y0: -opMax, x1: opMax, y1: opMax, line: { color: "#ccc", dash: "dot", width: 1 } }],
     });
 
     // ── 종합 ranking 테이블
@@ -1663,57 +1481,6 @@ export function renderOverview(root) {
   wfSel.addEventListener("change", renderWaterfall);
   renderWaterfall();
 
-  // ── ㊶ Margin Compression Detector
-  const marginDelta = companies.map(co => {
-    const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.m_gross != null && r.m_net != null).sort((a, b) => a.yr.localeCompare(b.yr));
-    if (s.length < 2) return null;
-    return {
-      short: co, region: s[s.length - 1].region,
-      gm_delta: s[s.length - 1].m_gross - s[0].m_gross,
-      nm_delta: s[s.length - 1].m_net - s[0].m_net,
-      gm_first: s[0].m_gross, gm_last: s[s.length - 1].m_gross,
-      nm_first: s[0].m_net, nm_last: s[s.length - 1].m_net,
-      revenue: s[s.length - 1].revenue,
-    };
-  }).filter(Boolean);
-
-  plot("ov-compr-quad", [{
-    x: marginDelta.map(r => r.gm_delta), y: marginDelta.map(r => r.nm_delta),
-    mode: "markers+text", type: "scatter",
-    text: marginDelta.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-    marker: {
-      size: marginDelta.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
-      color: marginDelta.map(r => (r.gm_delta < 0 && r.nm_delta < 0) ? "#d62728" : (r.gm_delta >= 0 && r.nm_delta >= 0) ? "#2ca02c" : "#ffbb78"),
-      opacity: 0.8, line: { color: "#fff", width: 1 },
-    },
-    hovertemplate: "%{text}<br>Gross Δ %{x:+.2f}pp<br>Net Δ %{y:+.2f}pp<extra></extra>",
-  }], {
-    xaxis: { title: "Gross Margin Δ (pp)", zeroline: true },
-    yaxis: { title: "Net Margin Δ (pp)", zeroline: true },
-    margin: { l: 70, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
-    annotations: [
-      { x: -20, y: -20, text: "동시 압축 (위험)", showarrow: false, font: { color: "#d62728", size: 11 } },
-      { x: 20, y: 20, text: "동시 확대", showarrow: false, font: { color: "#2ca02c", size: 11 } },
-    ],
-  });
-
-  const gmD = [...marginDelta].sort((a, b) => b.gm_delta - a.gm_delta);
-  plot("ov-gm-delta", [{
-    x: gmD.map(r => r.gm_delta).reverse(), y: gmD.map(r => r.short).reverse(),
-    type: "bar", orientation: "h",
-    marker: { color: gmD.map(r => r.gm_delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
-    text: gmD.map(r => (r.gm_delta >= 0 ? "+" : "") + r.gm_delta.toFixed(1) + "pp").reverse(), textposition: "outside",
-    hovertemplate: "%{y}<br>Gross %{customdata[0]:.1f}% → %{customdata[1]:.1f}% (Δ%{x:+.2f}pp)<extra></extra>",
-    customdata: gmD.map(r => [r.gm_first, r.gm_last]).reverse(),
-  }], { xaxis: { title: "Gross Margin Δ (pp, latest − first)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, gmD.length * 24 + 60) });
-
-  const nmD = [...marginDelta].sort((a, b) => b.nm_delta - a.nm_delta);
-  plot("ov-nm-delta", [{
-    x: nmD.map(r => r.nm_delta).reverse(), y: nmD.map(r => r.short).reverse(),
-    type: "bar", orientation: "h",
-    marker: { color: nmD.map(r => r.nm_delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
-    text: nmD.map(r => (r.nm_delta >= 0 ? "+" : "") + r.nm_delta.toFixed(1) + "pp").reverse(), textposition: "outside",
-  }], { xaxis: { title: "Net Margin Δ (pp, latest − first)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, nmD.length * 24 + 60) });
 
   // ── ⑩ Multi-Year Trend Explorer (통합)
   const TREND_META = {
@@ -1793,43 +1560,6 @@ export function renderOverview(root) {
   };
   trendSel.addEventListener("change", renderTrend);
   renderTrend();
-
-  // ── ㊻ EBITDA vs Revenue Growth (Operating Leverage)
-  const opLev = companies.map(co => {
-    const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.revenue > 0 && r.ebitda != null && r.ebitda > 0).sort((a, b) => a.yr.localeCompare(b.yr));
-    if (s.length < 2) return null;
-    const years = s.length - 1;
-    const revCagr = (Math.pow(s[s.length-1].revenue / s[0].revenue, 1/years) - 1) * 100;
-    const ebCagr = (Math.pow(s[s.length-1].ebitda / s[0].ebitda, 1/years) - 1) * 100;
-    return { short: co, region: s[s.length-1].region, revCagr, ebCagr, opl: ebCagr - revCagr, revenue: s[s.length-1].revenue };
-  }).filter(Boolean).filter(r => isFinite(r.revCagr) && isFinite(r.ebCagr));
-
-  const opMax = Math.max(...opLev.map(r => Math.max(Math.abs(r.revCagr), Math.abs(r.ebCagr))));
-  plot("ov-opl", [{
-    x: opLev.map(r => r.revCagr), y: opLev.map(r => r.ebCagr),
-    mode: "markers+text", type: "scatter",
-    text: opLev.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-    marker: {
-      size: opLev.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
-      color: opLev.map(r => r.opl >= 0 ? "#2ca02c" : "#d62728"),
-      opacity: 0.8, line: { color: "#fff", width: 1 },
-    },
-    hovertemplate: "%{text}<br>Rev CAGR %{x:+.1f}%<br>EBITDA CAGR %{y:+.1f}%<br>OpL %{customdata:+.1f}pp<extra></extra>",
-    customdata: opLev.map(r => r.opl),
-  }], {
-    xaxis: { title: "Revenue CAGR (%/yr)", zeroline: true },
-    yaxis: { title: "EBITDA CAGR (%/yr)", zeroline: true },
-    margin: { l: 70, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
-    shapes: [{ type: "line", x0: -opMax, y0: -opMax, x1: opMax, y1: opMax, line: { color: "#ccc", dash: "dot", width: 1 } }],
-  });
-
-  const opSorted = [...opLev].sort((a, b) => b.opl - a.opl);
-  plot("ov-opl-rank", [{
-    x: opSorted.map(r => r.opl).reverse(), y: opSorted.map(r => r.short).reverse(),
-    type: "bar", orientation: "h",
-    marker: { color: opSorted.map(r => r.opl >= 5 ? "#2ca02c" : r.opl >= 0 ? "#1f77b4" : r.opl >= -5 ? "#ffbb78" : "#d62728").reverse() },
-    text: opSorted.map(r => (r.opl >= 0 ? "+" : "") + r.opl.toFixed(1) + "pp").reverse(), textposition: "outside",
-  }], { xaxis: { title: "OpL = EBITDA CAGR − Revenue CAGR (pp)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, opSorted.length * 24 + 60) });
 
   // ── ㊴ Quarterly Snapshot (2026 Q1)
   const Q1_YR = "2026 Q1";
