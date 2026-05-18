@@ -317,16 +317,30 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>FCF Margin × FCF Yield scatter (회사별 · 기준연도)</h3><div id="ov-fcf-scatter" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑦ Valuation Multiples (P/E · P/B · Dividend Yield)</h3>
-    <div class="grid-2">
-      <div class="card"><h3>P/E ratio (price / EPS, 흑자 회사만)</h3><div id="ov-pe" class="plot plot-tall"></div></div>
-      <div class="card"><h3>P/B ratio (price / NAV per share)</h3><div id="ov-pb" class="plot plot-tall"></div></div>
+    <h3 class="section-h">⑦ Valuation & Returns — 통합 (Multiples · Dividend · Quality 매트릭스)</h3>
+    <p class="notice">
+      Multiple ranking + Quality 매트릭스 + 배당 분석 통합. Multiple/매트릭스 축은 select로 전환.
+    </p>
+    <div class="filter-bar">
+      <label>Multiple ranking:</label>
+      <select id="ov-val-metric">
+        <option value="pe" selected>P/E (낮을수록 저평가)</option>
+        <option value="pb">P/B</option>
+        <option value="div_yield">Dividend Yield (높을수록 좋음)</option>
+        <option value="earnings_yield">Earnings Yield (높을수록 좋음)</option>
+      </select>
+      <label>Quality 매트릭스 X축:</label>
+      <select id="ov-val-axis">
+        <option value="pe" selected>P/E</option>
+        <option value="pb">P/B</option>
+        <option value="div_yield">Dividend Yield</option>
+      </select>
     </div>
     <div class="grid-2">
-      <div class="card"><h3>Dividend Yield % (interim + final DPS / price)</h3><div id="ov-divy" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Earnings Yield % (1/PE) — 가치 점수</h3><div id="ov-eyld" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Multiple ranking (선택)</h3><div id="ov-val-rank" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Quality × Multiple 매트릭스 (Hidden Gem 좌상단)</h3><div id="ov-val-quad" class="plot plot-tall"></div></div>
     </div>
-    <div class="card"><h3>P/E × ROE — Value vs Quality 매트릭스</h3><div id="ov-pe-roe" class="plot plot-tall"></div></div>
+    <div class="card"><h3>배당 분석 — Payout % / Div Total bn / FCF Coverage (3축 grouped)</h3><div id="ov-val-div" class="plot plot-tall"></div></div>
 
     <h3 class="section-h">⑧ 권역(Region) 분석 — Sumatra · Kalimantan · Java · Sulawesi · Papua · Diversified</h3>
     <div class="grid-2">
@@ -571,17 +585,6 @@ export function renderOverview(root) {
       <div class="card"><h3>Long-term Liab 절대값 (IDR bn) ranking</h3><div id="ov-ltl-abs" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㉘ Dividend Analytics — 배당 정책 & 지속 가능성</h3>
-    <p class="notice">
-      Payout Ratio = DPS / EPS (%). 30-60% = 정상, 100%↑ = 이익 초과 배당 위험.
-      FCF / Div Coverage = FCF / 총 배당. 1.5x 이상이면 배당 지속 안정적.
-    </p>
-    <div class="grid-2">
-      <div class="card"><h3>Payout Ratio (DPS/EPS %) 랭킹</h3><div id="ov-payout" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Dividend Total (IDR bn) 랭킹 — 총 배당 규모</h3><div id="ov-div-bn" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>FCF / Dividend Coverage (x) — 배당 지속 가능성</h3><div id="ov-fcf-cov" class="plot plot-tall"></div></div>
-
     <h3 class="section-h">㉙ Profitability Stability — 흑자 지속성 & 변동 계수</h3>
     <p class="notice">
       전 기간 회사별 흑자/적자 연수 카운트 + Net Profit 변동 계수(CV = StdDev / |Mean|). CV ↑이면 변동 큰 회사.
@@ -683,16 +686,6 @@ export function renderOverview(root) {
       <div class="card"><h3>CPO / Mature ha (ton/ha) — 진짜 yield</h3><div id="ov-cpo-mat" class="plot plot-tall"></div></div>
     </div>
     <div class="card"><h3>EBITDA / Planted ha (IDR M/ha) — 운영 수익 효율</h3><div id="ov-ebitda-ha" class="plot plot-tall"></div></div>
-
-    <h3 class="section-h">㊸ Quality vs Valuation — 저평가 우량주 식별</h3>
-    <p class="notice">
-      Quality Score (높을수록 좋음) × P/E (낮을수록 저평가) 매트릭스. 좌상단 = 저평가 우량주 (Hidden Gem). 우하단 = 고평가 부실주 (피해야 함).
-    </p>
-    <div class="card"><h3>Quality × P/E 4분면 (Hidden Gem 식별)</h3><div id="ov-qv-pe" class="plot plot-tall"></div></div>
-    <div class="grid-2">
-      <div class="card"><h3>Quality × P/B 4분면</h3><div id="ov-qv-pb" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Quality × Dividend Yield 4분면 (Quality + Income)</h3><div id="ov-qv-dy" class="plot plot-tall"></div></div>
-    </div>
 
     <h3 class="section-h">㊹ Tax & Interest Burden — EBIT → NP 전환율</h3>
     <p class="notice">
@@ -975,59 +968,69 @@ export function renderOverview(root) {
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
 
-    // ── ⑦ Valuation multiples
-    const peRows = rows.filter(r => r.pe != null && r.pe > 0 && r.pe < 200).sort((a, b) => a.pe - b.pe);
-    plot("ov-pe", [{
-      x: peRows.map(r => r.pe).reverse(), y: peRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: peRows.map(r => r.pe).reverse(), colorscale: "Blues" },
-      text: peRows.map(r => r.pe.toFixed(1) + "x").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>P/E: %{x:.2f}x<extra></extra>",
-    }], { xaxis: { title: "P/E (x)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, peRows.length * 24 + 80) });
+    // ── ⑦ Valuation & Returns (통합)
+    const VAL_META = {
+      pe: { label: "P/E (x)", filter: (r) => r.pe > 0 && r.pe < 200, asc: true, fmt: (v) => v.toFixed(2) + "x" },
+      pb: { label: "P/B (x)", filter: (r) => r.pb > 0 && r.pb < 50, asc: true, fmt: (v) => v.toFixed(2) + "x" },
+      div_yield: { label: "Dividend Yield (%)", filter: (r) => r.div_yield > 0, asc: false, fmt: (v) => v.toFixed(2) + "%" },
+      earnings_yield: { label: "Earnings Yield (%)", filter: (r) => r.earnings_yield != null, asc: false, fmt: (v) => v.toFixed(2) + "%" },
+    };
+    const valSel = document.getElementById("ov-val-metric");
+    const valAxis = document.getElementById("ov-val-axis");
 
-    const pbRows = rows.filter(r => r.pb != null && r.pb > 0 && r.pb < 50).sort((a, b) => a.pb - b.pb);
-    plot("ov-pb", [{
-      x: pbRows.map(r => r.pb).reverse(), y: pbRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: pbRows.map(r => r.pb).reverse(), colorscale: "Purples" },
-      text: pbRows.map(r => r.pb.toFixed(2) + "x").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>P/B: %{x:.2f}x<extra></extra>",
-    }], { xaxis: { title: "P/B (x)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, pbRows.length * 24 + 80) });
+    const renderValRank = () => {
+      const m = valSel.value;
+      const meta = VAL_META[m];
+      const rs = rows.filter(r => r[m] != null && meta.filter(r)).sort((a, b) => meta.asc ? a[m] - b[m] : b[m] - a[m]);
+      plot("ov-val-rank", [{
+        x: rs.map(r => r[m]).reverse(), y: rs.map(r => r.short).reverse(),
+        type: "bar", orientation: "h",
+        marker: { color: rs.map(r => r[m] >= 0 ? "#1f77b4" : "#d62728").reverse() },
+        text: rs.map(r => meta.fmt(r[m])).reverse(), textposition: "outside",
+      }], { xaxis: { title: meta.label, zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, rs.length * 22 + 60) });
+    };
 
-    const dyRows = rows.filter(r => r.div_yield != null && r.div_yield > 0).sort((a, b) => b.div_yield - a.div_yield);
-    plot("ov-divy", [{
-      x: dyRows.map(r => r.div_yield).reverse(), y: dyRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: "#2ca02c" },
-      text: dyRows.map(r => r.div_yield.toFixed(2) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Div Yield: %{x:.2f}%<br>DPS: " + "<extra></extra>",
-    }], { xaxis: { title: "Dividend Yield (%)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, dyRows.length * 24 + 80) });
+    const renderValQuad = () => {
+      const m = valAxis.value;
+      const meta = VAL_META[m];
+      const rs = rows.filter(r => r.quality_score != null && r[m] != null && meta.filter(r) && r[m] < 100);
+      plot("ov-val-quad", [{
+        x: rs.map(r => r[m]), y: rs.map(r => r.quality_score),
+        mode: "markers+text", type: "scatter",
+        text: rs.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+        marker: {
+          size: rs.map(r => Math.max(10, Math.min(50, Math.sqrt(r.mcap || 100) / 4))),
+          color: rs.map(r => ({ A: "#2ca02c", B: "#1f77b4", C: "#ffbb78", D: "#d62728" }[r.quality_band] || "#7f7f7f")),
+          opacity: 0.8, line: { color: "#fff", width: 1 },
+        },
+        hovertemplate: "%{text}<br>" + meta.label + " %{x}<br>Quality %{y:.1f}<extra></extra>",
+      }], {
+        xaxis: { title: meta.label + (meta.asc ? " (낮을수록 저평가)" : " (높을수록 좋음)") },
+        yaxis: { title: "Quality Score" },
+        margin: { l: 60, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
+      });
+    };
 
-    const eyRows = rows.filter(r => r.earnings_yield != null).sort((a, b) => b.earnings_yield - a.earnings_yield);
-    plot("ov-eyld", [{
-      x: eyRows.map(r => r.earnings_yield).reverse(), y: eyRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: eyRows.map(r => r.earnings_yield >= 0 ? "#1f77b4" : "#d62728").reverse() },
-      text: eyRows.map(r => r.earnings_yield.toFixed(2) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Earnings Yield: %{x:.2f}%<extra></extra>",
-    }], { xaxis: { title: "Earnings Yield (1/PE) (%)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, eyRows.length * 24 + 80) });
-
-    // P/E × ROE scatter
-    const peRoeRows = rows.filter(r => r.pe != null && r.pe > 0 && r.pe < 100 && r.roe != null);
-    plot("ov-pe-roe", [{
-      x: peRoeRows.map(r => r.pe), y: peRoeRows.map(r => r.roe),
-      mode: "markers+text", type: "scatter",
-      text: peRoeRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: peRoeRows.map(r => Math.max(10, Math.min(50, Math.sqrt(r.mcap || 100) / 4))),
-        color: peRoeRows.map(r => colorMap[r.short]), opacity: 0.75, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>P/E %{x:.2f}x<br>ROE %{y:.2f}%<br>크기=mcap<extra></extra>",
-    }], {
-      xaxis: { title: "P/E (x) — 가치(↑싸다)" },
-      yaxis: { title: "ROE (%) — 품질(↑좋다)", zeroline: true },
-      margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    // Dividend 3축 통합 차트: Payout / Div Total / FCF Coverage 동시
+    const divRs = rows.filter(r => r.div_total_bn != null && r.div_total_bn > 0)
+      .sort((a, b) => b.div_total_bn - a.div_total_bn);
+    plot("ov-val-div", [
+      { x: divRs.map(r => r.short), y: divRs.map(r => r.div_total_bn), type: "bar", name: "Div Total (bn)", marker: { color: "#1f77b4" }, yaxis: "y" },
+      { x: divRs.map(r => r.short), y: divRs.map(r => r.payout_ratio), type: "scatter", mode: "lines+markers", name: "Payout %", line: { color: "#2ca02c", width: 2 }, marker: { size: 8 }, yaxis: "y2" },
+      { x: divRs.map(r => r.short), y: divRs.map(r => r.fcf_div_coverage), type: "scatter", mode: "lines+markers", name: "FCF/Div (x)", line: { color: "#ff7f0e", width: 2, dash: "dot" }, marker: { size: 8 }, yaxis: "y3" },
+    ], {
+      yaxis: { title: "Div Total (IDR bn)" },
+      yaxis2: { title: "Payout %", overlaying: "y", side: "right", position: 1 },
+      yaxis3: { title: "FCF/Div (x)", overlaying: "y", side: "right", position: 0.92, anchor: "free" },
+      xaxis: { tickangle: -45, automargin: true, domain: [0, 0.88] },
+      legend: { orientation: "h", y: -0.35 },
+      margin: { l: 70, r: 100, t: 10, b: 130 }, height: 480,
     });
+
+    valSel.addEventListener("change", renderValRank);
+    valAxis.addEventListener("change", renderValQuad);
+    renderValRank();
+    renderValQuad();
 
     // ── ⑧ Region analysis
     const REGIONS = ["Sumatra", "Kalimantan", "Java", "Sulawesi", "Papua", "Diversified", "Other"];
@@ -1525,55 +1528,6 @@ export function renderOverview(root) {
       shapes: [{ type: "line", x0: -maxV, y0: -maxV, x1: maxV, y1: maxV, line: { color: "#ccc", dash: "dot", width: 1 } }],
     });
 
-    // ── ㊸ Quality vs Valuation 매트릭스
-    const QBAND_COLOR_LOCAL = (b) => ({ A: "#2ca02c", B: "#1f77b4", C: "#ffbb78", D: "#d62728" }[b] || "#7f7f7f");
-    const qvPe = rows.filter(r => r.quality_score != null && r.pe != null && r.pe > 0 && r.pe < 100);
-    plot("ov-qv-pe", [{
-      x: qvPe.map(r => r.pe), y: qvPe.map(r => r.quality_score),
-      mode: "markers+text", type: "scatter",
-      text: qvPe.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: qvPe.map(r => Math.max(10, Math.min(48, Math.sqrt(r.mcap || 100) / 4))),
-        color: qvPe.map(r => QBAND_COLOR_LOCAL(r.quality_band)),
-        opacity: 0.8, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>P/E %{x:.2f}x<br>Quality %{y:.1f}<extra></extra>",
-    }], {
-      xaxis: { title: "P/E (낮을수록 저평가)" },
-      yaxis: { title: "Quality Score" },
-      margin: { l: 60, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
-      annotations: [
-        { x: 5, y: 90, text: "Hidden Gem", showarrow: false, font: { color: "#2ca02c", size: 11 } },
-        { x: 60, y: 90, text: "Premium Quality", showarrow: false, font: { color: "#1f77b4", size: 11 } },
-        { x: 60, y: 10, text: "비싸고 부실", showarrow: false, font: { color: "#d62728", size: 11 } },
-      ],
-    });
-
-    const qvPb = rows.filter(r => r.quality_score != null && r.pb != null && r.pb > 0 && r.pb < 20);
-    plot("ov-qv-pb", [{
-      x: qvPb.map(r => r.pb), y: qvPb.map(r => r.quality_score),
-      mode: "markers+text", type: "scatter",
-      text: qvPb.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: qvPb.map(r => Math.max(10, Math.min(48, Math.sqrt(r.mcap || 100) / 4))),
-        color: qvPb.map(r => QBAND_COLOR_LOCAL(r.quality_band)),
-        opacity: 0.8, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>P/B %{x:.2f}x<br>Quality %{y:.1f}<extra></extra>",
-    }], { xaxis: { title: "P/B (낮을수록 저평가)" }, yaxis: { title: "Quality Score" }, margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false });
-
-    const qvDy = rows.filter(r => r.quality_score != null && r.div_yield != null && r.div_yield > 0);
-    plot("ov-qv-dy", [{
-      x: qvDy.map(r => r.div_yield), y: qvDy.map(r => r.quality_score),
-      mode: "markers+text", type: "scatter",
-      text: qvDy.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: qvDy.map(r => Math.max(10, Math.min(48, Math.sqrt(r.mcap || 100) / 4))),
-        color: qvDy.map(r => QBAND_COLOR_LOCAL(r.quality_band)),
-        opacity: 0.8, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>Div Yield %{x:.2f}%<br>Quality %{y:.1f}<extra></extra>",
-    }], { xaxis: { title: "Dividend Yield (%) — 우측이 고배당" }, yaxis: { title: "Quality Score" }, margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false });
 
     // ── ㊷ 단위 면적당 효율 (Mature ha 기준)
     const rmRows = rows.filter(r => r.rev_per_mature_ha != null && r.rev_per_mature_ha > 0).sort((a, b) => b.rev_per_mature_ha - a.rev_per_mature_ha);
@@ -1769,34 +1723,6 @@ export function renderOverview(root) {
       text: dpRows2.map(r => r.payout_total > 300 ? ">300%" : r.payout_total.toFixed(0) + "%").reverse(), textposition: "outside",
       hovertemplate: "%{y}<br>Deploy %{x:.1f}% (CapEx+Div / CFO)<extra></extra>",
     }], { xaxis: { title: "Total Deployment / CFO (%) — 100%↑ 시 CFO 초과 사용" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, dpRows2.length * 24 + 60) });
-
-    // ── ㉘ Dividend Analytics
-    const poRows = rows.filter(r => r.payout_ratio != null && r.payout_ratio < 500).sort((a, b) => b.payout_ratio - a.payout_ratio);
-    plot("ov-payout", [{
-      x: poRows.map(r => r.payout_ratio).reverse(), y: poRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: poRows.map(r => r.payout_ratio > 100 ? "#d62728" : r.payout_ratio >= 30 ? "#2ca02c" : r.payout_ratio >= 0 ? "#ffbb78" : "#9ca3af").reverse() },
-      text: poRows.map(r => r.payout_ratio.toFixed(0) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Payout %{x:.1f}%<extra></extra>",
-    }], { xaxis: { title: "Payout Ratio (DPS/EPS %) — 30-60% 정상, 100%+ 위험" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, poRows.length * 24 + 60) });
-
-    const dbRows = rows.filter(r => r.div_total_bn != null && r.div_total_bn > 0).sort((a, b) => b.div_total_bn - a.div_total_bn);
-    plot("ov-div-bn", [{
-      x: dbRows.map(r => r.div_total_bn).reverse(), y: dbRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: "#1f77b4" },
-      text: dbRows.map(r => Math.round(r.div_total_bn).toLocaleString()).reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Div Total %{x:,.0f} bn<extra></extra>",
-    }], { xaxis: { title: "Total Dividend (IDR bn)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, dbRows.length * 24 + 60) });
-
-    const fdRows = rows.filter(r => r.fcf_div_coverage != null && Math.abs(r.fcf_div_coverage) < 50).sort((a, b) => b.fcf_div_coverage - a.fcf_div_coverage);
-    plot("ov-fcf-cov", [{
-      x: fdRows.map(r => r.fcf_div_coverage).reverse(), y: fdRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: fdRows.map(r => r.fcf_div_coverage >= 2 ? "#2ca02c" : r.fcf_div_coverage >= 1 ? "#1f77b4" : r.fcf_div_coverage >= 0 ? "#ffbb78" : "#d62728").reverse() },
-      text: fdRows.map(r => r.fcf_div_coverage.toFixed(2) + "x").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>FCF/Div %{x:.2f}x<extra></extra>",
-    }], { xaxis: { title: "FCF / Dividend (x) — 1x 이상 안전, 2x+ 우수", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, fdRows.length * 24 + 60) });
 
     // ── ㉗ Liability Maturity
     const mtRows = rows.filter(r => r.lt_share != null).sort((a, b) => (b.liab || 0) - (a.liab || 0));
