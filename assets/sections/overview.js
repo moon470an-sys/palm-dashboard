@@ -235,7 +235,7 @@ export function renderOverview(root) {
   root.innerHTML = `
     <h2>🏠 종합 — Annual Report ${companies.length}사 재무 비교</h2>
     <p class="notice">
-      출처: IDX 상장 팜 회사 ${companies.length}사 · ${fin.length} 보고기간 row
+      출처: <a href="https://www.idx.co.id/en" target="_blank" rel="noopener">IDX</a> 상장 팜 회사 Annual Report ${companies.length}사 · ${fin.length} 보고기간 row
       · 기간 ${allYears[0]}–${allYears[allYears.length-1]}
       · 단위 IDR bn (10억 루피아)
     </p>

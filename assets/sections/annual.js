@@ -26,7 +26,7 @@ export function renderAnnual(root) {
 
   root.innerHTML = `
     <h2>📊 Annual Report (IDX 상장 ${state.ar.companies.length}개사)</h2>
-    <p class="notice">출처: palm_longlist (Claude generated + NotebookLM verified) · IDR 십억 단위 · 5 sub-section 으로 분리</p>
+    <p class="notice">출처: <a href="https://www.idx.co.id/en" target="_blank" rel="noopener">IDX</a> Annual Report (palm_longlist · Claude generated + NotebookLM verified) · IDR 십억 단위 · 5 sub-section</p>
 
     <div class="filter-bar">
       <label>회사 (Company):</label>
