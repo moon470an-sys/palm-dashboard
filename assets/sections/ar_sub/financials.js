@@ -1,5 +1,5 @@
 // Financials section: Revenue/Profit chart + Balance Sheet chart.
-import { state, ALL } from "../../data.js";
+import { state, ALL, lazyPlot } from "../../data.js";
 
 const COLORS = {
   revenue: "#2e7d32",
@@ -92,7 +92,7 @@ export function renderFinancials() {
   const fmtLabel = (v) => (v == null || Number.isNaN(v) ? "" : Number(v).toLocaleString("en-US"));
 
   // ============================ Chart 1: Revenue & Profit ============================
-  Plotly.newPlot(
+  lazyPlot("chart-revenue-profit", () => Plotly.newPlot(
     "chart-revenue-profit",
     [
       {
@@ -134,10 +134,10 @@ export function renderFinancials() {
       yaxis: { ...Y_AXIS_BASE, title: { text: "IDR bn" } },
     },
     CONFIG
-  );
+  ));
 
   // ============================ Chart 2: Balance Sheet ============================
-  Plotly.newPlot(
+  lazyPlot("chart-assets-liab", () => Plotly.newPlot(
     "chart-assets-liab",
     [
       {
@@ -173,5 +173,5 @@ export function renderFinancials() {
       yaxis: { ...Y_AXIS_BASE, title: { text: "Amount (IDR bn)" } },
     },
     CONFIG
-  );
+  ));
 }
