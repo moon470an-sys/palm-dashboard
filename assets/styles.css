@@ -184,6 +184,7 @@ table.dt thead th { background: #f0f5ec; }
   white-space: pre-wrap; color: var(--c-text); font-size: 13px; line-height: 1.6;
 }
 .detail-block .na { color: var(--c-muted); font-style: italic; }
+.detail-block .warn-note { border-left-color: var(--c-warn) !important; background: #fff8e0 !important; }
 
 /* AR charts */
 .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 14px; }

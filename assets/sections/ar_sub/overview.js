@@ -5,10 +5,22 @@ import { txt } from "./format.js";
 const FIELDS = [
   { key: "company", label: "Company" },
   { key: "ticker", label: "Ticker" },
+  { key: "exchange", label: "Exchange" },
+  { key: "listed_status", label: "Listed Status" },
   { key: "hq", label: "HQ" },
   { key: "core_region", label: "Core Region" },
   { key: "primary_business", label: "Primary Business" },
   { key: "business_model", label: "Business Model" },
+];
+
+// 회사 메타 풍부 텍스트 노트 — AR source 단독 활용
+const NOTE_FIELDS = [
+  { key: "overall_comment", label: "Overall Comment" },
+  { key: "key_red_flags", label: "Key Red Flags", warn: true },
+  { key: "group_structure_note", label: "Group Structure" },
+  { key: "subsidiaries_note", label: "Subsidiaries" },
+  { key: "shareholder_structure_note", label: "Shareholder Structure" },
+  { key: "acquisition_note", label: "Acquisition Note" },
 ];
 
 export function renderOverview() {
@@ -36,17 +48,19 @@ export function renderOverview() {
       </div>`
   ).join("");
 
-  const note = co.group_structure_note;
-  const noteHtml = note
-    ? `<div class="note">${escapeHtml(note)}</div>`
-    : `<div class="note na">N/A</div>`;
+  // 6개 노트 블록 (있는 것만)
+  const noteBlocks = NOTE_FIELDS.map(({ key, label, warn }) => {
+    const note = co[key];
+    if (!note || String(note).trim().length === 0) return "";
+    const cls = warn ? 'note warn-note' : 'note';
+    return `<div class="detail-block">
+      <h3>${label}</h3>
+      <div class="${cls}">${escapeHtml(String(note))}</div>
+    </div>`;
+  }).filter(Boolean).join("");
 
-  document.getElementById("overview-detail").innerHTML = `
-    <div class="detail-block">
-      <h3>Group Structure</h3>
-      ${noteHtml}
-    </div>
-  `;
+  document.getElementById("overview-detail").innerHTML = noteBlocks ||
+    `<div class="detail-block"><div class="note na">N/A</div></div>`;
 }
 
 function escapeHtml(s) {
