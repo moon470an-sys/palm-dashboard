@@ -65,6 +65,7 @@ export function renderOverview(root) {
       area_sumatra: num(op.sumatra_area_ha) || 0, area_kalimantan: num(op.kalimantan_area_ha) || 0,
       area_sulawesi: num(op.sulawesi_area_ha) || 0, area_other: num(op.other_region_area_ha) || 0,
       mills_n: num(op.mills_count), mill_cap_tph: num(op.mill_capacity_tph),
+      ffb_processed_t: num(op.ffb_processed_t), third_party_ffb_t: num(op.third_party_ffb_t),
       rbdpo_t: num(op.rbdpo_production_t) || 0, olein_t: num(op.olein_production_t) || 0,
       stearin_t: num(op.stearin_production_t) || 0, pfad_t: num(op.pfad_production_t) || 0,
       pko_t: num(op.pko_production_t) || 0, pke_t: num(op.pke_production_t) || 0,
@@ -147,6 +148,12 @@ export function renderOverview(root) {
     // Nucleus vs Plasma
     const npTot = (r.nucleus_ha || 0) + (r.plasma_ha || 0);
     r.plasma_share = npTot > 0 ? r.plasma_ha / npTot * 100 : null;
+    // Mill utilization (assume 8760 hours/year, 100% theoretical = continuous operation)
+    r.annual_cap_t = r.mill_cap_tph != null ? r.mill_cap_tph * 8760 : null;
+    r.mill_util = (r.ffb_processed_t != null && r.annual_cap_t) ? r.ffb_processed_t / r.annual_cap_t * 100 : null;
+    // Third-party FFB dependence
+    r.third_party_share = (r.third_party_ffb_t != null && r.ffb_processed_t) ? r.third_party_ffb_t / r.ffb_processed_t * 100 : null;
+    r.own_ffb_share = r.third_party_share != null ? 100 - r.third_party_share : null;
     // Risk Score 0-100 (높을수록 위험)
     let s = 0;
     if (r.net_profit != null && r.net_profit < 0) s += 30;
@@ -446,7 +453,18 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>OER × Net Margin scatter (효율이 수익성에 영향?)</h3><div id="ov-oer-margin" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉔ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉔ Mill Utilization & Third-party FFB</h3>
+    <p class="notice">
+      Mill Utilization (%) = FFB processed / (capacity tph × 8760h). 30-50% = 정상, 60%+ = 풀가동.
+      Third-party FFB share = 외부 plasma/협력 농장 FFB / 총 처리 FFB. 100%에 가까울수록 자체 plantation 없이 가공 중심.
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>Mill Utilization (%) ranking</h3><div id="ov-mill-util" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Third-party FFB Share (%) — 외부 FFB 의존도</h3><div id="ov-third-party" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>Mill Capacity (tph) × FFB Production scatter — 자체 FFB가 mill capacity 충족?</h3><div id="ov-cap-prod" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㉕ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1067,6 +1085,44 @@ export function renderOverview(root) {
       xaxis: { title: "Diversification (1 - HHI)" },
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // ── ㉔ Mill Utilization & Third-party FFB
+    const muRows = rows.filter(r => r.mill_util != null && r.mill_util > 0 && r.mill_util < 200).sort((a, b) => b.mill_util - a.mill_util);
+    plot("ov-mill-util", [{
+      x: muRows.map(r => r.mill_util).reverse(), y: muRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: muRows.map(r => r.mill_util > 60 ? "#2ca02c" : r.mill_util > 40 ? "#1f77b4" : r.mill_util > 20 ? "#ffbb78" : "#d62728").reverse() },
+      text: muRows.map(r => r.mill_util.toFixed(1) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Util %{x:.2f}%<br>(processed / 연 capacity)<extra></extra>",
+    }], { xaxis: { title: "Mill Utilization (%) — 60%+ 풀가동" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, muRows.length * 22 + 60) });
+
+    const tpRows = rows.filter(r => r.third_party_share != null).sort((a, b) => b.third_party_share - a.third_party_share);
+    plot("ov-third-party", [{
+      x: tpRows.map(r => r.third_party_share).reverse(), y: tpRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: tpRows.map(r => r.third_party_share > 70 ? "#d62728" : r.third_party_share > 40 ? "#ffbb78" : r.third_party_share > 15 ? "#1f77b4" : "#2ca02c").reverse() },
+      text: tpRows.map(r => r.third_party_share.toFixed(1) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>3rd Party %{x:.1f}%<br>자체 FFB %{customdata:.1f}%<extra></extra>",
+      customdata: tpRows.map(r => 100 - r.third_party_share).reverse(),
+    }], { xaxis: { title: "Third-party FFB Share (%) — 외부 FFB 의존도" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, tpRows.length * 22 + 60) });
+
+    // Cap × Production scatter
+    const cpScRows = rows.filter(r => r.mill_cap_tph != null && r.ffb_t > 0);
+    plot("ov-cap-prod", [{
+      x: cpScRows.map(r => r.mill_cap_tph), y: cpScRows.map(r => r.ffb_t),
+      mode: "markers+text", type: "scatter",
+      text: cpScRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: cpScRows.map(r => Math.max(10, Math.min(48, Math.sqrt(r.planted_ha || 100) / 30))),
+        color: cpScRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>Capacity %{x} tph<br>Own FFB %{y:,.0f} ton<extra></extra>",
+    }], {
+      xaxis: { title: "Mill Capacity (tph)", type: "log" },
+      yaxis: { title: "Own FFB Production (ton)", type: "log" },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
 
     // ── ㉓ OER & CPO Price
