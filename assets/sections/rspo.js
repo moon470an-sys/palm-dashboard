@@ -74,6 +74,11 @@ export function renderRspo(root) {
     </div>
     <div class="card"><h3>만료 임박 (90일·1년 내 + 이미 만료) — Active 회원 갱신 추적</h3><div id="rspo-expiry" class="plot plot-tall"></div></div>
 
+    <div class="grid-2">
+      <div class="card"><h3>Parent Entity Top 15 — 모회사별 자회사 수 (그룹 영향력)</h3><div id="rspo-parent-n" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Parent Entity Top 15 — 모회사별 CSPO 합산 (ton/yr)</h3><div id="rspo-parent-cspo" class="plot plot-tall"></div></div>
+    </div>
+
     <div class="card">
       <h3>Indonesia RSPO 회원 목록 (필터 검색)</h3>
       <div id="rspo-table"></div>
@@ -171,6 +176,33 @@ export function renderRspo(root) {
     legend: { orientation: "h", y: -0.18 },
     margin: { l: 60, r: 20, t: 10, b: 60 }, height: 480,
   });
+
+  // Parent Entity 그룹 분석 (180개 모회사 — Top 15)
+  const parentMap = {};
+  idMembers.forEach(m => {
+    const p = m.parent_entity_name || "Independent";
+    if (!parentMap[p]) parentMap[p] = { n: 0, cspo: 0, area: 0 };
+    parentMap[p].n++;
+    parentMap[p].cspo += m.cspo_volume_ton || 0;
+    parentMap[p].area += m.area_ha || 0;
+  });
+  const parentTopN = Object.entries(parentMap).sort((a, b) => b[1].n - a[1].n).slice(0, 15);
+  plot("rspo-parent-n", [{
+    x: parentTopN.map(p => p[1].n).reverse(),
+    y: parentTopN.map(p => p[0].length > 35 ? p[0].substring(0, 35) + "…" : p[0]).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: parentTopN.map(p => p[1].n).reverse(), colorscale: "Blues" },
+    text: parentTopN.map(p => p[1].n).reverse(), textposition: "outside",
+  }], { yaxis: { autorange: "reversed" }, xaxis: { title: "자회사 수" } });
+
+  const parentTopCspo = Object.entries(parentMap).filter(([_, v]) => v.cspo > 0).sort((a, b) => b[1].cspo - a[1].cspo).slice(0, 15);
+  plot("rspo-parent-cspo", [{
+    x: parentTopCspo.map(p => p[1].cspo).reverse(),
+    y: parentTopCspo.map(p => p[0].length > 35 ? p[0].substring(0, 35) + "…" : p[0]).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: parentTopCspo.map(p => p[1].cspo).reverse(), colorscale: "Greens" },
+    text: parentTopCspo.map(p => `${(p[1].cspo/1000).toFixed(0)}k`).reverse(), textposition: "outside",
+  }], { yaxis: { autorange: "reversed" }, xaxis: { title: "CSPO Volume 합산 (ton/yr)" } });
 
   // table
   const rows = idMembers.map(m => ({
