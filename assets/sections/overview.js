@@ -164,6 +164,10 @@ export function renderOverview(root) {
     // Nucleus vs Plasma
     const npTot = (r.nucleus_ha || 0) + (r.plasma_ha || 0);
     r.plasma_share = npTot > 0 ? r.plasma_ha / npTot * 100 : null;
+    // Per-mature-ha efficiency (immature 제외, 실제 생산기만)
+    r.rev_per_mature_ha = (r.revenue && r.mature_ha) ? r.revenue * 1e9 / r.mature_ha : null;
+    r.cpo_per_mature_ha = (r.cpo_t && r.mature_ha) ? r.cpo_t / r.mature_ha : null;
+    r.ebitda_per_planted_ha = (r.ebitda && r.planted_ha) ? r.ebitda * 1e9 / r.planted_ha : null;
     // Mill utilization (assume 8760 hours/year, 100% theoretical = continuous operation)
     r.annual_cap_t = r.mill_cap_tph != null ? r.mill_cap_tph * 8760 : null;
     r.mill_util = (r.ffb_processed_t != null && r.annual_cap_t) ? r.ffb_processed_t / r.annual_cap_t * 100 : null;
@@ -676,7 +680,17 @@ export function renderOverview(root) {
       <div class="card"><h3>Net Margin Δ ranking (latest − first pp)</h3><div id="ov-nm-delta" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㊷ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊷ 단위 면적당 효율 — Revenue/Mature ha · CPO/Mature ha · EBITDA/Planted ha</h3>
+    <p class="notice">
+      Planted ha 전체가 아닌 생산 가능한 Mature ha 기준으로 효율 측정. EBITDA per planted ha는 운영 마진 기준.
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>Revenue / Mature ha (IDR M/ha)</h3><div id="ov-rev-mat" class="plot plot-tall"></div></div>
+      <div class="card"><h3>CPO / Mature ha (ton/ha) — 진짜 yield</h3><div id="ov-cpo-mat" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>EBITDA / Planted ha (IDR M/ha) — 운영 수익 효율</h3><div id="ov-ebitda-ha" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㊸ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1298,6 +1312,31 @@ export function renderOverview(root) {
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
+
+    // ── ㊷ 단위 면적당 효율 (Mature ha 기준)
+    const rmRows = rows.filter(r => r.rev_per_mature_ha != null && r.rev_per_mature_ha > 0).sort((a, b) => b.rev_per_mature_ha - a.rev_per_mature_ha);
+    plot("ov-rev-mat", [{
+      x: rmRows.map(r => r.rev_per_mature_ha / 1e6).reverse(), y: rmRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: rmRows.map(r => r.rev_per_mature_ha).reverse(), colorscale: "Greens" },
+      text: rmRows.map(r => (r.rev_per_mature_ha / 1e6).toFixed(1) + "M").reverse(), textposition: "outside",
+    }], { xaxis: { title: "Revenue / Mature ha (IDR mn/ha)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, rmRows.length * 24 + 60) });
+
+    const cmRows2 = rows.filter(r => r.cpo_per_mature_ha != null && r.cpo_per_mature_ha > 0).sort((a, b) => b.cpo_per_mature_ha - a.cpo_per_mature_ha);
+    plot("ov-cpo-mat", [{
+      x: cmRows2.map(r => r.cpo_per_mature_ha).reverse(), y: cmRows2.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: cmRows2.map(r => r.cpo_per_mature_ha >= 4 ? "#2ca02c" : r.cpo_per_mature_ha >= 3 ? "#1f77b4" : r.cpo_per_mature_ha >= 2 ? "#ffbb78" : "#d62728").reverse() },
+      text: cmRows2.map(r => r.cpo_per_mature_ha.toFixed(2) + " t/ha").reverse(), textposition: "outside",
+    }], { xaxis: { title: "CPO / Mature ha (ton/ha) — 4+ 우수" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cmRows2.length * 24 + 60) });
+
+    const ehRows = rows.filter(r => r.ebitda_per_planted_ha != null && r.ebitda_per_planted_ha > 0).sort((a, b) => b.ebitda_per_planted_ha - a.ebitda_per_planted_ha);
+    plot("ov-ebitda-ha", [{
+      x: ehRows.map(r => r.ebitda_per_planted_ha / 1e6).reverse(), y: ehRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: ehRows.map(r => r.ebitda_per_planted_ha).reverse(), colorscale: "Viridis" },
+      text: ehRows.map(r => (r.ebitda_per_planted_ha / 1e6).toFixed(2) + "M").reverse(), textposition: "outside",
+    }], { xaxis: { title: "EBITDA / Planted ha (IDR mn/ha)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, ehRows.length * 24 + 60) });
 
     // ── ㊲ Net Debt Decomposition
     const ndRows2 = rows.filter(r => r.debt != null && r.cash != null).sort((a, b) => (b.debt - b.cash) - (a.debt - a.cash));
