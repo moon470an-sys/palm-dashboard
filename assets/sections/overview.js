@@ -288,22 +288,15 @@ export function renderOverview(root) {
       <div class="card"><h3>순이익 시계열 (전사)</h3><div id="ov-np-ts" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">③ 수익성 매트릭스 — 기준연도</h3>
+    <h3 class="section-h">③ 수익성·구조·산업 위계 (통합 매트릭스)</h3>
     <div class="grid-2">
       <div class="card"><h3>Bubble: 매출 × 순이익률 (크기=자산)</h3><div id="ov-bubble" class="plot plot-tall"></div></div>
-      <div class="card"><h3>ROE vs ROA</h3><div id="ov-roe-roa" class="plot plot-tall"></div></div>
+      <div class="card"><h3>ROE vs ROA scatter</h3><div id="ov-roe-roa" class="plot plot-tall"></div></div>
     </div>
-
-    <h3 class="section-h">④ 자본 구조 & 효율성</h3>
-    <div class="grid-2">
-      <div class="card"><h3>Debt/Equity × 순이익률 (레버리지 vs 수익성)</h3><div id="ov-lev" class="plot plot-tall"></div></div>
-      <div class="card"><h3>마진 비교 (Gross / Net) — 회사별</h3><div id="ov-margin" class="plot plot-tall"></div></div>
-    </div>
-
-    <h3 class="section-h">⑤ 산업 위계 — Treemap</h3>
+    <div class="card"><h3>Debt/Equity × 순이익률 — 레버리지 vs 수익성</h3><div id="ov-lev" class="plot plot-tall"></div></div>
     <div class="grid-2">
       <div class="card"><h3>총자산 Treemap (전사)</h3><div id="ov-tree-asset" class="plot plot-tall"></div></div>
-      <div class="card"><h3>시가총액 Treemap (전사 · 누락 회사 제외)</h3><div id="ov-tree-mcap" class="plot plot-tall"></div></div>
+      <div class="card"><h3>시가총액 Treemap</h3><div id="ov-tree-mcap" class="plot plot-tall"></div></div>
     </div>
 
     <h3 class="section-h">⑥ Cash Flow Deep Dive — 통합 (분해 · Waterfall · 효율 · Quality)</h3>
@@ -501,28 +494,17 @@ export function renderOverview(root) {
       <div class="card"><h3>Operating Leverage: Revenue CAGR × EBITDA CAGR (대각선 위=positive)</h3><div id="ov-mrg-opl" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑲ Multi-Year 평균 (최근 3년) — Consistency 분석</h3>
+    <h3 class="section-h">⑲ Consistency 분석 — 3yr 평균 + 전기간 안정성 통합</h3>
     <p class="notice">
-      최근 3개 annual 보고기간 평균 ROE / Net Margin / FCF Margin / Net Debt-EBITDA + 표준편차로 "꾸준한 회사" vs "변동 큰 회사" 식별.
+      최근 3년 평균 (Smoother ROE/Margin) + 전 기간 흑자 지속률·NP 변동 계수 결합. "꾸준히 우량" 회사 식별.
     </p>
     <div class="grid-2">
-      <div class="card"><h3>3yr 평균 ROE — Smoother 수익성</h3><div id="ov-avg-roe" class="plot plot-tall"></div></div>
-      <div class="card"><h3>3yr 평균 Net Margin</h3><div id="ov-avg-margin" class="plot plot-tall"></div></div>
+      <div class="card"><h3>3yr 평균 ROE vs 변동성(StdDev) — Consistency Map</h3><div id="ov-consistency" class="plot plot-tall"></div></div>
+      <div class="card"><h3>흑자 지속률 vs 평균 Net Profit (전 기간)</h3><div id="ov-profit-quad" class="plot plot-tall"></div></div>
     </div>
-    <div class="card"><h3>3yr 평균 vs 변동성(StdDev) — Consistency Map</h3><div id="ov-consistency" class="plot plot-tall"></div></div>
+    <div class="card"><h3>흑자/적자 연수 + Net Profit CV (회사별 통합)</h3><div id="ov-cons-bar" class="plot plot-tall"></div></div>
 
-
-    <h3 class="section-h">㉙ Profitability Stability — 흑자 지속성 & 변동 계수</h3>
-    <p class="notice">
-      전 기간 회사별 흑자/적자 연수 카운트 + Net Profit 변동 계수(CV = StdDev / |Mean|). CV ↑이면 변동 큰 회사.
-    </p>
-    <div class="grid-2">
-      <div class="card"><h3>흑자/적자 연수 (전 기간)</h3><div id="ov-profit-years" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Net Profit 변동 계수 (CV) — 변동성 ranking</h3><div id="ov-np-cv" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>흑자 지속률 vs 평균 NP (영구 흑자 유지하면서 큰 이익 = 우량주)</h3><div id="ov-profit-quad" class="plot plot-tall"></div></div>
-
-    <h3 class="section-h">㊴ Quarterly Snapshot — 2026 Q1 가장 최신 데이터</h3>
+    <h3 class="section-h">㉑ Quarterly Snapshot — 2026 Q1 가장 최신 데이터</h3>
     <p class="notice">
       2026 Q1 보고된 회사 단일 분기 매출/순이익. Annualized = Q1 × 4 (단순 추정, seasonality 미반영). 2025 full-year와 비교.
     </p>
@@ -665,20 +647,6 @@ export function renderOverview(root) {
       xaxis: { title: "Debt / Equity (x)" },
       yaxis: { title: "Net margin (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
-    });
-
-    // ── 마진 비교 (gross + net) grouped bar
-    const mar = rows.filter(r => r.gross_margin != null || r.net_margin != null)
-      .sort((a, b) => (b.net_margin || -999) - (a.net_margin || -999));
-    plot("ov-margin", [
-      { x: mar.map(r => r.short), y: mar.map(r => r.gross_margin), type: "bar", name: "Gross margin", marker: { color: "#2ca02c" } },
-      { x: mar.map(r => r.short), y: mar.map(r => r.net_margin), type: "bar", name: "Net margin", marker: { color: "#1f77b4" } },
-    ], {
-      barmode: "group",
-      yaxis: { title: "Margin (%)", zeroline: true },
-      xaxis: { tickangle: -45, automargin: true },
-      legend: { orientation: "h", y: -0.35 },
-      margin: { l: 60, r: 20, t: 10, b: 130 }, height: 480,
     });
 
     // ── Treemap 총자산
@@ -1215,23 +1183,6 @@ export function renderOverview(root) {
       };
     }).filter(Boolean);
 
-    const arRows = [...avgRows].filter(r => r.avg_roe != null).sort((a, b) => b.avg_roe - a.avg_roe);
-    plot("ov-avg-roe", [{
-      x: arRows.map(r => r.avg_roe).reverse(), y: arRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: arRows.map(r => r.avg_roe >= 15 ? "#2ca02c" : r.avg_roe >= 5 ? "#1f77b4" : r.avg_roe >= 0 ? "#ffbb78" : "#d62728").reverse() },
-      text: arRows.map(r => r.avg_roe.toFixed(1) + "%").reverse(), textposition: "outside",
-      hovertemplate: `%{y}<br>3yr Avg ROE: %{x:.2f}% (n=${last3.length})<extra></extra>`,
-    }], { xaxis: { title: `3yr 평균 ROE (%) — ${last3.join("/")}`, zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, arRows.length * 22 + 60) });
-
-    const amRows = [...avgRows].filter(r => r.avg_margin != null).sort((a, b) => b.avg_margin - a.avg_margin);
-    plot("ov-avg-margin", [{
-      x: amRows.map(r => r.avg_margin).reverse(), y: amRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: amRows.map(r => r.avg_margin >= 0 ? "#2ca02c" : "#d62728").reverse() },
-      text: amRows.map(r => r.avg_margin.toFixed(1) + "%").reverse(), textposition: "outside",
-    }], { xaxis: { title: `3yr 평균 Net Margin (%)`, zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, amRows.length * 22 + 60) });
-
     // Consistency Map: 평균 ROE × StdDev (낮은 stddev = consistent)
     const csRows2 = avgRows.filter(r => r.avg_roe != null && r.std_roe != null);
     plot("ov-consistency", [{
@@ -1616,25 +1567,20 @@ export function renderOverview(root) {
     return { short: co, region: series[series.length - 1].region, profitYears, lossYears, mean_np: m, cv, profit_share, revenue: series[series.length - 1].revenue };
   }).filter(Boolean);
 
-  const pyRows = [...profitStab].sort((a, b) => b.profit_share - a.profit_share);
-  plot("ov-profit-years", [
-    { x: pyRows.map(r => r.short), y: pyRows.map(r => r.profitYears), type: "bar", name: "흑자 연수", marker: { color: "#2ca02c" } },
-    { x: pyRows.map(r => r.short), y: pyRows.map(r => r.lossYears), type: "bar", name: "적자 연수", marker: { color: "#d62728" } },
+  // ㉙ 통합 bar: 흑자/적자 연수 (좌축) + Net Profit CV (우축 라인)
+  const pyRows = [...profitStab].filter(r => r.cv != null && r.cv < 50).sort((a, b) => b.profit_share - a.profit_share);
+  plot("ov-cons-bar", [
+    { x: pyRows.map(r => r.short), y: pyRows.map(r => r.profitYears), type: "bar", name: "흑자 연수", marker: { color: "#2ca02c" }, yaxis: "y" },
+    { x: pyRows.map(r => r.short), y: pyRows.map(r => r.lossYears), type: "bar", name: "적자 연수", marker: { color: "#d62728" }, yaxis: "y" },
+    { x: pyRows.map(r => r.short), y: pyRows.map(r => r.cv), type: "scatter", mode: "lines+markers", name: "NP CV (변동)", line: { color: "#1f77b4", width: 2 }, marker: { size: 8 }, yaxis: "y2" },
   ], {
-    barmode: "stack", yaxis: { title: "보고 연수" },
+    barmode: "stack",
+    yaxis: { title: "흑자/적자 연수" },
+    yaxis2: { title: "NP CV (낮을수록 안정)", overlaying: "y", side: "right" },
     xaxis: { tickangle: -45, automargin: true },
     legend: { orientation: "h", y: -0.35 },
-    margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
+    margin: { l: 60, r: 60, t: 10, b: 130 }, height: 480,
   });
-
-  const cvRows = profitStab.filter(r => r.cv != null && r.cv < 50).sort((a, b) => b.cv - a.cv);
-  plot("ov-np-cv", [{
-    x: cvRows.map(r => r.cv).reverse(), y: cvRows.map(r => r.short).reverse(),
-    type: "bar", orientation: "h",
-    marker: { color: cvRows.map(r => r.cv > 3 ? "#d62728" : r.cv > 1.5 ? "#ffbb78" : r.cv > 0.5 ? "#1f77b4" : "#2ca02c").reverse() },
-    text: cvRows.map(r => r.cv.toFixed(2)).reverse(), textposition: "outside",
-    hovertemplate: "%{y}<br>CV %{x:.2f}<br>(낮을수록 안정)<extra></extra>",
-  }], { xaxis: { title: "Net Profit 변동 계수 (CV) — 낮을수록 안정", range: [0, Math.max(...cvRows.map(r => r.cv)) * 1.2] }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cvRows.length * 24 + 60) });
 
   // 흑자 지속률 × 평균 NP 4분면
   const psQuad = profitStab.filter(r => r.profit_share != null && r.mean_np != null);
