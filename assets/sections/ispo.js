@@ -81,12 +81,21 @@ export function renderIspo(root) {
     labels: Object.keys(jenisMap), values: Object.values(jenisMap), type: "pie", hole: 0.4,
   }]);
 
-  // LS top 10
-  const lsTop = ls.slice(0, 10);
-  plot("ispo-ls", [{
-    x: lsTop.map(l => l.n_cert), y: lsTop.map(l => l.short_code || l.name?.substring(0, 20)),
-    type: "bar", orientation: "h", marker: { color: "#1f77b4" }, text: lsTop.map(l => l.n_cert), textposition: "outside",
-  }], { yaxis: { autorange: "reversed" } });
+  // LS top 10 (인증서 수 + 총 인증 면적 dual axis)
+  const lsTop = [...ls].sort((a, b) => (b.n_cert||0) - (a.n_cert||0)).slice(0, 10);
+  plot("ispo-ls", [
+    { x: lsTop.map(l => l.n_cert), y: lsTop.map(l => (l.short_code || l.name || "").substring(0, 28)),
+      type: "bar", orientation: "h", name: "인증서 수", marker: { color: "#1f77b4" },
+      text: lsTop.map(l => l.n_cert), textposition: "outside", xaxis: "x" },
+    { x: lsTop.map(l => l.total_ha), y: lsTop.map(l => (l.short_code || l.name || "").substring(0, 28)),
+      type: "scatter", mode: "markers", name: "총 면적(ha)", marker: { color: "#d62728", size: 14, symbol: "diamond" },
+      hovertemplate: "%{y}<br>면적: %{x:,.0f} ha<extra></extra>", xaxis: "x2" },
+  ], {
+    yaxis: { autorange: "reversed" },
+    xaxis: { title: "인증서 수", side: "bottom" },
+    xaxis2: { title: "총 인증 면적 (ha)", overlaying: "x", side: "top" },
+    legend: { orientation: "h", y: -0.18 }, margin: { l: 180, r: 20, t: 40, b: 50 },
+  });
 
   // prov top 15
   const provMap = {};
