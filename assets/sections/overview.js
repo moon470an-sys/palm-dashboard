@@ -41,6 +41,12 @@ export function renderOverview(root) {
       mcap, eps: num(r.eps_local_per_share), nav: num(r.nav_per_share_local_per_share),
       dps_final: num(r.final_dps_local_per_share), dps_interim: num(r.interim_dps_local_per_share),
       px,
+      pe: (px != null && num(r.eps_local_per_share) > 0) ? px / num(r.eps_local_per_share) : null,
+      pb: (px != null && num(r.nav_per_share_local_per_share) > 0) ? px / num(r.nav_per_share_local_per_share) : null,
+      earnings_yield: (px != null && num(r.eps_local_per_share) != null) ? num(r.eps_local_per_share) / px * 100 : null,
+      div_total: ((num(r.final_dps_local_per_share) || 0) + (num(r.interim_dps_local_per_share) || 0)) || null,
+      div_yield: (px != null && ((num(r.final_dps_local_per_share) || 0) + (num(r.interim_dps_local_per_share) || 0)) > 0)
+        ? ((num(r.final_dps_local_per_share) || 0) + (num(r.interim_dps_local_per_share) || 0)) / px * 100 : null,
       roe: num(r.roe_reported_pct),
       roa: num(r.roa_reported_pct), net_margin: num(r.net_margin_reported_pct),
       gross_margin: num(r.gross_margin_reported_pct),
@@ -121,7 +127,18 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>FCF Margin × FCF Yield scatter (회사별 · 기준연도)</h3><div id="ov-fcf-scatter" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑦ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑦ Valuation Multiples (P/E · P/B · Dividend Yield)</h3>
+    <div class="grid-2">
+      <div class="card"><h3>P/E ratio (price / EPS, 흑자 회사만)</h3><div id="ov-pe" class="plot plot-tall"></div></div>
+      <div class="card"><h3>P/B ratio (price / NAV per share)</h3><div id="ov-pb" class="plot plot-tall"></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>Dividend Yield % (interim + final DPS / price)</h3><div id="ov-divy" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Earnings Yield % (1/PE) — 가치 점수</h3><div id="ov-eyld" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>P/E × ROE — Value vs Quality 매트릭스</h3><div id="ov-pe-roe" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">⑧ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 동시)</h3><div id="ov-table"></div></div>
   `;
 
@@ -346,12 +363,67 @@ export function renderOverview(root) {
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
 
+    // ── ⑦ Valuation multiples
+    const peRows = rows.filter(r => r.pe != null && r.pe > 0 && r.pe < 200).sort((a, b) => a.pe - b.pe);
+    plot("ov-pe", [{
+      x: peRows.map(r => r.pe).reverse(), y: peRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: peRows.map(r => r.pe).reverse(), colorscale: "Blues" },
+      text: peRows.map(r => r.pe.toFixed(1) + "x").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>P/E: %{x:.2f}x<extra></extra>",
+    }], { xaxis: { title: "P/E (x)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, peRows.length * 24 + 80) });
+
+    const pbRows = rows.filter(r => r.pb != null && r.pb > 0 && r.pb < 50).sort((a, b) => a.pb - b.pb);
+    plot("ov-pb", [{
+      x: pbRows.map(r => r.pb).reverse(), y: pbRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: pbRows.map(r => r.pb).reverse(), colorscale: "Purples" },
+      text: pbRows.map(r => r.pb.toFixed(2) + "x").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>P/B: %{x:.2f}x<extra></extra>",
+    }], { xaxis: { title: "P/B (x)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, pbRows.length * 24 + 80) });
+
+    const dyRows = rows.filter(r => r.div_yield != null && r.div_yield > 0).sort((a, b) => b.div_yield - a.div_yield);
+    plot("ov-divy", [{
+      x: dyRows.map(r => r.div_yield).reverse(), y: dyRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: "#2ca02c" },
+      text: dyRows.map(r => r.div_yield.toFixed(2) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Div Yield: %{x:.2f}%<br>DPS: " + "<extra></extra>",
+    }], { xaxis: { title: "Dividend Yield (%)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, dyRows.length * 24 + 80) });
+
+    const eyRows = rows.filter(r => r.earnings_yield != null).sort((a, b) => b.earnings_yield - a.earnings_yield);
+    plot("ov-eyld", [{
+      x: eyRows.map(r => r.earnings_yield).reverse(), y: eyRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: eyRows.map(r => r.earnings_yield >= 0 ? "#1f77b4" : "#d62728").reverse() },
+      text: eyRows.map(r => r.earnings_yield.toFixed(2) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Earnings Yield: %{x:.2f}%<extra></extra>",
+    }], { xaxis: { title: "Earnings Yield (1/PE) (%)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, eyRows.length * 24 + 80) });
+
+    // P/E × ROE scatter
+    const peRoeRows = rows.filter(r => r.pe != null && r.pe > 0 && r.pe < 100 && r.roe != null);
+    plot("ov-pe-roe", [{
+      x: peRoeRows.map(r => r.pe), y: peRoeRows.map(r => r.roe),
+      mode: "markers+text", type: "scatter",
+      text: peRoeRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: peRoeRows.map(r => Math.max(10, Math.min(50, Math.sqrt(r.mcap || 100) / 4))),
+        color: peRoeRows.map(r => colorMap[r.short]), opacity: 0.75, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>P/E %{x:.2f}x<br>ROE %{y:.2f}%<br>크기=mcap<extra></extra>",
+    }], {
+      xaxis: { title: "P/E (x) — 가치(↑싸다)" },
+      yaxis: { title: "ROE (%) — 품질(↑좋다)", zeroline: true },
+      margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
     // ── 종합 ranking 테이블
     const tableRows = [...rows].sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).map(r => ({
       회사: r.short,
       매출: r.revenue, 순이익: r.net_profit, EBITDA: r.ebitda,
       자산: r.assets, 부채: r.liab, 자본: r.equity, 시가총액: r.mcap,
       CFO: r.cfo, CapEx: r.capex, FCF: r.fcf,
+      "P/E": r.pe, "P/B": r.pb, "DivY%": r.div_yield,
       "순이익률(%)": r.net_margin, "ROE(%)": r.roe, "ROA(%)": r.roa, "D/E(x)": r.debt_eq,
     }));
     const numFmt = (d) => d == null ? "-" : Number(d).toLocaleString(undefined, { maximumFractionDigits: 0 });
@@ -368,6 +440,9 @@ export function renderOverview(root) {
       { data: "CFO", title: "CFO bn", render: numFmt },
       { data: "CapEx", title: "CapEx bn", render: numFmt },
       { data: "FCF", title: "FCF bn", render: numFmt },
+      { data: "P/E", title: "P/E x", render: pctFmt },
+      { data: "P/B", title: "P/B x", render: pctFmt },
+      { data: "DivY%", title: "DivY%", render: pctFmt },
       { data: "순이익률(%)", title: "순이익률%", render: pctFmt },
       { data: "ROE(%)", title: "ROE%", render: pctFmt },
       { data: "ROA(%)", title: "ROA%", render: pctFmt },
