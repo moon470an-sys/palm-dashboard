@@ -68,6 +68,12 @@ export function renderOverview(root) {
       business_model: cMeta.business_model || "", primary_business: cMeta.primary_business || "",
       bm_class: classifyBM(cMeta.business_model),
       key_red_flags: cMeta.key_red_flags || "", overall_comment: cMeta.overall_comment || "",
+      ticker: cMeta.ticker || "", listed_status: cMeta.listed_status || "",
+      ipo_year: (() => {
+        const s = cMeta.listed_status || "";
+        const m = s.match(/(?:since|IPO)\s+(?:\d+\s+\w+\s+)?(\d{4})/i) || s.match(/(\d{4})/);
+        return m ? parseInt(m[1]) : null;
+      })(),
       financial_risk_note: r.financial_risk_note || "", liquidity_note: r.liquidity_note || "",
       planted_ha: planted, ffb_t: ffb, cpo_t: cpo,
       area_sumatra: num(op.sumatra_area_ha) || 0, area_kalimantan: num(op.kalimantan_area_ha) || 0,
@@ -767,7 +773,17 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>두 회사 percentile overlay 비교</h3><div id="ov-pct-overlay" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⓪ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⓪ IPO Vintage & Company Age</h3>
+    <p class="notice">
+      listed_status 텍스트에서 추출한 IPO 연도. 회사 나이(2026 − IPO yr)별 매출/ROE 비교 — 신생 vs 노포 성과 차이.
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>IPO 연도 분포 (histogram)</h3><div id="ov-ipo-hist" class="plot plot-tall"></div></div>
+      <div class="card"><h3>회사 나이 구간별 평균 매출 / ROE</h3><div id="ov-age-bucket" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>IPO 연도 × ROE scatter (vintage vs 수익성)</h3><div id="ov-ipo-roe" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">⑴ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1388,6 +1404,60 @@ export function renderOverview(root) {
       xaxis: { title: "Diversification (1 - HHI)" },
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // ── ⓪ IPO Vintage
+    const ipoRows = rows.filter(r => r.ipo_year != null && r.ipo_year >= 1990 && r.ipo_year <= 2026);
+    const ipoYrs = ipoRows.map(r => r.ipo_year);
+    plot("ov-ipo-hist", [{
+      x: ipoYrs, type: "histogram", xbins: { start: 1995, end: 2027, size: 2 },
+      marker: { color: "#1f77b4" },
+    }], { xaxis: { title: "IPO 연도" }, yaxis: { title: "회사 수" }, margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480 });
+
+    // Age buckets (2026 기준)
+    const buckets = [
+      { label: "0-5yr (신생)", min: 0, max: 5 },
+      { label: "6-10yr", min: 6, max: 10 },
+      { label: "11-15yr", min: 11, max: 15 },
+      { label: "16-20yr", min: 16, max: 20 },
+      { label: "20yr+ (노포)", min: 21, max: 100 },
+    ];
+    const ageData = buckets.map(b => {
+      const rs = ipoRows.filter(r => {
+        const age = 2026 - r.ipo_year;
+        return age >= b.min && age <= b.max;
+      });
+      const validRev = rs.filter(r => r.revenue != null);
+      const validRoe = rs.filter(r => r.roe != null);
+      return {
+        label: `${b.label} (n=${rs.length})`,
+        rev: validRev.length ? validRev.reduce((s, r) => s + r.revenue, 0) / validRev.length : null,
+        roe: validRoe.length ? validRoe.reduce((s, r) => s + r.roe, 0) / validRoe.length : null,
+      };
+    });
+    plot("ov-age-bucket", [
+      { x: ageData.map(d => d.label), y: ageData.map(d => d.rev), type: "bar", name: "평균 매출 (bn)", marker: { color: "#1f77b4" } },
+      { x: ageData.map(d => d.label), y: ageData.map(d => d.roe), type: "scatter", mode: "lines+markers", name: "평균 ROE %", line: { color: "#d62728", width: 2 }, marker: { size: 10 }, yaxis: "y2" },
+    ], {
+      yaxis: { title: "평균 매출 (IDR bn)" },
+      yaxis2: { title: "평균 ROE (%)", overlaying: "y", side: "right", zeroline: true },
+      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 60, t: 10, b: 50 }, height: 480, barmode: "group",
+    });
+
+    const irRows = ipoRows.filter(r => r.roe != null);
+    plot("ov-ipo-roe", [{
+      x: irRows.map(r => r.ipo_year), y: irRows.map(r => r.roe),
+      mode: "markers+text", type: "scatter",
+      text: irRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: irRows.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
+        color: irRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>IPO %{x}<br>ROE %{y:.2f}%<extra></extra>",
+    }], {
+      xaxis: { title: "IPO 연도" }, yaxis: { title: "ROE (%)", zeroline: true },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
 
     // ── ㊾ Sustaining vs Growth CapEx
