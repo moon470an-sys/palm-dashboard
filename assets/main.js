@@ -19,8 +19,12 @@ const RENDERERS = {
 const rendered = new Set();
 
 function showTab(tabId) {
-  document.querySelectorAll(".tabs a").forEach((a) =>
-    a.classList.toggle("active", a.dataset.tab === tabId));
+  document.querySelectorAll(".tabs a").forEach((a) => {
+    const isActive = a.dataset.tab === tabId;
+    a.classList.toggle("active", isActive);
+    if (isActive) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  });
   document.querySelectorAll(".tab-panel").forEach((p) =>
     p.classList.toggle("active", p.id === tabId));
   if (!rendered.has(tabId) && RENDERERS[tabId]) {
