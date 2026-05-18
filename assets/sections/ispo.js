@@ -50,6 +50,12 @@ export function renderIspo(root) {
     </div>
 
     <div class="card">
+      <h3>분기별 누적 생산 Capa (CPO · TBS · PKS · 면적) — 정부 snapshot 시점 기준 유효 인증 합</h3>
+      <p class="notice">발급일 ≤ snapshot AND (만료일 &gt; snapshot OR 만료일 없음) 인증서의 생산능력 합산</p>
+      <div id="ispo-capa-ts"></div>
+    </div>
+
+    <div class="card">
       <h3>지도 — 주별 인증 면적 (berlaku)</h3>
       <div id="ispo-map" class="map"></div>
     </div>
@@ -136,6 +142,35 @@ export function renderIspo(root) {
   plot("ispo-quarterly", Object.entries(byJenis).map(([j, m]) => ({
     x: snaps, y: snaps.map(s => m[s] || 0), type: "bar", name: j,
   })), { barmode: "stack", yaxis: { title: "면적 (ha)" }, legend: { orientation: "h", y: -0.2 } });
+
+  // 분기별 누적 생산 Capa (CPO/TBS/PKS/면적) — snapshot 시점 기준 유효 인증 합
+  const snapDates = [...new Set(q.map(x => `${x.snapshot}|${x.snapshot_date}`))]
+    .map(s => { const [snap, date] = s.split("|"); return { snap, date }; })
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const capaRows = snapDates.map(({ snap, date }) => {
+    const valid = cert.filter(c =>
+      c.tanggal_terbit && c.tanggal_terbit <= date
+      && (!c.tanggal_berakhir || c.tanggal_berakhir > date)
+    );
+    return {
+      snapshot: snap,
+      snapshot_date: date,
+      n_cert: valid.length,
+      area_ha: Math.round(valid.reduce((s, c) => s + (c.luas_lahan_ha || 0), 0)),
+      cpo: Math.round(valid.reduce((s, c) => s + (c.volume_cpo_ton_per_tahun || 0), 0)),
+      tbs: Math.round(valid.reduce((s, c) => s + (c.volume_tbs_ton_per_tahun || 0), 0)),
+      pks: Math.round(valid.reduce((s, c) => s + (c.kapasitas_pks_ton_per_jam || 0), 0) * 10) / 10,
+    };
+  });
+  makeTable("ispo-capa-ts", [
+    { data: "snapshot", title: "분기 snapshot" },
+    { data: "snapshot_date", title: "기준일" },
+    { data: "n_cert", title: "유효 인증서", render: (d) => Number(d).toLocaleString() },
+    { data: "area_ha", title: "면적(ha)", render: (d) => Number(d).toLocaleString() },
+    { data: "cpo", title: "CPO Capa (ton/yr)", render: (d) => Number(d).toLocaleString() },
+    { data: "tbs", title: "TBS Capa (ton/yr)", render: (d) => Number(d).toLocaleString() },
+    { data: "pks", title: "PKS 처리능력 (tph)", render: (d) => Number(d).toLocaleString() },
+  ], capaRows, { pageLength: 10, order: [[1, "asc"]] });
 
   // map (Leaflet)
   setTimeout(() => {
