@@ -61,8 +61,8 @@ function hideFinancialCharts() {
   Plotly.purge("chart-assets-liab");
   const c1 = document.getElementById("chart-revenue-profit");
   const c2 = document.getElementById("chart-assets-liab");
-  c1.innerHTML = `<div class="note na">Select a specific company to view its yearly Revenue/Profit chart.</div>`;
-  c2.innerHTML = `<div class="note na">Select a specific company to view its Balance Sheet chart.</div>`;
+  c1.innerHTML = `<div class="chart-placeholder">Select a specific company to view its yearly Revenue/Profit chart.</div>`;
+  c2.innerHTML = `<div class="chart-placeholder">Select a specific company to view its Balance Sheet chart.</div>`;
   c1.style.display = "";
   c2.style.display = "";
 }
