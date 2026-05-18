@@ -86,10 +86,12 @@ export function renderFinancials() {
   if (rows.length === 0) {
     Plotly.purge("chart-revenue-profit");
     Plotly.purge("chart-assets-liab");
+    const safe = String(state.selectedCompany).replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     document.getElementById("chart-revenue-profit").innerHTML =
-      `<div class="chart-placeholder">No financial data for ${state.selectedCompany}.</div>`;
+      `<div class="chart-placeholder">No financial data for ${safe}.</div>`;
     document.getElementById("chart-assets-liab").innerHTML =
-      `<div class="chart-placeholder">No balance sheet data for ${state.selectedCompany}.</div>`;
+      `<div class="chart-placeholder">No balance sheet data for ${safe}.</div>`;
     return;
   }
 
