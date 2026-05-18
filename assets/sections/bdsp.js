@@ -114,6 +114,8 @@ export function renderBdsp(root) {
       <div class="card"><h3>Treemap: 권역 → 주 → 군 (면적, 기준연도)</h3><div id="bdsp-treemap" class="plot plot-tall"></div></div>
     </div>
 
+    <div class="card"><h3>Top 20 효율 군 (Kabupaten 생산성 kg/ha, 2024) — 단위면적당 CPO 생산</h3><div id="bdsp-kab-yield" class="plot plot-tall"></div></div>
+
     <div class="grid-2">
       <div class="card"><h3>BDSP raw (nasional + provinsi)</h3><div id="bdsp-table"></div></div>
       <div class="card"><h3>BDSP raw (kabupaten)</h3><div id="bdsp-kab-table"></div></div>
@@ -277,6 +279,19 @@ export function renderBdsp(root) {
   };
   yearSel.addEventListener("change", renderTreemap);
   renderTreemap();
+
+  // Top 20 efficient kabupaten (생산성 ranking, 최신 연도)
+  const kabYieldLy = kab.filter(k => k.indikator === "produktivitas" && k.tahun === ly && k.nilai > 0);
+  const kabYieldTop = [...kabYieldLy].sort((a, b) => b.nilai - a.nilai).slice(0, 20);
+  plot("bdsp-kab-yield", [{
+    x: kabYieldTop.map(k => k.nilai).reverse(),
+    y: kabYieldTop.map(k => `${k.kab_name} (${(k.prov_name || "").substring(0, 12)})`).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: kabYieldTop.map(k => k.nilai > 4500 ? "#2ca02c" : k.nilai > 3500 ? "#1f77b4" : "#ffbb78").reverse() },
+    text: kabYieldTop.map(k => Math.round(k.nilai).toLocaleString() + " kg/ha").reverse(),
+    textposition: "outside",
+    hovertemplate: "%{y}<br>%{x:,.0f} kg/ha<extra></extra>",
+  }], { yaxis: { autorange: "reversed" }, xaxis: { title: "생산성 (kg/ha) — 4500+ 우수" }, margin: { l: 220, r: 100, t: 10, b: 40 }, height: 540 });
 
   // ── raw tables
   makeTable("bdsp-table", [
