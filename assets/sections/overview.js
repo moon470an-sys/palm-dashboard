@@ -656,7 +656,17 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>2026 Q1 Annualized (×4) vs 2025 Full-Year — 가속/감속</h3><div id="ov-q1-annualized" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㊵ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊵ Market Cap 다년 변화</h3>
+    <p class="notice">
+      회사별 시가총액 (shares × closing price) 다년 변화. 시장의 평가 변화 + 시총 CAGR로 주가 성과 비교.
+    </p>
+    <div class="card"><h3>Top 12 시가총액 회사 시계열 (annual years)</h3><div id="ov-mcap-top" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Market Cap CAGR (전 기간) — 주가 성과</h3><div id="ov-mcap-cagr" class="plot plot-tall"></div></div>
+      <div class="card"><h3>최신 / 첫 mcap 비율 (x) — 시총 배수</h3><div id="ov-mcap-mult" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㊶ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1996,6 +2006,48 @@ export function renderOverview(root) {
   };
   wfSel.addEventListener("change", renderWaterfall);
   renderWaterfall();
+
+  // ── ㊵ Market Cap 다년
+  const mcapSeries = companies.map(co => {
+    const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.mcap != null && r.mcap > 0).sort((a, b) => a.yr.localeCompare(b.yr));
+    return { short: co, region: s[s.length - 1]?.region, s };
+  }).filter(r => r.s.length > 0);
+
+  const mcTop12 = [...mcapSeries].map(r => ({ ...r, last: r.s[r.s.length - 1].mcap })).sort((a, b) => b.last - a.last).slice(0, 12);
+  plot("ov-mcap-top", mcTop12.map(s => ({
+    x: s.s.map(r => r.yr), y: s.s.map(r => r.mcap),
+    name: s.short, type: "scatter", mode: "lines+markers",
+    line: { color: colorMap[s.short], width: 2 }, marker: { color: colorMap[s.short], size: 6 },
+  })), {
+    yaxis: { title: "Market Cap (IDR bn)" },
+    legend: { orientation: "h", y: -0.18, font: { size: 9 } },
+    margin: { l: 70, r: 20, t: 10, b: 80 }, height: 480,
+  });
+
+  const mcCagr = mcapSeries.filter(r => r.s.length >= 2).map(r => {
+    const first = r.s[0].mcap, last = r.s[r.s.length - 1].mcap;
+    const years = r.s.length - 1;
+    const c = (first > 0 && last > 0 && years > 0) ? (Math.pow(last / first, 1 / years) - 1) * 100 : null;
+    return { short: r.short, region: r.region, cagr: c, mult: first > 0 ? last / first : null, first, last };
+  }).filter(r => r.cagr != null && isFinite(r.cagr)).sort((a, b) => b.cagr - a.cagr);
+
+  plot("ov-mcap-cagr", [{
+    x: mcCagr.map(r => r.cagr).reverse(), y: mcCagr.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: mcCagr.map(r => r.cagr >= 20 ? "#2ca02c" : r.cagr >= 5 ? "#1f77b4" : r.cagr >= -5 ? "#ffbb78" : "#d62728").reverse() },
+    text: mcCagr.map(r => (r.cagr >= 0 ? "+" : "") + r.cagr.toFixed(1) + "%").reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>Mcap CAGR %{x:+.2f}%/yr<extra></extra>",
+  }], { xaxis: { title: "Market Cap CAGR (%/yr)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, mcCagr.length * 24 + 60) });
+
+  const mcMult = [...mcCagr].sort((a, b) => b.mult - a.mult);
+  plot("ov-mcap-mult", [{
+    x: mcMult.map(r => Math.min(20, r.mult)).reverse(), y: mcMult.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: mcMult.map(r => r.mult >= 2 ? "#2ca02c" : r.mult >= 1 ? "#1f77b4" : r.mult >= 0.5 ? "#ffbb78" : "#d62728").reverse() },
+    text: mcMult.map(r => r.mult > 20 ? ">20x" : r.mult.toFixed(2) + "x").reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>Latest/First %{x:.2f}x<br>%{customdata[0]:,.0f} → %{customdata[1]:,.0f} bn<extra></extra>",
+    customdata: mcMult.map(r => [r.first, r.last]).reverse(),
+  }], { xaxis: { title: "Mcap Latest / First (x) — 1x 동일, 2x+ 두배 이상" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, mcMult.length * 24 + 60) });
 
   // ── ㊴ Quarterly Snapshot (2026 Q1)
   const Q1_YR = "2026 Q1";
