@@ -15,8 +15,6 @@ export const state = {
   rspo: { members: [], global: [] },
   bdsp: { nasional: [], provinsi: [], kabupaten: [] },
   gapki: [],
-  idx: [],
-  cross: [],
   prov_coords: {},
   ar: { companies: [], financials: [], operations: [], regions: [], assets: [], region_geo: [] },
   // AR 호환 alias (loadAll 후 ar.* 와 동일 참조)
@@ -53,8 +51,6 @@ export async function loadAll() {
     j(BASE + "bdsp_provinsi.json").then((d) => state.bdsp.provinsi = d),
     j(BASE + "bdsp_kabupaten.json").then((d) => state.bdsp.kabupaten = d),
     j(BASE + "gapki_members.json").then((d) => state.gapki = d),
-    j(BASE + "idx_companies.json").then((d) => state.idx = d),
-    j(BASE + "cross_matching.json").then((d) => state.cross = d),
     j(BASE + "province_coords.json").then((d) => state.prov_coords = d),
     // Annual Report (기존 원본)
     j(AR_BASE + "companies.json").then((d) => state.ar.companies = d).catch(() => {}),
