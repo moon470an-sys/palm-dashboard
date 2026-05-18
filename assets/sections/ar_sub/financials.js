@@ -83,6 +83,16 @@ export function renderFinancials() {
     .filter((r) => r.company === state.selectedCompany)
     .sort((a, b) => (a.report_year || 0) - (b.report_year || 0));
 
+  if (rows.length === 0) {
+    Plotly.purge("chart-revenue-profit");
+    Plotly.purge("chart-assets-liab");
+    document.getElementById("chart-revenue-profit").innerHTML =
+      `<div class="chart-placeholder">No financial data for ${state.selectedCompany}.</div>`;
+    document.getElementById("chart-assets-liab").innerHTML =
+      `<div class="chart-placeholder">No balance sheet data for ${state.selectedCompany}.</div>`;
+    return;
+  }
+
   const years = rows.map((r) => String(r.report_year));
 
   const revenue = rows.map((r) => r.revenue_idr_bn);
