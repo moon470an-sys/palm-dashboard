@@ -616,7 +616,17 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Cash Ratio (Cash / Current Liab) — 즉시 상환 능력</h3><div id="ov-cash-ratio" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㊱ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊱ Industry Concentration — Top 5 vs Long Tail</h3>
+    <p class="notice">
+      매출 누적 % 곡선으로 산업 집중도 시각화. Top 5 vs 나머지 share, 분위별 분포로 IDX 팜 산업 구조 파악.
+    </p>
+    <div class="card"><h3>Cumulative Revenue Share Curve — Top → Bottom</h3><div id="ov-conc-curve" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Top 5 / Top 10 / Long Tail share</h3><div id="ov-conc-pie" class="plot plot-tall"></div></div>
+      <div class="card"><h3>매출 분위별 평균 (5분위)</h3><div id="ov-conc-quintile" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㊲ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1237,6 +1247,74 @@ export function renderOverview(root) {
       xaxis: { title: "Diversification (1 - HHI)" },
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // ── ㊱ Industry Concentration
+    const concRows = rows.filter(r => r.revenue > 0).sort((a, b) => b.revenue - a.revenue);
+    const totalRev = concRows.reduce((s, r) => s + r.revenue, 0);
+    let cum = 0;
+    const cumPoints = concRows.map((r, i) => {
+      cum += r.revenue;
+      return { idx: i + 1, short: r.short, rev: r.revenue, cum, cumPct: cum / totalRev * 100 };
+    });
+    plot("ov-conc-curve", [{
+      x: cumPoints.map(p => p.idx), y: cumPoints.map(p => p.cumPct),
+      type: "scatter", mode: "lines+markers",
+      line: { color: "#1f77b4", width: 3 }, marker: { color: "#1f77b4", size: 6 },
+      text: cumPoints.map(p => p.short), hovertemplate: "#%{x}: %{text}<br>누적 %{y:.1f}%<extra></extra>",
+    }], {
+      xaxis: { title: "회사 순위 (매출 큰 순)" },
+      yaxis: { title: "누적 매출 점유 (%)", range: [0, 105] },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+      shapes: [
+        { type: "line", x0: 5, y0: 0, x1: 5, y1: 105, line: { color: "#d62728", dash: "dash", width: 1 } },
+        { type: "line", x0: 10, y0: 0, x1: 10, y1: 105, line: { color: "#ff7f0e", dash: "dash", width: 1 } },
+      ],
+      annotations: [
+        { x: 5, y: 50, text: "Top 5", showarrow: false, font: { color: "#d62728" } },
+        { x: 10, y: 30, text: "Top 10", showarrow: false, font: { color: "#ff7f0e" } },
+      ],
+    });
+
+    // Top 5 / Top 6-10 / Long Tail pie
+    const top5Sum = cumPoints.slice(0, 5).reduce((s, p) => s + p.rev, 0);
+    const top10Sum = cumPoints.slice(0, 10).reduce((s, p) => s + p.rev, 0);
+    const next5 = top10Sum - top5Sum;
+    const longTail = totalRev - top10Sum;
+    plot("ov-conc-pie", [{
+      labels: ["Top 5", "Top 6-10", `Long Tail (나머지 ${concRows.length - 10}사)`],
+      values: [top5Sum, next5, longTail],
+      type: "pie", hole: 0.45,
+      marker: { colors: ["#d62728", "#ff7f0e", "#9ca3af"] },
+      text: [
+        `${(top5Sum/totalRev*100).toFixed(1)}%`,
+        `${(next5/totalRev*100).toFixed(1)}%`,
+        `${(longTail/totalRev*100).toFixed(1)}%`,
+      ],
+      textinfo: "label+text", hoverinfo: "label+value+percent",
+    }], { margin: { t: 20, b: 20, l: 0, r: 0 }, height: 480 });
+
+    // Quintile bars (5 분위, 가장 큰 → 작은)
+    const n = concRows.length;
+    const quintileSize = Math.ceil(n / 5);
+    const quintiles = [];
+    for (let i = 0; i < 5; i++) {
+      const chunk = concRows.slice(i * quintileSize, (i + 1) * quintileSize);
+      if (chunk.length === 0) continue;
+      quintiles.push({
+        label: `Q${i + 1}`,
+        n: chunk.length,
+        sum: chunk.reduce((s, r) => s + r.revenue, 0),
+        avg: chunk.reduce((s, r) => s + r.revenue, 0) / chunk.length,
+      });
+    }
+    plot("ov-conc-quintile", [
+      { x: quintiles.map(q => `${q.label} (${q.n}사)`), y: quintiles.map(q => q.avg), type: "bar", name: "평균 매출 (bn)", marker: { color: "#1f77b4" } },
+      { x: quintiles.map(q => `${q.label} (${q.n}사)`), y: quintiles.map(q => q.sum), type: "scatter", mode: "lines+markers", name: "총 매출 (bn)", line: { color: "#d62728", width: 2 }, yaxis: "y2" },
+    ], {
+      yaxis: { title: "분위 평균 매출 (IDR bn)" },
+      yaxis2: { title: "분위 총 매출 (IDR bn)", overlaying: "y", side: "right" },
+      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 60, t: 10, b: 50 }, height: 480,
     });
 
     // ── ㉟ Cash Position
