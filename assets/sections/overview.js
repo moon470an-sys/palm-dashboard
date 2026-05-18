@@ -134,6 +134,7 @@ export function renderOverview(root) {
     r.m_net = (r.net_profit != null && r.revenue) ? r.net_profit / r.revenue * 100 : null;
     // Operating leverage proxy: EBITDA - EBIT (≈ D&A)
     r.da_implied = (r.ebitda != null && r.ebit != null) ? r.ebitda - r.ebit : null;
+    r.capex_da = (r.capex != null && r.da_implied && r.da_implied > 0) ? r.capex / r.da_implied : null;  // CapEx / D&A
     // Working Capital + Asset composition
     const ca2 = num(r.current_assets_idr_bn);
     const cl2 = num(r.current_liabilities_idr_bn);
@@ -743,7 +744,14 @@ export function renderOverview(root) {
     </p>
     <div class="card"><h3>Award Cards</h3><div id="ov-awards" class="awards"></div></div>
 
-    <h3 class="section-h">㊾ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊾ Sustaining vs Growth CapEx (CapEx / D&A)</h3>
+    <p class="notice">
+      D&A (감가상각) ≈ EBITDA − EBIT. CapEx/D&A 1.0x ≈ sustaining only (자산 유지), 1.0x↑ = growth investment, 1.0x↓ = harvest / 자산 축소.
+    </p>
+    <div class="card"><h3>CapEx / D&A (x) — 회사별 투자 강도 ranking</h3><div id="ov-capex-da" class="plot plot-tall"></div></div>
+    <div class="card"><h3>CapEx Intensity × D&A Intensity scatter (모두 %)</h3><div id="ov-capda-scatter" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㊿ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1364,6 +1372,35 @@ export function renderOverview(root) {
       xaxis: { title: "Diversification (1 - HHI)" },
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // ── ㊾ Sustaining vs Growth CapEx
+    const cdaRows = rows.filter(r => r.capex_da != null && r.capex_da > 0 && r.capex_da < 30).sort((a, b) => b.capex_da - a.capex_da);
+    plot("ov-capex-da", [{
+      x: cdaRows.map(r => r.capex_da).reverse(), y: cdaRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: cdaRows.map(r => r.capex_da >= 1.5 ? "#ff7f0e" : r.capex_da >= 0.8 ? "#1f77b4" : "#2ca02c").reverse() },
+      text: cdaRows.map(r => r.capex_da.toFixed(2) + "x").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>CapEx/D&A %{x:.2f}x<extra></extra>",
+    }], { xaxis: { title: "CapEx / D&A (x) — 1x sustaining, 1.5x+ growth, <0.8x harvest" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cdaRows.length * 24 + 60) });
+
+    // Scatter: capex intensity vs D&A intensity
+    const cdSc = rows.filter(r => r.capex_intensity != null && r.da_implied != null && r.revenue);
+    plot("ov-capda-scatter", [{
+      x: cdSc.map(r => r.da_implied / r.revenue * 100),
+      y: cdSc.map(r => r.capex_intensity),
+      mode: "markers+text", type: "scatter",
+      text: cdSc.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: cdSc.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
+        color: cdSc.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>D&A %{x:.2f}% of Rev<br>CapEx %{y:.2f}% of Rev<extra></extra>",
+    }], {
+      xaxis: { title: "D&A / Revenue (%)" }, yaxis: { title: "CapEx / Revenue (%)" },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+      shapes: [{ type: "line", x0: 0, y0: 0, x1: 20, y1: 20, line: { color: "#ccc", dash: "dot", width: 1 } }],
     });
 
     // ── ㊽ Best in Class Awards
