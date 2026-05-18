@@ -157,6 +157,9 @@ export function renderIspo(root) {
     LS: c.ls_short || c.ls_name?.substring(0, 25) || "",
     주: c.provinsi || "", 군: c.kabupaten || "",
     면적: Math.round(c.luas_lahan_ha || 0),
+    CPO: Math.round(c.volume_cpo_ton_per_tahun || 0),
+    TBS: Math.round(c.volume_tbs_ton_per_tahun || 0),
+    PKS: c.kapasitas_pks_ton_per_jam ? Math.round(c.kapasitas_pks_ton_per_jam * 100) / 100 : 0,
     발급: c.tanggal_terbit || "", 만료: c.tanggal_berakhir || "",
     상태: c.status || "",
   }));
@@ -165,8 +168,11 @@ export function renderIspo(root) {
     { data: "유형", title: "유형" }, { data: "LS", title: "인증기관" },
     { data: "주", title: "주" }, { data: "군", title: "군" },
     { data: "면적", title: "면적(ha)", render: (d) => Number(d).toLocaleString() },
+    { data: "CPO", title: "CPO(t/yr)", render: (d) => d ? Number(d).toLocaleString() : "-" },
+    { data: "TBS", title: "TBS(t/yr)", render: (d) => d ? Number(d).toLocaleString() : "-" },
+    { data: "PKS", title: "PKS(tph)", render: (d) => d ? Number(d).toLocaleString() : "-" },
     { data: "발급", title: "발급" }, { data: "만료", title: "만료" }, { data: "상태", title: "상태" },
-  ], rows, { pageLength: 15, order: [[8, "asc"]] });
+  ], rows, { pageLength: 15, order: [[11, "asc"]] });
 
   // company leaderboard
   makeTable("ispo-co-table", [
