@@ -198,7 +198,24 @@ export function renderOverview(root) {
       <div class="card"><h3>자본 구조 — Equity vs Liabilities (회사별 stacked)</h3><div id="ov-capstack" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑪ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑪ Per-Share & 주가 시계열 — EPS · NAV · DPS · 종가</h3>
+    <div class="filter-bar">
+      <label>주당 지표:</label>
+      <select id="ov-ps-metric">
+        <option value="eps" selected>EPS (주당순이익)</option>
+        <option value="nav">NAV (주당순자산)</option>
+        <option value="div_total">DPS Total (interim + final)</option>
+        <option value="px">종가 (Closing price)</option>
+      </select>
+      <span class="badge">단위: IDR/share</span>
+    </div>
+    <div class="card"><h3>전사 주당 지표 multi-line 시계열</h3><div id="ov-ps-ts" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>EPS 시계열 — Top 10 (기준연도 EPS 상위)</h3><div id="ov-eps-top" class="plot plot-tall"></div></div>
+      <div class="card"><h3>DPS 지급 회사 (기준연도, 0 제외)</h3><div id="ov-dps" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">⑫ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + 권역)</h3><div id="ov-table"></div></div>
   `;
 
@@ -676,4 +693,55 @@ export function renderOverview(root) {
   };
   pairSel.addEventListener("change", renderGrowth);
   renderGrowth();
+
+  // ── ⑪ Per-Share & 주가 시계열
+  const psSel = document.getElementById("ov-ps-metric");
+  const PS_LABEL = { eps: "EPS", nav: "NAV/share", div_total: "DPS Total", px: "종가" };
+
+  const renderPS = () => {
+    const m = psSel.value;
+    // 전사 multi-line
+    const traces = companies.map(co => {
+      const series = fin.filter(r => r.short === co).sort((a, b) => a.yr.localeCompare(b.yr));
+      return {
+        x: series.map(r => r.yr), y: series.map(r => r[m]),
+        name: co, type: "scatter", mode: "lines+markers",
+        line: { color: colorMap[co], width: 1.5 }, marker: { color: colorMap[co], size: 5 },
+      };
+    }).filter(t => t.y.some(v => v != null));
+    plot("ov-ps-ts", traces, {
+      yaxis: { title: `${PS_LABEL[m]} (IDR/share)`, zeroline: true },
+      legend: { orientation: "h", y: -0.18, font: { size: 9 } },
+      margin: { l: 80, r: 20, t: 10, b: 80 }, height: 480,
+    });
+  };
+  psSel.addEventListener("change", renderPS);
+  renderPS();
+
+  // Top 10 EPS 시계열 (기준연도 EPS 상위)
+  const lyEps = fin.filter(r => r.yr === ly && r.eps != null).sort((a, b) => b.eps - a.eps).slice(0, 10).map(r => r.short);
+  const epsTraces = lyEps.map(co => {
+    const series = fin.filter(r => r.short === co).sort((a, b) => a.yr.localeCompare(b.yr));
+    return {
+      x: series.map(r => r.yr), y: series.map(r => r.eps),
+      name: co, type: "scatter", mode: "lines+markers",
+      line: { color: colorMap[co], width: 2.5 }, marker: { color: colorMap[co], size: 8 },
+    };
+  });
+  plot("ov-eps-top", epsTraces, {
+    yaxis: { title: "EPS (IDR/share)", zeroline: true },
+    legend: { orientation: "h", y: -0.18 },
+    margin: { l: 80, r: 20, t: 10, b: 60 }, height: 480,
+  });
+
+  // DPS 지급 회사 (기준연도)
+  const dpsRows = fin.filter(r => r.yr === ly && r.div_total > 0).sort((a, b) => b.div_total - a.div_total);
+  plot("ov-dps", [
+    { x: dpsRows.map(r => r.short), y: dpsRows.map(r => r.dps_interim || 0), type: "bar", name: "Interim DPS", marker: { color: "#aec7e8" } },
+    { x: dpsRows.map(r => r.short), y: dpsRows.map(r => r.dps_final || 0), type: "bar", name: "Final DPS", marker: { color: "#1f77b4" } },
+  ], {
+    barmode: "stack", yaxis: { title: "DPS (IDR/share)" },
+    xaxis: { tickangle: -45, automargin: true },
+    legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
+  });
 }
