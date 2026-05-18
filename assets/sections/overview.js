@@ -582,7 +582,17 @@ export function renderOverview(root) {
       <div class="card"><h3>CFO vs NP divergence — 누적 차이 (CFO 합 − NP 합) bn</h3><div id="ov-eq-div" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㉝ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉝ CapEx Cycle — 다년 투자 사이클 패턴</h3>
+    <p class="notice">
+      CapEx 다년 변화로 회사의 expansion vs harvest phase 식별. 최근/평균 CapEx 비율: 1.5x+ = 증액 사이클, 0.5x↓ = 감액 사이클.
+    </p>
+    <div class="card"><h3>Top 8 CapEx 회사 다년 시계열 (전 기간 합산 상위)</h3><div id="ov-capex-trend" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>최근/평균 CapEx (x) — Expansion vs Harvest</h3><div id="ov-capex-cycle" class="plot plot-tall"></div></div>
+      <div class="card"><h3>총 누적 CapEx (전 기간 IDR bn) ranking</h3><div id="ov-capex-cum" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㉞ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1795,6 +1805,50 @@ export function renderOverview(root) {
   };
   wfSel.addEventListener("change", renderWaterfall);
   renderWaterfall();
+
+  // ── ㉝ CapEx Cycle
+  const capexCum = companies.map(co => {
+    const series = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.capex != null).sort((a, b) => a.yr.localeCompare(b.yr));
+    if (series.length === 0) return null;
+    const total = series.reduce((s, r) => s + r.capex, 0);
+    const avg = total / series.length;
+    const latest = series[series.length - 1].capex;
+    const ratio = avg > 0 ? latest / avg : null;
+    return { short: co, region: series[series.length - 1].region, series, total, avg, latest, ratio };
+  }).filter(Boolean);
+
+  // Top 8 capex (전 기간 합)
+  const cxTop8 = [...capexCum].sort((a, b) => b.total - a.total).slice(0, 8);
+  plot("ov-capex-trend", cxTop8.map(s => ({
+    x: s.series.map(r => r.yr), y: s.series.map(r => r.capex),
+    name: s.short, type: "scatter", mode: "lines+markers",
+    line: { color: colorMap[s.short], width: 2.5 }, marker: { color: colorMap[s.short], size: 8 },
+  })), {
+    yaxis: { title: "CapEx (IDR bn)" },
+    legend: { orientation: "h", y: -0.18 },
+    margin: { l: 70, r: 20, t: 10, b: 60 }, height: 480,
+  });
+
+  // Cycle ratio (latest / avg)
+  const cxCycle = capexCum.filter(r => r.ratio != null && r.ratio > 0 && isFinite(r.ratio)).sort((a, b) => b.ratio - a.ratio);
+  plot("ov-capex-cycle", [{
+    x: cxCycle.map(r => Math.min(10, r.ratio)).reverse(), y: cxCycle.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: cxCycle.map(r => r.ratio >= 1.5 ? "#ff7f0e" : r.ratio >= 0.8 ? "#1f77b4" : "#2ca02c").reverse() },
+    text: cxCycle.map(r => r.ratio > 10 ? ">10x" : r.ratio.toFixed(2) + "x").reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>Latest %{customdata[0]:,.0f} bn / Avg %{customdata[1]:,.0f} bn<br>= %{x:.2f}x<extra></extra>",
+    customdata: cxCycle.map(r => [r.latest, r.avg]).reverse(),
+  }], { xaxis: { title: "Latest / Avg CapEx (x) — 1.5x+ Expansion, <0.8x Harvest", range: [0, 10.5] }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cxCycle.length * 24 + 60) });
+
+  // Total cumulative
+  const cxCum = [...capexCum].sort((a, b) => b.total - a.total);
+  plot("ov-capex-cum", [{
+    x: cxCum.map(r => r.total).reverse(), y: cxCum.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: cxCum.map(r => r.total).reverse(), colorscale: "Oranges" },
+    text: cxCum.map(r => Math.round(r.total).toLocaleString()).reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>총 CapEx %{x:,.0f} bn<extra></extra>",
+  }], { xaxis: { title: "총 누적 CapEx (IDR bn, 전 기간)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, cxCum.length * 24 + 60) });
 
   // ── ㉜ Earnings Quality Trend
   // Top 8 NP companies — CFO + NP overlay
