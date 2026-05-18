@@ -751,7 +751,23 @@ export function renderOverview(root) {
     <div class="card"><h3>CapEx / D&A (x) — 회사별 투자 강도 ranking</h3><div id="ov-capex-da" class="plot plot-tall"></div></div>
     <div class="card"><h3>CapEx Intensity × D&A Intensity scatter (모두 %)</h3><div id="ov-capda-scatter" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㊿ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊿ Percentile Rank Matrix — 회사 강약 시각화</h3>
+    <p class="notice">
+      각 회사 7개 지표 (매출/ROE/마진/Quality/FCF margin/Div yield/CFO/NP) percentile rank (0-100). 막대가 채워질수록 강함. 회사 select로 비교.
+    </p>
+    <div class="filter-bar">
+      <label>회사 1:</label>
+      <select id="ov-pct-co1"></select>
+      <label>회사 2:</label>
+      <select id="ov-pct-co2"></select>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>회사 1 percentile rank (지표별)</h3><div id="ov-pct-1" class="plot plot-tall"></div></div>
+      <div class="card"><h3>회사 2 percentile rank (지표별)</h3><div id="ov-pct-2" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>두 회사 percentile overlay 비교</h3><div id="ov-pct-overlay" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">⓪ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -2316,6 +2332,70 @@ export function renderOverview(root) {
     marker: { color: nmD.map(r => r.nm_delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
     text: nmD.map(r => (r.nm_delta >= 0 ? "+" : "") + r.nm_delta.toFixed(1) + "pp").reverse(), textposition: "outside",
   }], { xaxis: { title: "Net Margin Δ (pp, latest − first)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, nmD.length * 24 + 60) });
+
+  // ── ㊿ Percentile Rank Matrix
+  const PCT_METRICS = [
+    { key: "revenue", label: "매출" },
+    { key: "roe", label: "ROE" },
+    { key: "net_margin", label: "Net Margin" },
+    { key: "quality_score", label: "Quality" },
+    { key: "fcf_margin", label: "FCF Margin" },
+    { key: "div_yield", label: "Div Yield" },
+    { key: "cfo", label: "CFO" },
+    { key: "net_profit", label: "Net Profit" },
+  ];
+  // percentile 계산: 전체 ly fin 중에서 회사 i의 rank
+  const lyRows = fin.filter(r => r.yr === ly);
+  const pctRank = (val, arr) => {
+    const sorted = arr.filter(v => v != null && !isNaN(v)).sort((a, b) => a - b);
+    if (sorted.length === 0 || val == null) return null;
+    let below = sorted.filter(v => v < val).length;
+    return below / sorted.length * 100;
+  };
+  const pctTable = {};
+  companies.forEach(co => {
+    const r = lyRows.find(x => x.short === co);
+    if (!r) return;
+    pctTable[co] = {};
+    PCT_METRICS.forEach(m => {
+      pctTable[co][m.key] = pctRank(r[m.key], lyRows.map(x => x[m.key]));
+    });
+  });
+
+  const pSel1 = document.getElementById("ov-pct-co1");
+  const pSel2 = document.getElementById("ov-pct-co2");
+  pSel1.innerHTML = companies.map((c, i) => `<option value="${c}" ${i === 0 ? "selected" : ""}>${c}</option>`).join("");
+  pSel2.innerHTML = companies.map((c, i) => `<option value="${c}" ${i === 1 ? "selected" : ""}>${c}</option>`).join("");
+
+  const drawPct = (elId, co) => {
+    const data = pctTable[co];
+    if (!data) { document.getElementById(elId).innerHTML = `<div class="award-empty">${co}: 데이터 없음</div>`; return; }
+    plot(elId, [{
+      x: PCT_METRICS.map(m => data[m.key] || 0),
+      y: PCT_METRICS.map(m => m.label).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: PCT_METRICS.map(m => (data[m.key] || 0) >= 75 ? "#2ca02c" : (data[m.key] || 0) >= 50 ? "#1f77b4" : (data[m.key] || 0) >= 25 ? "#ffbb78" : "#d62728").reverse() },
+      text: PCT_METRICS.map(m => data[m.key] != null ? data[m.key].toFixed(0) + "%" : "n/a").reverse(),
+      textposition: "outside",
+    }], { title: { text: co, font: { size: 13 } }, xaxis: { title: "Percentile (0-100)", range: [0, 110] }, margin: { l: 100, r: 60, t: 30, b: 40 }, height: 420 });
+  };
+  const drawOverlay = () => {
+    const co1 = pSel1.value, co2 = pSel2.value;
+    if (!pctTable[co1] || !pctTable[co2]) return;
+    plot("ov-pct-overlay", [
+      { x: PCT_METRICS.map(m => m.label), y: PCT_METRICS.map(m => pctTable[co1][m.key] || 0), type: "bar", name: co1, marker: { color: "#1f77b4" } },
+      { x: PCT_METRICS.map(m => m.label), y: PCT_METRICS.map(m => pctTable[co2][m.key] || 0), type: "bar", name: co2, marker: { color: "#ff7f0e" } },
+    ], { barmode: "group", yaxis: { title: "Percentile (0-100)", range: [0, 110] }, legend: { orientation: "h", y: -0.18 }, margin: { l: 60, r: 20, t: 10, b: 60 }, height: 480 });
+  };
+
+  const renderPctAll = () => {
+    drawPct("ov-pct-1", pSel1.value);
+    drawPct("ov-pct-2", pSel2.value);
+    drawOverlay();
+  };
+  pSel1.addEventListener("change", renderPctAll);
+  pSel2.addEventListener("change", renderPctAll);
+  renderPctAll();
 
   // ── ㊼ Working Capital 다년
   const nwcSeries = companies.map(co => {
