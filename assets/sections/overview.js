@@ -571,7 +571,18 @@ export function renderOverview(root) {
       <div class="card"><h3>최신 vs 첫 연도 Asset Turnover — Slope 차트</h3><div id="ov-at-slope" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㉜ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉜ Earnings Quality Trend — CFO vs Net Profit 다년 비교</h3>
+    <p class="notice">
+      이상적 회사: CFO ≈ Net Profit (이익이 현금으로 잘 전환). CFO ≪ NP = 매출채권/재고 누적 (현금화 지연). CFO ≫ NP = 비현금 비용 큼.
+      Avg CFO/NP 100% 근처 + 변동 작으면 earnings quality 우수.
+    </p>
+    <div class="card"><h3>Top 8 회사 CFO vs NP overlay (기준연도 NP 상위)</h3><div id="ov-eq-overlay" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>다년 평균 CFO/NP (%) — Quality 지속성</h3><div id="ov-eq-avg" class="plot plot-tall"></div></div>
+      <div class="card"><h3>CFO vs NP divergence — 누적 차이 (CFO 합 − NP 합) bn</h3><div id="ov-eq-div" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㉝ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1784,6 +1795,64 @@ export function renderOverview(root) {
   };
   wfSel.addEventListener("change", renderWaterfall);
   renderWaterfall();
+
+  // ── ㉜ Earnings Quality Trend
+  // Top 8 NP companies — CFO + NP overlay
+  const top8NP = fin.filter(r => r.yr === ly && r.net_profit != null)
+    .sort((a, b) => b.net_profit - a.net_profit).slice(0, 8).map(r => r.short);
+  const eqTraces = [];
+  top8NP.forEach(co => {
+    const series = fin.filter(r => r.short === co && annualYears.includes(r.yr)).sort((a, b) => a.yr.localeCompare(b.yr));
+    eqTraces.push({
+      x: series.map(r => `${r.yr}\n${co.slice(0, 8)}`), y: series.map(r => r.cfo),
+      type: "bar", name: `CFO — ${co}`, marker: { color: colorMap[co], opacity: 0.6 }, legendgroup: co, showlegend: false,
+    });
+    eqTraces.push({
+      x: series.map(r => `${r.yr}\n${co.slice(0, 8)}`), y: series.map(r => r.net_profit),
+      type: "scatter", mode: "lines+markers", name: co, line: { color: colorMap[co], width: 2.5 }, marker: { color: colorMap[co], size: 8 }, legendgroup: co,
+    });
+  });
+  plot("ov-eq-overlay", eqTraces, {
+    yaxis: { title: "IDR bn", zeroline: true },
+    xaxis: { tickangle: -45, automargin: true },
+    legend: { orientation: "h", y: -0.35 },
+    margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480, barmode: "group",
+  });
+
+  // 다년 평균 CFO/NP (annualYears)
+  const eqAvg = companies.map(co => {
+    const series = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.cfo != null && r.net_profit != null && r.net_profit > 0);
+    if (series.length === 0) return null;
+    const ratios = series.map(r => r.cfo / r.net_profit * 100);
+    const m = ratios.reduce((s, v) => s + v, 0) / ratios.length;
+    return { short: co, region: series[series.length - 1].region, avg_eq: m, n: series.length };
+  }).filter(Boolean).sort((a, b) => b.avg_eq - a.avg_eq);
+
+  plot("ov-eq-avg", [{
+    x: eqAvg.map(r => Math.min(400, r.avg_eq)).reverse(), y: eqAvg.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: eqAvg.map(r => r.avg_eq >= 80 && r.avg_eq <= 150 ? "#2ca02c" : r.avg_eq >= 50 ? "#1f77b4" : r.avg_eq >= 0 ? "#ffbb78" : "#d62728").reverse() },
+    text: eqAvg.map(r => r.avg_eq > 400 ? ">400%" : r.avg_eq.toFixed(0) + "%").reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>Avg CFO/NP %{x:.1f}% (n=%{customdata})<extra></extra>",
+    customdata: eqAvg.map(r => r.n).reverse(),
+  }], { xaxis: { title: "다년 평균 CFO/NP (%) — 80-150% 우수" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, eqAvg.length * 24 + 60) });
+
+  // Divergence: CFO 합 − NP 합 (전 기간)
+  const eqDiv = companies.map(co => {
+    const series = fin.filter(r => r.short === co);
+    const cfoSum = series.reduce((s, r) => s + (r.cfo || 0), 0);
+    const npSum = series.reduce((s, r) => s + (r.net_profit || 0), 0);
+    return { short: co, region: series[series.length - 1]?.region, div: cfoSum - npSum, cfoSum, npSum };
+  }).sort((a, b) => Math.abs(b.div) - Math.abs(a.div));
+
+  plot("ov-eq-div", [{
+    x: eqDiv.map(r => r.div).reverse(), y: eqDiv.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: eqDiv.map(r => r.div >= 0 ? "#2ca02c" : "#d62728").reverse() },
+    text: eqDiv.map(r => (r.div >= 0 ? "+" : "") + Math.round(r.div).toLocaleString()).reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>CFO−NP %{x:,.0f} bn<br>CFO 합 %{customdata[0]:,.0f} bn / NP 합 %{customdata[1]:,.0f} bn<extra></extra>",
+    customdata: eqDiv.map(r => [r.cfoSum, r.npSum]).reverse(),
+  }], { xaxis: { title: "누적 CFO − NP (IDR bn) — 양수=CFO ≥ NP", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, eqDiv.length * 24 + 60) });
 
   // ── ㉛ Asset Turnover Trend (annual years 전체)
   const atSeries = companies.map(co => {
