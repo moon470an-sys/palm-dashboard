@@ -561,7 +561,17 @@ export function renderOverview(root) {
       <div class="card"><h3>Total Deployment (CapEx+Div) / CFO % — Cash Burn 위험</h3><div id="ov-deploy" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㉛ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉛ Asset Turnover Trend — 자산 효율 다년 변화</h3>
+    <p class="notice">
+      Asset Turnover = Revenue / Total Assets. 시간에 따라 ↑이면 자산 활용 효율 개선, ↓이면 악화 (자산 늘었는데 매출 못 따라옴).
+    </p>
+    <div class="card"><h3>Top 8 Asset Turnover 시계열 (기준연도 상위)</h3><div id="ov-at-top" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Asset Turnover 개선 폭 (latest − first annual) 랭킹</h3><div id="ov-at-improve" class="plot plot-tall"></div></div>
+      <div class="card"><h3>최신 vs 첫 연도 Asset Turnover — Slope 차트</h3><div id="ov-at-slope" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㉜ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1774,6 +1784,49 @@ export function renderOverview(root) {
   };
   wfSel.addEventListener("change", renderWaterfall);
   renderWaterfall();
+
+  // ── ㉛ Asset Turnover Trend (annual years 전체)
+  const atSeries = companies.map(co => {
+    const series = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.dp_turnover != null).sort((a, b) => a.yr.localeCompare(b.yr));
+    return { short: co, series, region: series[series.length - 1]?.region };
+  }).filter(x => x.series.length > 0);
+
+  // Top 8 시계열 (기준연도 dp_turnover 상위)
+  const atLast = atSeries.map(s => ({ ...s, last: s.series[s.series.length - 1].dp_turnover }))
+    .filter(s => s.last != null).sort((a, b) => b.last - a.last).slice(0, 8);
+  plot("ov-at-top", atLast.map(s => ({
+    x: s.series.map(r => r.yr), y: s.series.map(r => r.dp_turnover),
+    name: s.short, type: "scatter", mode: "lines+markers",
+    line: { color: colorMap[s.short], width: 2.5 }, marker: { color: colorMap[s.short], size: 8 },
+  })), {
+    yaxis: { title: "Asset Turnover (x)", zeroline: true },
+    legend: { orientation: "h", y: -0.18 },
+    margin: { l: 70, r: 20, t: 10, b: 60 }, height: 480,
+  });
+
+  // Improvement = latest - first
+  const atImp = atSeries.map(s => {
+    if (s.series.length < 2) return null;
+    return { short: s.short, region: s.region, first: s.series[0].dp_turnover, last: s.series[s.series.length - 1].dp_turnover, delta: s.series[s.series.length - 1].dp_turnover - s.series[0].dp_turnover };
+  }).filter(Boolean).sort((a, b) => b.delta - a.delta);
+
+  plot("ov-at-improve", [{
+    x: atImp.map(r => r.delta).reverse(), y: atImp.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: atImp.map(r => r.delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
+    text: atImp.map(r => (r.delta >= 0 ? "+" : "") + r.delta.toFixed(3) + "x").reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>Δ %{x:+.3f}x (first→latest)<extra></extra>",
+  }], { xaxis: { title: "Asset Turnover Δ (latest − first)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, atImp.length * 24 + 60) });
+
+  // Slope chart: 두 점 (first, last) 라인
+  plot("ov-at-slope", atImp.map(r => ({
+    x: ["First", "Latest"], y: [r.first, r.last], name: r.short, type: "scatter",
+    mode: "lines+markers", line: { color: r.delta >= 0 ? "#2ca02c" : "#d62728", width: 1.5 },
+    marker: { size: 5 }, hovertemplate: r.short + "<br>%{x}: %{y:.3f}x<extra></extra>",
+  })), {
+    yaxis: { title: "Asset Turnover (x)" }, showlegend: false,
+    margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480,
+  });
 
   // ── ㉙ Profitability Stability (전 기간 NP 변동성)
   const profitStab = companies.map(co => {
