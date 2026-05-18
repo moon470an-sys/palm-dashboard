@@ -143,6 +143,14 @@ export function renderOverview(root) {
     r.ca_share = (ca2 != null && r.assets) ? ca2 / r.assets * 100 : null;
     r.nca_share = (nca != null && r.assets) ? nca / r.assets * 100 : null;
     r.cash_share = (r.cash != null && r.assets) ? r.cash / r.assets * 100 : null;
+    // Liability maturity
+    const ltl = num(r.long_term_liabilities_idr_bn);
+    const ctl = num(r.current_liabilities_idr_bn);
+    const tlTot = (ltl != null && ctl != null) ? ltl + ctl : null;
+    r.ltl = ltl; r.ctl_bn = ctl;
+    r.lt_share = (tlTot && ltl != null) ? ltl / tlTot * 100 : null;  // long-term share of total liabilities
+    r.st_share = (tlTot && ctl != null) ? ctl / tlTot * 100 : null;
+    r.st_to_equity = (ctl != null && r.equity && r.equity > 0) ? ctl / r.equity : null;  // short-term burden vs equity
     // Downstream Integration Score 0-6 (refinery count + refined product 가짓수)
     r.downstream_score = (r.cpo_refinery > 0 ? 1 : 0) + (r.pko_refinery > 0 ? 1 : 0)
       + (r.rbdpo_t > 0 ? 1 : 0) + (r.olein_t > 0 ? 1 : 0)
@@ -494,7 +502,17 @@ export function renderOverview(root) {
     <div class="card"><h3>Waterfall: Revenue → 단계별 cash 흐름</h3><div id="ov-waterfall" class="plot plot-tall"></div></div>
     <div class="card"><h3>FCF Conversion 전체 비교 — Revenue → FCF 변환율 (FCF / Revenue %)</h3><div id="ov-fcf-conv" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉗ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉗ Liability Maturity — 단기 vs 장기 부채</h3>
+    <p class="notice">
+      Short-term liab 비중 ↑ 이면 refinancing 위험 ↑. Short-term liab / Equity 가 1.0 이상이면 단기 부담 큼.
+    </p>
+    <div class="card"><h3>회사별 부채 만기 구성 (100% stacked) — Current vs Long-term</h3><div id="ov-mat-stack" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Short-term Liab / Equity (x) — 단기 부담</h3><div id="ov-stl-eq" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Long-term Liab 절대값 (IDR bn) ranking</h3><div id="ov-ltl-abs" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㉘ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1116,6 +1134,34 @@ export function renderOverview(root) {
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
+
+    // ── ㉗ Liability Maturity
+    const mtRows = rows.filter(r => r.lt_share != null).sort((a, b) => (b.liab || 0) - (a.liab || 0));
+    plot("ov-mat-stack", [
+      { x: mtRows.map(r => r.short), y: mtRows.map(r => r.st_share), type: "bar", name: "Current (단기)", marker: { color: "#d62728" } },
+      { x: mtRows.map(r => r.short), y: mtRows.map(r => r.lt_share), type: "bar", name: "Long-term (장기)", marker: { color: "#1f77b4" } },
+    ], {
+      barmode: "stack", yaxis: { title: "% of total liabilities", range: [0, 105] },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.35 },
+      margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
+    });
+
+    const stRows = rows.filter(r => r.st_to_equity != null && Math.abs(r.st_to_equity) < 50).sort((a, b) => b.st_to_equity - a.st_to_equity);
+    plot("ov-stl-eq", [{
+      x: stRows.map(r => r.st_to_equity).reverse(), y: stRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: stRows.map(r => r.st_to_equity > 1.5 ? "#d62728" : r.st_to_equity > 0.8 ? "#ffbb78" : "#2ca02c").reverse() },
+      text: stRows.map(r => r.st_to_equity.toFixed(2) + "x").reverse(), textposition: "outside",
+    }], { xaxis: { title: "Short-term Liab / Equity (x)" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, stRows.length * 22 + 60) });
+
+    const ltlRows = rows.filter(r => r.ltl != null && r.ltl > 0).sort((a, b) => b.ltl - a.ltl);
+    plot("ov-ltl-abs", [{
+      x: ltlRows.map(r => r.ltl).reverse(), y: ltlRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: ltlRows.map(r => r.ltl).reverse(), colorscale: "Blues" },
+      text: ltlRows.map(r => Math.round(r.ltl).toLocaleString()).reverse(), textposition: "outside",
+    }], { xaxis: { title: "Long-term Liabilities (IDR bn)" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, ltlRows.length * 22 + 60) });
 
     // ── ㉕ Business Model Cluster
     const BM_LIST = ["Upstream", "Integrated", "Downstream", "Other"];
