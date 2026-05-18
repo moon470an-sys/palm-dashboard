@@ -80,14 +80,7 @@ export function renderOverview(root) {
       area_sulawesi: num(op.sulawesi_area_ha) || 0, area_other: num(op.other_region_area_ha) || 0,
       mills_n: num(op.mills_count), mill_cap_tph: num(op.mill_capacity_tph),
       ffb_processed_t: num(op.ffb_processed_t), third_party_ffb_t: num(op.third_party_ffb_t),
-      rbdpo_t: num(op.rbdpo_production_t) || 0, olein_t: num(op.olein_production_t) || 0,
-      stearin_t: num(op.stearin_production_t) || 0, pfad_t: num(op.pfad_production_t) || 0,
-      pko_t: num(op.pko_production_t) || 0, pke_t: num(op.pke_production_t) || 0,
-      cpo_refinery: num(op.cpo_refinery_count) || 0, pko_refinery: num(op.pko_refinery_count) || 0,
-      domestic_pct: num(op.domestic_sales_pct), export_pct: num(op.export_sales_pct),
       mature_ha: num(op.mature_area_ha), immature_ha: num(op.immature_area_ha),
-      productive_ha: num(op.productive_age_area_ha), old_ha: num(op.old_age_area_ha),
-      avg_tree_age: num(op.average_tree_age_years), replanting_ha: num(op.replanting_area_ha),
       nucleus_ha: num(op.nucleus_area_ha), plasma_ha: num(op.plasma_area_ha),
       oer_pct: num(op.oer_reported_pct), cpo_price_kg: num(op.average_cpo_selling_price_local_per_kg),
       rev_per_ha: (revenue && planted) ? revenue * 1e9 / planted : null,  // IDR per ha
@@ -142,9 +135,7 @@ export function renderOverview(root) {
     r.m_ebitda = (r.ebitda != null && r.revenue) ? r.ebitda / r.revenue * 100 : null;
     r.m_ebit = (r.ebit != null && r.revenue) ? r.ebit / r.revenue * 100 : null;
     r.m_net = (r.net_profit != null && r.revenue) ? r.net_profit / r.revenue * 100 : null;
-    // Operating leverage proxy: EBITDA - EBIT (≈ D&A)
-    r.da_implied = (r.ebitda != null && r.ebit != null) ? r.ebitda - r.ebit : null;
-    r.capex_da = (r.capex != null && r.da_implied && r.da_implied > 0) ? r.capex / r.da_implied : null;  // CapEx / D&A
+    // (Operating leverage proxy: EBITDA - EBIT ≈ D&A — derive 제거됨, 차트 미사용)
     // Working Capital + Asset composition
     const ca2 = num(r.current_assets_idr_bn);
     const cl2 = num(r.current_liabilities_idr_bn);
@@ -162,12 +153,7 @@ export function renderOverview(root) {
     r.lt_share = (tlTot && ltl != null) ? ltl / tlTot * 100 : null;  // long-term share of total liabilities
     r.st_share = (tlTot && ctl != null) ? ctl / tlTot * 100 : null;
     r.st_to_equity = (ctl != null && r.equity && r.equity > 0) ? ctl / r.equity : null;  // short-term burden vs equity
-    // Downstream Integration Score 0-6 (refinery count + refined product 가짓수)
-    r.downstream_score = (r.cpo_refinery > 0 ? 1 : 0) + (r.pko_refinery > 0 ? 1 : 0)
-      + (r.rbdpo_t > 0 ? 1 : 0) + (r.olein_t > 0 ? 1 : 0)
-      + (r.stearin_t > 0 ? 1 : 0) + (r.pfad_t > 0 ? 1 : 0);
-    r.refined_total_t = (r.rbdpo_t || 0) + (r.olein_t || 0) + (r.stearin_t || 0) + (r.pfad_t || 0);
-    r.refined_per_cpo = (r.refined_total_t > 0 && r.cpo_t > 0) ? r.refined_total_t / r.cpo_t * 100 : null;
+    // (Downstream Integration/Refined products — derive 제거됨, 4-9사만 보고하여 차트 미사용)
     // Tree maturity ratios
     const mTot = (r.mature_ha || 0) + (r.immature_ha || 0);
     r.mature_share = mTot > 0 ? r.mature_ha / mTot * 100 : null;
@@ -238,16 +224,7 @@ export function renderOverview(root) {
     r.q_size = r.revenue ? Math.min(20, Math.log10(r.revenue + 1) * 3) : 0;  // 규모 점수 (log scale)
     r.quality_score = r.q_profit + r.q_cash + r.q_bs + r.q_yield + r.q_size;
     r.quality_band = r.quality_score >= 70 ? "A" : r.quality_score >= 50 ? "B" : r.quality_score >= 30 ? "C" : "D";
-    // Geographic HHI (Herfindahl) — 4지역 점유율 제곱합 (1.0 = 단일지역, 0.25 = 균등 4분할)
-    const areaTotal = (r.area_sumatra || 0) + (r.area_kalimantan || 0) + (r.area_sulawesi || 0) + (r.area_other || 0);
-    if (areaTotal > 0) {
-      const shares = [r.area_sumatra, r.area_kalimantan, r.area_sulawesi, r.area_other].map(a => (a || 0) / areaTotal);
-      r.geo_hhi = shares.reduce((s, v) => s + v * v, 0);
-      r.geo_diversification = 1 - r.geo_hhi;  // 0=완전 집중, 0.75=완전 균등
-      r.area_total_reported = areaTotal;
-    } else {
-      r.geo_hhi = null; r.geo_diversification = null; r.area_total_reported = null;
-    }
+    // (Geographic HHI 제거됨 — 지역 mix는 ⑪ Operations stacked로 충분)
   });
   const allYears = [...new Set(fin.map(r => r.yr))].sort();
   const annualYears = allYears.filter(y => !/Q\d/i.test(y));
