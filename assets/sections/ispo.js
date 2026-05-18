@@ -12,6 +12,11 @@ export function renderIspo(root) {
   const totalHa = berlaku.reduce((s, c) => s + (c.luas_lahan_ha || 0), 0);
   const today = new Date().toISOString().slice(0, 10);
   const exp90 = berlaku.filter(c => c.tanggal_berakhir && c.tanggal_berakhir <= addDays(today, 90)).length;
+  const exp365 = berlaku.filter(c => c.tanggal_berakhir && c.tanggal_berakhir <= addDays(today, 365) && c.tanggal_berakhir > today).length;
+  // 농장 생산 Capa (사용자 4축 일치): TBS·CPO 생산능력 + PKS 처리능력
+  const totalTbs = berlaku.reduce((s, c) => s + (c.volume_tbs_ton_per_tahun || 0), 0);
+  const totalCpo = berlaku.reduce((s, c) => s + (c.volume_cpo_ton_per_tahun || 0), 0);
+  const totalPks = berlaku.reduce((s, c) => s + (c.kapasitas_pks_ton_per_jam || 0), 0);
 
   root.innerHTML = `
     <h2>📜 ISPO (Indonesian Sustainable Palm Oil)</h2>
@@ -21,7 +26,10 @@ export function renderIspo(root) {
       ${kpiHTML("인증서 총수", fmtInt(cert.length), `유효 ${berlaku.length}`, "blue")}
       ${kpiHTML("회사", fmtInt(co.length))}
       ${kpiHTML("총 인증 면적", fmtHa(totalHa))}
+      ${kpiHTML("총 CPO 생산 Capa", `${(totalCpo/1e6).toFixed(2)}M ton/yr`, "유효 인증 합계")}
+      ${kpiHTML("총 PKS 처리능력", `${fmtInt(Math.round(totalPks))} tph`, "Mill capacity")}
       ${kpiHTML("90일내 만료", fmtInt(exp90), "갱신 필요", "warn")}
+      ${kpiHTML("1년내 만료", fmtInt(exp365), "갱신 계획", "warn")}
       ${kpiHTML("인증기관 (LS)", fmtInt(ls.length))}
     </div>
 
@@ -34,6 +42,11 @@ export function renderIspo(root) {
     <div class="grid-2">
       <div class="card"><h3>주(Provinsi)별 인증 면적 Top 15</h3><div id="ispo-prov" class="plot"></div></div>
       <div class="card"><h3>분기별 ISPO 구현률 (Kepmentan 833/2019)</h3><div id="ispo-quarterly" class="plot"></div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><h3>주별 CPO 생산 Capa Top 15 (ton/yr, 유효 인증)</h3><div id="ispo-cpo-prov" class="plot"></div></div>
+      <div class="card"><h3>주별 PKS 처리능력 Top 15 (tph)</h3><div id="ispo-pks-prov" class="plot"></div></div>
     </div>
 
     <div class="card">
@@ -85,6 +98,28 @@ export function renderIspo(root) {
     marker: { color: provSorted.map(p => p[1]), colorscale: "Greens" },
     text: provSorted.map(p => Math.round(p[1]).toLocaleString()), textposition: "outside",
   }], { yaxis: { autorange: "reversed" }, xaxis: { title: "면적 (ha)" } });
+
+  // 주별 CPO 생산 Capa (유효 인증)
+  const cpoProvMap = {};
+  berlaku.forEach(c => { if (c.provinsi && c.volume_cpo_ton_per_tahun) cpoProvMap[c.provinsi] = (cpoProvMap[c.provinsi] || 0) + c.volume_cpo_ton_per_tahun; });
+  const cpoProvSorted = Object.entries(cpoProvMap).sort((a, b) => b[1] - a[1]).slice(0, 15);
+  plot("ispo-cpo-prov", [{
+    x: cpoProvSorted.map(p => p[1]), y: cpoProvSorted.map(p => p[0]),
+    type: "bar", orientation: "h",
+    marker: { color: cpoProvSorted.map(p => p[1]), colorscale: "YlOrRd" },
+    text: cpoProvSorted.map(p => Math.round(p[1]).toLocaleString()), textposition: "outside",
+  }], { yaxis: { autorange: "reversed" }, xaxis: { title: "CPO Capa (ton/yr)" } });
+
+  // 주별 PKS 처리능력
+  const pksProvMap = {};
+  berlaku.forEach(c => { if (c.provinsi && c.kapasitas_pks_ton_per_jam) pksProvMap[c.provinsi] = (pksProvMap[c.provinsi] || 0) + c.kapasitas_pks_ton_per_jam; });
+  const pksProvSorted = Object.entries(pksProvMap).sort((a, b) => b[1] - a[1]).slice(0, 15);
+  plot("ispo-pks-prov", [{
+    x: pksProvSorted.map(p => p[1]), y: pksProvSorted.map(p => p[0]),
+    type: "bar", orientation: "h",
+    marker: { color: pksProvSorted.map(p => p[1]), colorscale: "Blues" },
+    text: pksProvSorted.map(p => Math.round(p[1]).toLocaleString()), textposition: "outside",
+  }], { yaxis: { autorange: "reversed" }, xaxis: { title: "Mill capacity (tph)" } });
 
   // quarterly trend (total scope)
   const qTotal = q.filter(x => x.scope === "total");
