@@ -55,6 +55,11 @@ export function renderIspo(root) {
     </div>
 
     <div class="card">
+      <h3>90일 내 만료 임박 인증서 (유효 상태만, 갱신 행동 필요)</h3>
+      <div id="ispo-expiry-table"></div>
+    </div>
+
+    <div class="card">
       <h3>인증서 검색 + 필터</h3>
       <p class="notice">상태/주/인증기관 헤더 클릭 또는 검색창 입력</p>
       <div id="ispo-table"></div>
@@ -161,6 +166,35 @@ export function renderIspo(root) {
   }, 200);
 
   // table
+  // 90일 내 만료 임박 (berlaku만)
+  const todayD = new Date();
+  const in90D = addDays(today, 90);
+  const expSoonCerts = berlaku
+    .filter(c => c.tanggal_berakhir && c.tanggal_berakhir <= in90D && c.tanggal_berakhir > today)
+    .map(c => ({
+      회사: c.company || "-",
+      유형: c.jenis || "",
+      LS: c.ls_short || c.ls_name?.substring(0, 25) || "",
+      주: c.provinsi || "",
+      면적: Math.round(c.luas_lahan_ha || 0),
+      CPO: Math.round(c.volume_cpo_ton_per_tahun || 0),
+      PKS: c.kapasitas_pks_ton_per_jam ? Math.round(c.kapasitas_pks_ton_per_jam * 100)/100 : 0,
+      만료일: c.tanggal_berakhir,
+      남은일수: Math.ceil((new Date(c.tanggal_berakhir) - todayD) / 86400000),
+    }))
+    .sort((a, b) => a.남은일수 - b.남은일수);
+  makeTable("ispo-expiry-table", [
+    { data: "회사", title: "회사" },
+    { data: "유형", title: "유형" },
+    { data: "LS", title: "인증기관" },
+    { data: "주", title: "주" },
+    { data: "면적", title: "면적(ha)", render: (d) => Number(d).toLocaleString() },
+    { data: "CPO", title: "CPO(t/yr)", render: (d) => d ? Number(d).toLocaleString() : "-" },
+    { data: "PKS", title: "PKS(tph)", render: (d) => d ? Number(d).toLocaleString() : "-" },
+    { data: "만료일", title: "만료일" },
+    { data: "남은일수", title: "남은 일수", render: (d) => `<b style="color:${d<=30?'#d62728':d<=60?'#ff7f0e':'#1f77b4'}">${d}일</b>` },
+  ], expSoonCerts, { pageLength: 20, order: [[8, "asc"]] });
+
   const rows = cert.map(c => ({
     인증번호: c.nomor_sertifikat, 회사: c.company || "-", 유형: c.jenis || "",
     LS: c.ls_short || c.ls_name?.substring(0, 25) || "",
