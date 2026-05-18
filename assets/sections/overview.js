@@ -31,6 +31,12 @@ const PALETTE = ["#2ca02c","#1f77b4","#ff7f0e","#d62728","#9467bd","#8c564b","#e
 export function renderOverview(root) {
   // 회사 메타 — companies.json (회사명 → core_region 등)
   const meta = Object.fromEntries((state.ar.companies || []).map(c => [c.company, c]));
+  // 회사·연도별 operations lookup
+  const opLookup = {};
+  (state.ar.operations || []).forEach(o => {
+    const k = `${o.company}|${o.report_year}`;
+    opLookup[k] = o;
+  });
   const fin = (state.ar.financials || []).map(r => {
     const revenue = num(r.revenue_idr_bn);
     const cfo = num(r.cfo_idr_bn);
@@ -45,12 +51,22 @@ export function renderOverview(root) {
     // mcap (bn IDR) = shares (mn) * price / 1000
     const mcap = mcapReported ?? (shares != null && px != null ? shares * px / 1000 : null);
     const cMeta = meta[r.company] || {};
+    const op = opLookup[`${r.company}|${r.report_year}`] || {};
+    const planted = num(op.planted_area_total_ha);
+    const cpo = num(op.cpo_production_t);
+    const ffb = num(op.ffb_production_t);
     return {
       ...r, company: r.company, short: shortName(r.company),
       hq: cMeta.hq || "", core_region: cMeta.core_region || "", region: classifyRegion(cMeta.core_region),
       business_model: cMeta.business_model || "", primary_business: cMeta.primary_business || "",
       key_red_flags: cMeta.key_red_flags || "", overall_comment: cMeta.overall_comment || "",
       financial_risk_note: r.financial_risk_note || "", liquidity_note: r.liquidity_note || "",
+      planted_ha: planted, ffb_t: ffb, cpo_t: cpo,
+      mills_n: num(op.mills_count), mill_cap_tph: num(op.mill_capacity_tph),
+      oer_pct: num(op.oer_reported_pct), cpo_price_kg: num(op.average_cpo_selling_price_local_per_kg),
+      rev_per_ha: (revenue && planted) ? revenue * 1e9 / planted : null,  // IDR per ha
+      cpo_per_ha: (cpo && planted) ? cpo / planted : null,  // ton/ha CPO
+      ffb_per_ha: (ffb && planted) ? ffb / planted : null,
       revenue, net_profit: np,
       gross_profit: num(r.gross_profit_idr_bn), ebit: num(r.ebit_idr_bn),
       ebitda: num(r.ebitda_reported_idr_bn ?? r.ebitda_calculated_idr_bn),
@@ -244,7 +260,18 @@ export function renderOverview(root) {
       <div id="ov-risk-table"></div>
     </div>
 
-    <h3 class="section-h">⑬ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑬ Operations — Planted ha · CPO · Revenue/ha (실물 운영)</h3>
+    <div class="grid-2">
+      <div class="card"><h3>Planted Area (ha) 랭킹 — 회사 규모 실물 지표</h3><div id="ov-planted" class="plot plot-tall"></div></div>
+      <div class="card"><h3>CPO Production (ton) 랭킹</h3><div id="ov-cpo-prod" class="plot plot-tall"></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>Revenue / Planted ha (IDR/ha) — 토지당 매출 효율</h3><div id="ov-rev-ha" class="plot plot-tall"></div></div>
+      <div class="card"><h3>CPO Yield (ton/ha) — 단위 면적당 CPO 생산성</h3><div id="ov-cpo-yield" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>Mills × Capacity scatter (회사별 mill 수 × 처리 능력 tph)</h3><div id="ov-mills" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">⑭ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + 권역)</h3><div id="ov-table"></div></div>
   `;
 
@@ -653,6 +680,61 @@ export function renderOverview(root) {
       { data: "재무_risk_note", title: "재무 risk note" },
     ], riskTbl, { pageLength: 20, order: [[2, "desc"]] });
 
+    // ── ⑬ Operations (planted ha, CPO, revenue/ha)
+    const plRows = rows.filter(r => r.planted_ha > 0).sort((a, b) => b.planted_ha - a.planted_ha);
+    plot("ov-planted", [{
+      x: plRows.map(r => r.planted_ha).reverse(), y: plRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: plRows.map(r => REGION_COLOR[r.region] || "#7f7f7f").reverse() },
+      text: plRows.map(r => Math.round(r.planted_ha).toLocaleString() + " ha").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>%{x:,.0f} ha<extra></extra>",
+    }], { xaxis: { title: "Planted Area (ha)" }, margin: { l: 220, r: 100, t: 10, b: 40 }, height: Math.max(400, plRows.length * 24 + 80) });
+
+    const cpoRows = rows.filter(r => r.cpo_t > 0).sort((a, b) => b.cpo_t - a.cpo_t);
+    plot("ov-cpo-prod", [{
+      x: cpoRows.map(r => r.cpo_t).reverse(), y: cpoRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: cpoRows.map(r => r.cpo_t).reverse(), colorscale: "YlOrRd" },
+      text: cpoRows.map(r => Math.round(r.cpo_t).toLocaleString() + " t").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>%{x:,.0f} ton CPO<extra></extra>",
+    }], { xaxis: { title: "CPO Production (ton)" }, margin: { l: 220, r: 100, t: 10, b: 40 }, height: Math.max(400, cpoRows.length * 24 + 80) });
+
+    const rhRows = rows.filter(r => r.rev_per_ha != null).sort((a, b) => b.rev_per_ha - a.rev_per_ha);
+    plot("ov-rev-ha", [{
+      x: rhRows.map(r => r.rev_per_ha / 1e6).reverse(),  // IDR mn/ha
+      y: rhRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: rhRows.map(r => r.rev_per_ha).reverse(), colorscale: "Greens" },
+      text: rhRows.map(r => (r.rev_per_ha / 1e6).toFixed(1) + "M").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Revenue/ha: %{x:.2f} IDR mn/ha<extra></extra>",
+    }], { xaxis: { title: "Revenue / Planted ha (IDR mn/ha)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, rhRows.length * 24 + 80) });
+
+    const cyRows = rows.filter(r => r.cpo_per_ha != null).sort((a, b) => b.cpo_per_ha - a.cpo_per_ha);
+    plot("ov-cpo-yield", [{
+      x: cyRows.map(r => r.cpo_per_ha).reverse(), y: cyRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: cyRows.map(r => r.cpo_per_ha).reverse(), colorscale: "Viridis" },
+      text: cyRows.map(r => r.cpo_per_ha.toFixed(2) + " t/ha").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>CPO Yield: %{x:.3f} ton/ha<extra></extra>",
+    }], { xaxis: { title: "CPO Production / Planted ha (ton/ha)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, cyRows.length * 24 + 80) });
+
+    const millRows = rows.filter(r => r.mills_n != null && r.mill_cap_tph != null);
+    plot("ov-mills", [{
+      x: millRows.map(r => r.mills_n), y: millRows.map(r => r.mill_cap_tph),
+      mode: "markers+text", type: "scatter",
+      text: millRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: millRows.map(r => Math.max(10, Math.min(50, Math.sqrt(r.planted_ha || 100) / 30))),
+        color: millRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.75, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>Mills %{x} · 처리능력 %{y} tph<br>크기=planted ha<extra></extra>",
+    }], {
+      xaxis: { title: "Mills count" },
+      yaxis: { title: "Mill Capacity (tph)" },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
     // 자본구조 stacked (equity + liab = assets), 회사별
     const csRows = rows.filter(r => r.equity != null && r.liab != null).sort((a, b) => (b.assets || 0) - (a.assets || 0));
     plot("ov-capstack", [
@@ -673,6 +755,7 @@ export function renderOverview(root) {
       "P/E": r.pe, "P/B": r.pb, "DivY%": r.div_yield,
       "순이익률(%)": r.net_margin, "ROE(%)": r.roe, "ROA(%)": r.roa,
       "D/E(x)": r.debt_eq, "CurR": r.curr_ratio, "ND/EB": r.nd_ebitda,
+      "Planted ha": r.planted_ha, "CPO t": r.cpo_t, "Rev/ha(M)": r.rev_per_ha ? r.rev_per_ha / 1e6 : null,
     }));
     const numFmt = (d) => d == null ? "-" : Number(d).toLocaleString(undefined, { maximumFractionDigits: 0 });
     const pctFmt = (d) => d == null ? "-" : Number(d).toFixed(2);
@@ -698,6 +781,9 @@ export function renderOverview(root) {
       { data: "D/E(x)", title: "D/E x", render: pctFmt },
       { data: "CurR", title: "CurR x", render: pctFmt },
       { data: "ND/EB", title: "ND/EBITDA", render: pctFmt },
+      { data: "Planted ha", title: "Planted ha", render: numFmt },
+      { data: "CPO t", title: "CPO ton", render: numFmt },
+      { data: "Rev/ha(M)", title: "Rev/ha (IDR M)", render: pctFmt },
     ], tableRows, { pageLength: 25 });
   };
 
