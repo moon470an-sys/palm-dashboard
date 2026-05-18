@@ -293,7 +293,21 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Top 8 회사 Radar — 5축 동시 비교</h3><div id="ov-radar" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑮ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑮ Peer Comparison — 회사 select × peer 중앙값 비교</h3>
+    <div class="filter-bar">
+      <label>대상 회사:</label>
+      <select id="ov-peer-co"></select>
+      <label>비교 기준:</label>
+      <select id="ov-peer-base">
+        <option value="region" selected>같은 권역 peer</option>
+        <option value="all">전체 peer (34사)</option>
+      </select>
+      <span class="badge" id="ov-peer-info"></span>
+    </div>
+    <div class="card"><h3>지표별 회사 값 vs Peer 중앙값 (% 차이)</h3><div id="ov-peer-delta" class="plot plot-tall"></div></div>
+    <div class="card"><h3>지표별 절대값 비교 (회사 vs peer 중앙값 vs peer Top quartile)</h3><div id="ov-peer-abs" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">⑯ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -961,6 +975,95 @@ export function renderOverview(root) {
   };
   psSel.addEventListener("change", renderPS);
   renderPS();
+
+  // ── ⑮ Peer Comparison
+  const peerCoSel = document.getElementById("ov-peer-co");
+  const peerBaseSel = document.getElementById("ov-peer-base");
+  const peerInfo = document.getElementById("ov-peer-info");
+  peerCoSel.innerHTML = companies.map(c => `<option value="${c}">${c}</option>`).join("");
+
+  const PEER_METRICS = [
+    { key: "net_margin", label: "Net margin %", fmt: (v) => v.toFixed(2) + "%" },
+    { key: "roe", label: "ROE %", fmt: (v) => v.toFixed(2) + "%" },
+    { key: "roa", label: "ROA %", fmt: (v) => v.toFixed(2) + "%" },
+    { key: "fcf_margin", label: "FCF margin %", fmt: (v) => v.toFixed(2) + "%" },
+    { key: "cash_conv", label: "CFO/NP %", fmt: (v) => v.toFixed(0) + "%" },
+    { key: "nd_ebitda", label: "ND/EBITDA x", fmt: (v) => v.toFixed(2) + "x" },
+    { key: "div_yield", label: "Div Yield %", fmt: (v) => v.toFixed(2) + "%" },
+    { key: "quality_score", label: "Quality Score", fmt: (v) => v.toFixed(0) },
+  ];
+
+  const median = (arr) => {
+    const a = arr.filter(v => v != null && !isNaN(v)).sort((x, y) => x - y);
+    if (a.length === 0) return null;
+    const m = Math.floor(a.length / 2);
+    return a.length % 2 ? a[m] : (a[m-1] + a[m]) / 2;
+  };
+  const quantile = (arr, q) => {
+    const a = arr.filter(v => v != null && !isNaN(v)).sort((x, y) => x - y);
+    if (a.length === 0) return null;
+    const pos = (a.length - 1) * q;
+    const base = Math.floor(pos), rest = pos - base;
+    return a[base + 1] != null ? a[base] + rest * (a[base + 1] - a[base]) : a[base];
+  };
+
+  const renderPeer = () => {
+    const co = peerCoSel.value;
+    const target = fin.find(r => r.short === co && r.yr === ly);
+    if (!target) return;
+    const peerPool = peerBaseSel.value === "region"
+      ? fin.filter(r => r.yr === ly && r.region === target.region && r.short !== co)
+      : fin.filter(r => r.yr === ly && r.short !== co);
+    peerInfo.textContent = `대상 ${co} (${target.region}) · Peer ${peerPool.length}사 · ${ly}`;
+
+    // Delta vs median (%)
+    const deltas = PEER_METRICS.map(m => {
+      const med = median(peerPool.map(r => r[m.key]));
+      const v = target[m.key];
+      if (v == null || med == null || med === 0) return { label: m.label, delta: null, raw: v, med };
+      const delta = m.key === "nd_ebitda" ? (med - v) / Math.abs(med) * 100 : (v - med) / Math.abs(med) * 100;
+      // ND/EBITDA는 낮을수록 좋으므로 부호 반전
+      return { label: m.label, delta, raw: v, med };
+    });
+
+    plot("ov-peer-delta", [{
+      x: deltas.map(d => d.delta).reverse(), y: deltas.map(d => d.label).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: deltas.map(d => d.delta == null ? "#999" : d.delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
+      text: deltas.map(d => d.delta == null ? "n/a" : (d.delta >= 0 ? "+" : "") + d.delta.toFixed(0) + "%").reverse(),
+      textposition: "outside",
+      hovertemplate: "%{y}<br>%{x:+.1f}% vs peer median<extra></extra>",
+    }], {
+      xaxis: { title: `${co} vs peer median (%) — 양수=좋음, ND/EBITDA는 부호 반전`, zeroline: true },
+      margin: { l: 160, r: 80, t: 10, b: 50 }, height: 380,
+    });
+
+    // 절대값 비교: target, peer median, peer top quartile
+    const absBars = PEER_METRICS.map(m => {
+      const peerVals = peerPool.map(r => r[m.key]).filter(v => v != null);
+      // Top quartile: ND/EBITDA는 낮은 게 좋으니 25th percentile
+      const isLowerBetter = m.key === "nd_ebitda";
+      return {
+        label: m.label,
+        target: target[m.key],
+        med: median(peerVals),
+        top: quantile(peerVals, isLowerBetter ? 0.25 : 0.75),
+      };
+    });
+    plot("ov-peer-abs", [
+      { x: absBars.map(b => b.label), y: absBars.map(b => b.target), type: "bar", name: `${co}`, marker: { color: "#1f77b4" } },
+      { x: absBars.map(b => b.label), y: absBars.map(b => b.med), type: "bar", name: "Peer median", marker: { color: "#999" } },
+      { x: absBars.map(b => b.label), y: absBars.map(b => b.top), type: "bar", name: "Peer top quartile", marker: { color: "#2ca02c" } },
+    ], {
+      barmode: "group", yaxis: { title: "지표 값 (단위는 지표별 상이)", zeroline: true },
+      xaxis: { tickangle: -20, automargin: true },
+      legend: { orientation: "h", y: -0.2 },
+      margin: { l: 70, r: 20, t: 10, b: 100 }, height: 480,
+    });
+  };
+  peerCoSel.addEventListener("change", renderPeer);
+  peerBaseSel.addEventListener("change", renderPeer);
+  renderPeer();
 
   // Top 10 EPS 시계열 (기준연도 EPS 상위)
   const lyEps = fin.filter(r => r.yr === ly && r.eps != null).sort((a, b) => b.eps - a.eps).slice(0, 10).map(r => r.short);
