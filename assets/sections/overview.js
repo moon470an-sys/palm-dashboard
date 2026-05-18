@@ -646,7 +646,17 @@ export function renderOverview(root) {
       <div class="card"><h3>Revenue CAGR (전 기간) — 장기 성장률</h3><div id="ov-rev-cagr" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㊴ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊴ Quarterly Snapshot — 2026 Q1 가장 최신 데이터</h3>
+    <p class="notice">
+      2026 Q1 보고된 회사 단일 분기 매출/순이익. Annualized = Q1 × 4 (단순 추정, seasonality 미반영). 2025 full-year와 비교.
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>2026 Q1 매출 ranking</h3><div id="ov-q1-rev" class="plot plot-tall"></div></div>
+      <div class="card"><h3>2026 Q1 순이익 ranking (음수 포함)</h3><div id="ov-q1-np" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>2026 Q1 Annualized (×4) vs 2025 Full-Year — 가속/감속</h3><div id="ov-q1-annualized" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㊵ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1986,6 +1996,47 @@ export function renderOverview(root) {
   };
   wfSel.addEventListener("change", renderWaterfall);
   renderWaterfall();
+
+  // ── ㊴ Quarterly Snapshot (2026 Q1)
+  const Q1_YR = "2026 Q1";
+  if (allYears.includes(Q1_YR)) {
+    const q1Rows = fin.filter(r => r.yr === Q1_YR);
+    const q1Rev = q1Rows.filter(r => r.revenue != null).sort((a, b) => b.revenue - a.revenue);
+    plot("ov-q1-rev", [{
+      x: q1Rev.map(r => r.revenue).reverse(), y: q1Rev.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: q1Rev.map(r => REGION_COLOR[r.region] || "#7f7f7f").reverse() },
+      text: q1Rev.map(r => Math.round(r.revenue).toLocaleString()).reverse(), textposition: "outside",
+    }], { xaxis: { title: "Revenue Q1 2026 (IDR bn)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, q1Rev.length * 24 + 60) });
+
+    const q1NP = q1Rows.filter(r => r.net_profit != null).sort((a, b) => b.net_profit - a.net_profit);
+    plot("ov-q1-np", [{
+      x: q1NP.map(r => r.net_profit).reverse(), y: q1NP.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: q1NP.map(r => r.net_profit >= 0 ? "#2ca02c" : "#d62728").reverse() },
+      text: q1NP.map(r => Math.round(r.net_profit).toLocaleString()).reverse(), textposition: "outside",
+    }], { xaxis: { title: "Net Profit Q1 2026 (IDR bn)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, q1NP.length * 24 + 60) });
+
+    // Annualized × 4 vs 2025
+    const annData = q1Rows.map(r => {
+      const fy2025 = fin.find(x => x.short === r.short && x.yr === "2025" && x.revenue != null);
+      if (!fy2025) return null;
+      const annualized = r.revenue * 4;
+      const delta = (annualized - fy2025.revenue) / fy2025.revenue * 100;
+      return { short: r.short, region: r.region, fy2025: fy2025.revenue, annualized, delta };
+    }).filter(Boolean).sort((a, b) => b.delta - a.delta);
+
+    plot("ov-q1-annualized", [
+      { x: annData.map(r => r.short), y: annData.map(r => r.fy2025), type: "bar", name: "2025 FY 매출", marker: { color: "#9ca3af" } },
+      { x: annData.map(r => r.short), y: annData.map(r => r.annualized), type: "bar", name: "Q1 ×4 Annualized", marker: { color: "#1f77b4" } },
+      { x: annData.map(r => r.short), y: annData.map(r => r.delta), type: "scatter", mode: "lines+markers+text", name: "Δ %", line: { color: "#d62728", width: 2 }, marker: { color: "#d62728", size: 6 }, yaxis: "y2", text: annData.map(r => (r.delta >= 0 ? "+" : "") + r.delta.toFixed(0) + "%"), textposition: "top center", textfont: { size: 9 } },
+    ], {
+      yaxis: { title: "Revenue (IDR bn)" },
+      yaxis2: { title: "Δ (%)", overlaying: "y", side: "right", zeroline: true },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.3 }, margin: { l: 70, r: 60, t: 10, b: 130 }, height: 480, barmode: "group",
+    });
+  }
 
   // ── ㊳ Revenue Trend & Stability
   const revAll = companies.map(co => {
