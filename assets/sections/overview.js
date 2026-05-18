@@ -737,7 +737,13 @@ export function renderOverview(root) {
     <div class="card"><h3>Top 12 NWC 회사 다년 시계열</h3><div id="ov-nwc-trend" class="plot plot-tall"></div></div>
     <div class="card"><h3>NWC / Revenue (%) 다년 평균 — 운전자금 강도</h3><div id="ov-nwc-rev-avg" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㊽ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊽ Best in Class Awards — 카테고리별 1위 회사</h3>
+    <p class="notice">
+      8개 핵심 카테고리에서 기준연도 1위 회사 + Top 3 시각 카드. 각 카테고리별 강자 한눈에.
+    </p>
+    <div class="card"><h3>Award Cards</h3><div id="ov-awards" class="awards"></div></div>
+
+    <h3 class="section-h">㊾ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1359,6 +1365,38 @@ export function renderOverview(root) {
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
+
+    // ── ㊽ Best in Class Awards
+    const AWARDS = [
+      { key: "revenue", label: "매출 (Revenue)", icon: "💰", fmt: (v) => `${Math.round(v).toLocaleString()} bn`, higher: true },
+      { key: "net_profit", label: "순이익 (NP)", icon: "📈", fmt: (v) => `${Math.round(v).toLocaleString()} bn`, higher: true },
+      { key: "roe", label: "ROE", icon: "🎯", fmt: (v) => v.toFixed(2) + "%", higher: true },
+      { key: "net_margin", label: "Net Margin", icon: "✨", fmt: (v) => v.toFixed(2) + "%", higher: true },
+      { key: "quality_score", label: "Quality Score", icon: "🏆", fmt: (v) => v.toFixed(1), higher: true },
+      { key: "fcf", label: "FCF", icon: "💵", fmt: (v) => `${Math.round(v).toLocaleString()} bn`, higher: true },
+      { key: "div_yield", label: "Div Yield", icon: "🎁", fmt: (v) => v.toFixed(2) + "%", higher: true },
+      { key: "pe", label: "P/E (저평가)", icon: "💎", fmt: (v) => v.toFixed(2) + "x", higher: false, filter: (r) => r.pe > 0 && r.pe < 100 },
+    ];
+    const awardsHTML = AWARDS.map(award => {
+      let pool = rows.filter(r => r[award.key] != null);
+      if (award.filter) pool = pool.filter(award.filter);
+      pool.sort((a, b) => award.higher ? b[award.key] - a[award.key] : a[award.key] - b[award.key]);
+      const top3 = pool.slice(0, 3);
+      return `
+        <div class="award-card">
+          <div class="award-head"><span class="award-icon">${award.icon}</span><span class="award-label">${award.label}</span></div>
+          ${top3.length === 0 ? `<div class="award-empty">데이터 없음</div>` :
+            top3.map((r, i) => `
+              <div class="award-row award-rank-${i+1}">
+                <div class="award-medal">${i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</div>
+                <div class="award-co">${r.short}<div class="award-region">${r.region}</div></div>
+                <div class="award-val">${award.fmt(r[award.key])}</div>
+              </div>
+            `).join("")}
+        </div>
+      `;
+    }).join("");
+    document.getElementById("ov-awards").innerHTML = awardsHTML;
 
     // ── ㊹ Tax & Interest Burden
     const neRows = rows.filter(r => r.np_to_ebit != null && r.np_to_ebit > 0).sort((a, b) => b.np_to_ebit - a.np_to_ebit);
