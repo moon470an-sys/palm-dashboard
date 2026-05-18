@@ -77,7 +77,6 @@ export async function loadAll() {
 // --- 유틸 ---
 export const fmtInt = (n) => n == null ? "-" : Number(n).toLocaleString();
 export const fmtHa = (n) => n == null ? "-" : Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }) + " ha";
-export const fmtNum = (n, d = 0) => n == null ? "-" : Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
 
 export function kpiHTML(label, value, delta = "", cls = "") {
   return `<div class="kpi ${cls}">
