@@ -582,12 +582,26 @@ export function renderOverview(root) {
     const sumAsset = rows.reduce((s, r) => s + (r.assets || 0), 0);
     const sumMcap = rows.reduce((s, r) => s + (r.mcap || 0), 0);
     const profitable = rows.filter(r => r.net_profit > 0).length;
+    // 농장·생산 KPI (4축: 농장·Capa·효율)
+    const sumPlanted = rows.reduce((s, r) => s + (r.planted_ha || 0), 0);
+    const sumCpo = rows.reduce((s, r) => s + (r.cpo_t || 0), 0);
+    const sumFfb = rows.reduce((s, r) => s + (r.ffb_t || 0), 0);
+    const sumMills = rows.reduce((s, r) => s + (r.mills_n || 0), 0);
+    const sumMillCap = rows.reduce((s, r) => s + (r.mill_cap_tph || 0), 0);
+    const plantedN = rows.filter(r => r.planted_ha > 0).length;
+    const cpoN = rows.filter(r => r.cpo_t > 0).length;
     kpiBox.innerHTML = [
+      // 재무 KPI
       kpiHTML("회사 수", `${rows.length}/${companies.length}`),
       kpiHTML(`${yr} 매출 합`, fmtBn(sumRev), "IDR bn"),
       kpiHTML(`${yr} 순이익 합`, fmtBn(sumNp), `흑자 ${profitable}사`, sumNp >= 0 ? "blue" : "error"),
       kpiHTML(`${yr} 총자산 합`, fmtBn(sumAsset)),
-      kpiHTML(`${yr} 시가총액 합`, fmtBn(sumMcap), `${rows.filter(r => r.mcap != null).length}사 합산`, "warn"),
+      kpiHTML(`${yr} 시가총액 합`, fmtBn(sumMcap), `${rows.filter(r => r.mcap != null).length}사`, "warn"),
+      // 농장 KPI
+      kpiHTML("🌴 Planted ha 합", sumPlanted > 0 ? `${(sumPlanted/1000).toFixed(0)}k ha` : "n/a", `${plantedN}사 보고`),
+      kpiHTML("🛢 CPO 생산 합", sumCpo > 0 ? `${(sumCpo/1000).toFixed(0)}k ton` : "n/a", `${cpoN}사 보고`),
+      kpiHTML("🌾 FFB 생산 합", sumFfb > 0 ? `${(sumFfb/1000).toFixed(0)}k ton` : "n/a"),
+      kpiHTML("🏭 Mills 합", sumMills > 0 ? `${sumMills}` : "n/a", sumMillCap > 0 ? `처리 ${sumMillCap.toFixed(0)} tph` : ""),
     ].join("");
 
     // ── 랭킹 막대 (지표 select)
