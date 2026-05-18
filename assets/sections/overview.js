@@ -364,7 +364,17 @@ export function renderOverview(root) {
       <div class="card"><h3>EBITDA Margin × EBIT Margin scatter (operating leverage proxy)</h3><div id="ov-eb-scatter" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑲ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑲ Multi-Year 평균 (최근 3년) — Consistency 분석</h3>
+    <p class="notice">
+      최근 3개 annual 보고기간 평균 ROE / Net Margin / FCF Margin / Net Debt-EBITDA + 표준편차로 "꾸준한 회사" vs "변동 큰 회사" 식별.
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>3yr 평균 ROE — Smoother 수익성</h3><div id="ov-avg-roe" class="plot plot-tall"></div></div>
+      <div class="card"><h3>3yr 평균 Net Margin</h3><div id="ov-avg-margin" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>3yr 평균 vs 변동성(StdDev) — Consistency Map</h3><div id="ov-consistency" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">⑳ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -985,6 +995,70 @@ export function renderOverview(root) {
       xaxis: { title: "Diversification (1 - HHI)" },
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // ── ⑲ Multi-Year Average (3yr) — 회사별, 최근 3 annual year
+    const last3 = annualYears.slice(-3);
+    const mean = (a) => { const x = a.filter(v => v != null); return x.length ? x.reduce((s, v) => s + v, 0) / x.length : null; };
+    const stddev = (a) => {
+      const x = a.filter(v => v != null);
+      if (x.length < 2) return null;
+      const m = x.reduce((s, v) => s + v, 0) / x.length;
+      return Math.sqrt(x.reduce((s, v) => s + (v - m) ** 2, 0) / (x.length - 1));
+    };
+    const avgRows = companies.map(co => {
+      const series = fin.filter(r => r.short === co && last3.includes(r.yr));
+      if (series.length === 0) return null;
+      return {
+        short: co, region: series[series.length - 1].region,
+        n: series.length,
+        avg_roe: mean(series.map(r => r.roe)),
+        avg_margin: mean(series.map(r => r.net_margin)),
+        avg_fcf_margin: mean(series.map(r => r.fcf_margin)),
+        avg_nd_eb: mean(series.map(r => r.nd_ebitda)),
+        std_roe: stddev(series.map(r => r.roe)),
+        std_margin: stddev(series.map(r => r.net_margin)),
+        revenue: series[series.length - 1].revenue,
+      };
+    }).filter(Boolean);
+
+    const arRows = [...avgRows].filter(r => r.avg_roe != null).sort((a, b) => b.avg_roe - a.avg_roe);
+    plot("ov-avg-roe", [{
+      x: arRows.map(r => r.avg_roe).reverse(), y: arRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: arRows.map(r => r.avg_roe >= 15 ? "#2ca02c" : r.avg_roe >= 5 ? "#1f77b4" : r.avg_roe >= 0 ? "#ffbb78" : "#d62728").reverse() },
+      text: arRows.map(r => r.avg_roe.toFixed(1) + "%").reverse(), textposition: "outside",
+      hovertemplate: `%{y}<br>3yr Avg ROE: %{x:.2f}% (n=${last3.length})<extra></extra>`,
+    }], { xaxis: { title: `3yr 평균 ROE (%) — ${last3.join("/")}`, zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, arRows.length * 22 + 60) });
+
+    const amRows = [...avgRows].filter(r => r.avg_margin != null).sort((a, b) => b.avg_margin - a.avg_margin);
+    plot("ov-avg-margin", [{
+      x: amRows.map(r => r.avg_margin).reverse(), y: amRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: amRows.map(r => r.avg_margin >= 0 ? "#2ca02c" : "#d62728").reverse() },
+      text: amRows.map(r => r.avg_margin.toFixed(1) + "%").reverse(), textposition: "outside",
+    }], { xaxis: { title: `3yr 평균 Net Margin (%)`, zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, amRows.length * 22 + 60) });
+
+    // Consistency Map: 평균 ROE × StdDev (낮은 stddev = consistent)
+    const csRows2 = avgRows.filter(r => r.avg_roe != null && r.std_roe != null);
+    plot("ov-consistency", [{
+      x: csRows2.map(r => r.std_roe), y: csRows2.map(r => r.avg_roe),
+      mode: "markers+text", type: "scatter",
+      text: csRows2.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: csRows2.map(r => Math.max(10, Math.min(48, Math.sqrt(r.revenue || 100) / 4))),
+        color: csRows2.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>3yr ROE %{y:.2f}%<br>변동성(StdDev) %{x:.2f}<extra></extra>",
+    }], {
+      xaxis: { title: "ROE StdDev (낮을수록 consistent)" },
+      yaxis: { title: "3yr 평균 ROE (%)", zeroline: true },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
+      annotations: [
+        { x: 1, y: 25, text: "이상: 고ROE·꾸준", showarrow: false, font: { color: "#2ca02c", size: 11 } },
+        { x: 1, y: -15, text: "지루: 저ROE·꾸준", showarrow: false, font: { color: "#999", size: 11 } },
+      ],
     });
 
     // ── ⑱ Margin Cascade
