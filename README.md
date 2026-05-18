@@ -98,11 +98,17 @@ dashboard/
 - **GAPKI**: gapki.id/member-gapki/
 - **IDX (Annual Report)**: palm_longlist (Claude generated + NotebookLM verified, 34 회사)
 
-## 검증 결과 (2026-05-18)
+## 검증 결과 (2026-05-19)
 
-- 6 탭 모두 단독 source 검증 OK · cross-reference 흔적 모두 제거
+- 6 탭 모두 단독 source 검증 OK · cross-reference 흔적 모두 제거 (cross_matching/idx_companies 로드도 제거)
 - 콘솔 에러 0개
-- Lazy rendering으로 초기 로드 시간 단축
+- Lazy rendering (IntersectionObserver, viewport 200px 전 미리 렌더)으로 초기 로드 단축
 - DataTables 검색/페이징, Plotly 차트 모두 정상
 - 지도 (ISPO 탭) OSM 타일 + 주별 면적 원
 - footer에 DB size + 갱신 시각 자동 표시
+- a11y: skip-link, focus-visible outline, aria-current, prefers-reduced-motion
+- print stylesheet (PDF 인쇄 시 모든 탭 노출)
+- 모바일 반응형 (≤900px)
+- favicon (palm emoji SVG) + Open Graph 메타
+- 브라우저 nav: hashchange listener + pushState (뒤로가기 지원)
+- 보안: target=\"_blank\" 외부 링크 rel=\"noopener\"
