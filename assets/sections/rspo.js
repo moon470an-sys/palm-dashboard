@@ -9,8 +9,10 @@ export function renderRspo(root) {
   const expired = idMembers.filter(m => m.license_status === 'EXPIRED').length;
   const suspended = idMembers.filter(m => m.license_status === 'SUSPENDED').length;
   const terminated = idMembers.filter(m => m.license_status === 'TERMINATED').length;
-  const pcArea = idMembers.filter(m => m.category === 'pc').reduce((s, m) => s + (m.area_ha || 0), 0);
-  const cspoTotal = idMembers.reduce((s, m) => s + (m.cspo_volume_ton || 0), 0);
+  const pcWithArea = idMembers.filter(m => m.category === 'pc' && m.area_ha);
+  const pcArea = pcWithArea.reduce((s, m) => s + (m.area_ha || 0), 0);
+  const cspoCompanies = idMembers.filter(m => m.cspo_volume_ton);
+  const cspoTotal = cspoCompanies.reduce((s, m) => s + (m.cspo_volume_ton || 0), 0);
 
   // 만료 분석
   const today = new Date();
@@ -32,8 +34,8 @@ export function renderRspo(root) {
 
     <div class="kpis">
       ${kpiHTML("Indonesia RSPO 회원", fmtInt(idMembers.length), `Active ${active} · Expired ${expired}`, "blue")}
-      ${kpiHTML("PC 면적 (P&C, 145사 보고)", `${(pcArea/1e6).toFixed(2)}M ha`, `${fmtInt(pcArea)} ha`)}
-      ${kpiHTML("CSPO Volume (1496사)", `${(cspoTotal/1e6).toFixed(2)}M ton/yr`, "Certified Sustainable Palm Oil")}
+      ${kpiHTML(`PC 면적 (P&C, ${pcWithArea.length}사 보고)`, `${(pcArea/1e6).toFixed(2)}M ha`, `${fmtInt(pcArea)} ha`)}
+      ${kpiHTML(`CSPO Volume (${cspoCompanies.length}사)`, `${(cspoTotal/1e6).toFixed(2)}M ton/yr`, "Certified Sustainable Palm Oil")}
       ${kpiHTML("90일 내 만료", fmtInt(exp90), "갱신 임박", "warn")}
       ${kpiHTML("1년 내 만료", fmtInt(exp365), "갱신 계획 필요", "warn")}
       ${kpiHTML("Indonesia 점유 (글로벌)", `${(idGlobal/globalTotal*100).toFixed(1)}%`, `${fmtInt(idGlobal)} / ${fmtInt(globalTotal)}`)}
