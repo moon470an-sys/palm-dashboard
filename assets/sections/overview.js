@@ -299,7 +299,7 @@ export function renderOverview(root) {
       <div class="card"><h3>시가총액 Treemap</h3><div id="ov-tree-mcap" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑥ Cash Flow Deep Dive — 통합 (분해 · Waterfall · 효율 · Quality)</h3>
+    <h3 class="section-h">④ Cash Flow Deep Dive — 통합 (분해 · Waterfall · 효율 · Quality)</h3>
     <p class="notice">
       CFO 흐름 + 자본 사용 + 효율 매트릭스 + earnings quality 4축 통합. 회사 select로 waterfall 분석.
     </p>
@@ -317,7 +317,7 @@ export function renderOverview(root) {
       <div class="card"><h3>Earnings Quality: Top 8 회사 CFO(막대) vs NP(라인)</h3><div id="ov-cf-eq" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑦ Valuation & Returns — 통합 (Multiples · Dividend · Quality 매트릭스)</h3>
+    <h3 class="section-h">⑤ Valuation & Returns — 통합 (Multiples · Dividend · Quality 매트릭스)</h3>
     <p class="notice">
       Multiple ranking + Quality 매트릭스 + 배당 분석 통합. Multiple/매트릭스 축은 select로 전환.
     </p>
@@ -342,7 +342,7 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>배당 분석 — Payout % / Div Total bn / FCF Coverage (3축 grouped)</h3><div id="ov-val-div" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑧ Industry Structure — 권역·BM·집중도·IPO Vintage 통합</h3>
+    <h3 class="section-h">⑥ Industry Structure — 권역·BM·집중도·IPO Vintage 통합</h3>
     <p class="notice">
       산업 구조 4축: 권역(Sumatra/Kalimantan/Java/etc) × Business Model(Upstream/Integrated/Downstream) × 매출 집중도 × IPO 시점.
     </p>
@@ -356,7 +356,7 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>권역별 매출 시계열 (stacked area)</h3><div id="ov-ind-ts" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑨ 성장률 (Growth) — YoY 매출·순이익 변화</h3>
+    <h3 class="section-h">⑦ 성장률 (Growth) — YoY 매출·순이익 변화</h3>
     <div class="filter-bar">
       <label>비교 기간:</label>
       <select id="ov-growth-pair"></select>
@@ -368,7 +368,7 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Growth × Margin 매트릭스 (성장 vs 수익성, 크기=매출, 색=권역)</h3><div id="ov-grow-margin" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑩ Multi-Year Trend Explorer — 8개 지표 통합</h3>
+    <h3 class="section-h">⑧ Multi-Year Trend Explorer — 8개 지표 통합</h3>
     <p class="notice">
       회사별 다년 시계열을 한 화면에서 비교: 지표 select로 Top 12 라인 + Δ ranking + CAGR ranking 동시 갱신. 기존 분산된 trend 차트를 모두 통합.
     </p>
@@ -392,7 +392,7 @@ export function renderOverview(root) {
       <div class="card"><h3>CAGR (%/yr) ranking</h3><div id="ov-trend-cagr" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑪ Balance Sheet Deep Dive — 통합 (자본구조 · 자산 · 부채 만기 · 유동성)</h3>
+    <h3 class="section-h">⑨ Balance Sheet Deep Dive — 통합 (자본구조 · 자산 · 부채 만기 · 유동성)</h3>
     <p class="notice">
       자본구조 + 자산 구성 + 부채 만기 + 유동성 ratio + Net Debt 분해 통합. 5개 차트로 BS 전체 한눈에.
     </p>
@@ -406,7 +406,7 @@ export function renderOverview(root) {
       <div class="card"><h3>Cash Position 매트릭스 (Cash/Mcap × Cash Ratio)</h3><div id="ov-bs-cash" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑫ Per-Share & 주가 시계열 — EPS · NAV · DPS · 종가</h3>
+    <h3 class="section-h">⑩ Per-Share & 주가 시계열 — EPS · NAV · DPS · 종가</h3>
     <div class="filter-bar">
       <label>주당 지표:</label>
       <select id="ov-ps-metric">
@@ -423,7 +423,7 @@ export function renderOverview(root) {
       <div class="card"><h3>DPS 지급 회사 (기준연도, 0 제외)</h3><div id="ov-dps" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑬ Operations Deep Dive — 통합 (Planted · 지역 · 수령 · 공장 · 정제 · 효율)</h3>
+    <h3 class="section-h">⑪ Operations Deep Dive — 통합 (Planted · 지역 · 수령 · 공장 · 정제 · 효율)</h3>
     <p class="notice">
       7개 분산 섹션 통합: Planted Area + 지역 분포 + Tree Maturity + Plasma + Mill 운영 + Downstream + 단위면적당 효율.
     </p>
@@ -437,7 +437,7 @@ export function renderOverview(root) {
       <div class="card"><h3>Mill 운영: 처리능력(tph) × 자체 FFB (색=3rd party share)</h3><div id="ov-op-mill" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑭ Quality & Risk 종합 평가 (통합)</h3>
+    <h3 class="section-h">⑫ Quality & Risk 종합 평가 (통합)</h3>
     <p class="notice">
       Quality Score (5축: ROE·CFO/NP·ND/EBITDA·Yield·Size, 각 0-20) + Risk Score (재무 위험 + 텍스트 hint). 4분면으로 회사 포지셔닝 + Top 8 radar + Red Flags 노트.
     </p>
@@ -451,7 +451,7 @@ export function renderOverview(root) {
       <div id="ov-risk-table"></div>
     </div>
 
-    <h3 class="section-h">⑮ Compare Tool — Peer 중앙값 + Percentile + 두 회사 비교 (통합)</h3>
+    <h3 class="section-h">⑬ Compare Tool — Peer 중앙값 + Percentile + 두 회사 비교 (통합)</h3>
     <p class="notice">
       회사 select → Peer 중앙값/Top quartile 비교 + 8지표 percentile bar. 회사 2 선택 시 두 회사 percentile overlay 비교.
     </p>
@@ -472,7 +472,7 @@ export function renderOverview(root) {
       <div class="card"><h3>A vs B Percentile overlay (0=낮음 100=최상)</h3><div id="ov-cmp-pct" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑯ DuPont 분해 — ROE = 마진 × 자산회전 × 레버리지</h3>
+    <h3 class="section-h">⑭ DuPont 분해 — ROE = 마진 × 자산회전 × 레버리지</h3>
     <p class="notice">
       DuPont: ROE = (Net Profit / Revenue) × (Revenue / Assets) × (Assets / Equity)
       = 순이익률 × 자산회전율 × 자본승수. 같은 ROE라도 분해 패턴이 다르면 비즈니스 성격이 다름.
@@ -484,7 +484,7 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Margin × Turnover scatter (색=레버리지, 크기=ROE) — 효율 vs 회전</h3><div id="ov-dp-scatter" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑱ Margin 분석 통합 (Cascade · Compression · Operating Leverage)</h3>
+    <h3 class="section-h">⑮ Margin 분석 통합 (Cascade · Compression · Operating Leverage)</h3>
     <p class="notice">
       4단계 마진 분해 + 다년 압축 detector + Operating Leverage 통합. Gross→EBITDA→EBIT→Net 각 단계 + 시간에 따른 마진 변화.
     </p>
@@ -494,7 +494,7 @@ export function renderOverview(root) {
       <div class="card"><h3>Operating Leverage: Revenue CAGR × EBITDA CAGR (대각선 위=positive)</h3><div id="ov-mrg-opl" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑲ Consistency 분석 — 3yr 평균 + 전기간 안정성 통합</h3>
+    <h3 class="section-h">⑯ Consistency 분석 — 3yr 평균 + 전기간 안정성 통합</h3>
     <p class="notice">
       최근 3년 평균 (Smoother ROE/Margin) + 전 기간 흑자 지속률·NP 변동 계수 결합. "꾸준히 우량" 회사 식별.
     </p>
@@ -504,7 +504,7 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>흑자/적자 연수 + Net Profit CV (회사별 통합)</h3><div id="ov-cons-bar" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉑ Quarterly Snapshot — 2026 Q1 가장 최신 데이터</h3>
+    <h3 class="section-h">⑰ Quarterly Snapshot — 2026 Q1 가장 최신 데이터</h3>
     <p class="notice">
       2026 Q1 보고된 회사 단일 분기 매출/순이익. Annualized = Q1 × 4 (단순 추정, seasonality 미반영). 2025 full-year와 비교.
     </p>
@@ -514,7 +514,7 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>2026 Q1 Annualized (×4) vs 2025 Full-Year — 가속/감속</h3><div id="ov-q1-annualized" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㊹ Tax & Interest Burden — EBIT → NP 전환율</h3>
+    <h3 class="section-h">⑱ Tax & Interest Burden — EBIT → NP 전환율</h3>
     <p class="notice">
       NP/EBIT 비율 = EBIT 100원이 NP로 얼마나 남는가. 80%+ 효율 · 50-80% 정상 · 50%↓ 세금/이자 부담 큼. 음수 = 적자.
     </p>
@@ -524,14 +524,14 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>EBIT vs NP scatter (이상: y=x 라인 가까이, 멀수록 부담 큼)</h3><div id="ov-ebit-np" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㊽ Best in Class Awards — 카테고리별 1위 회사</h3>
+    <h3 class="section-h">⑲ Best in Class Awards — 카테고리별 1위 회사</h3>
     <p class="notice">
       8개 핵심 카테고리에서 기준연도 1위 회사 + Top 3 시각 카드. 각 카테고리별 강자 한눈에.
     </p>
     <div class="card"><h3>Award Cards</h3><div id="ov-awards" class="awards"></div></div>
 
 
-    <h3 class="section-h">⑴ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑳ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
