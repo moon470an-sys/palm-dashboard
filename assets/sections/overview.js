@@ -730,7 +730,14 @@ export function renderOverview(root) {
     <div class="card"><h3>EBITDA CAGR vs Revenue CAGR scatter (대각선 위 = positive leverage)</h3><div id="ov-opl" class="plot plot-tall"></div></div>
     <div class="card"><h3>Operating Leverage ratio (EBITDA CAGR − Revenue CAGR pp) ranking</h3><div id="ov-opl-rank" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㊼ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊼ Working Capital 다년 변화</h3>
+    <p class="notice">
+      NWC 시계열 + NWC/Revenue 비중. NWC 증가 ↑이면 운전자금 묶임 (캐시 부담), 감소 ↓이면 efficient management.
+    </p>
+    <div class="card"><h3>Top 12 NWC 회사 다년 시계열</h3><div id="ov-nwc-trend" class="plot plot-tall"></div></div>
+    <div class="card"><h3>NWC / Revenue (%) 다년 평균 — 운전자금 강도</h3><div id="ov-nwc-rev-avg" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㊽ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -2234,6 +2241,37 @@ export function renderOverview(root) {
     marker: { color: nmD.map(r => r.nm_delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
     text: nmD.map(r => (r.nm_delta >= 0 ? "+" : "") + r.nm_delta.toFixed(1) + "pp").reverse(), textposition: "outside",
   }], { xaxis: { title: "Net Margin Δ (pp, latest − first)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, nmD.length * 24 + 60) });
+
+  // ── ㊼ Working Capital 다년
+  const nwcSeries = companies.map(co => {
+    const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.nwc != null).sort((a, b) => a.yr.localeCompare(b.yr));
+    return { short: co, region: s[s.length - 1]?.region, s };
+  }).filter(r => r.s.length > 0);
+
+  const nwcTop12 = [...nwcSeries].map(r => ({ ...r, last: r.s[r.s.length - 1].nwc })).sort((a, b) => Math.abs(b.last) - Math.abs(a.last)).slice(0, 12);
+  plot("ov-nwc-trend", nwcTop12.map(s => ({
+    x: s.s.map(r => r.yr), y: s.s.map(r => r.nwc),
+    name: s.short, type: "scatter", mode: "lines+markers",
+    line: { color: colorMap[s.short], width: 2 }, marker: { color: colorMap[s.short], size: 6 },
+  })), {
+    yaxis: { title: "NWC (IDR bn)", zeroline: true },
+    legend: { orientation: "h", y: -0.18, font: { size: 9 } },
+    margin: { l: 70, r: 20, t: 10, b: 80 }, height: 480,
+  });
+
+  const nwcRevAvg = companies.map(co => {
+    const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.nwc_per_rev != null && Math.abs(r.nwc_per_rev) < 500);
+    if (s.length === 0) return null;
+    const m = s.reduce((sum, r) => sum + r.nwc_per_rev, 0) / s.length;
+    return { short: co, region: s[s.length - 1].region, avg: m };
+  }).filter(Boolean).sort((a, b) => b.avg - a.avg);
+
+  plot("ov-nwc-rev-avg", [{
+    x: nwcRevAvg.map(r => r.avg).reverse(), y: nwcRevAvg.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: nwcRevAvg.map(r => r.avg > 50 ? "#ffbb78" : r.avg >= 0 ? "#1f77b4" : "#d62728").reverse() },
+    text: nwcRevAvg.map(r => r.avg.toFixed(1) + "%").reverse(), textposition: "outside",
+  }], { xaxis: { title: "다년 평균 NWC / Revenue (%)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, nwcRevAvg.length * 24 + 60) });
 
   // ── ㊻ EBITDA vs Revenue Growth (Operating Leverage)
   const opLev = companies.map(co => {
