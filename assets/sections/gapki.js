@@ -18,7 +18,6 @@ export function renderGapki(root) {
     branchCount.set(r.member_name, (branchCount.get(r.member_name) || 0) + 1);
   });
   const multiBranch = [...branchCount.entries()].filter(([, n]) => n > 1);
-  const topMulti = [...branchCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
 
   // 지역(주) 분포 — Pusat 제외 (지방 거점만)
   const regionCount = new Map();
@@ -45,10 +44,7 @@ export function renderGapki(root) {
       ${kpiHTML("전화 보유 row", fmtInt(withPhone), `${(withPhone/rows.length*100).toFixed(1)}%`)}
     </div>
 
-    <div class="grid-2">
-      <div class="card"><h3>지역별 거점 분포 (Pusat 제외)</h3><div id="gapki-region" class="plot"></div></div>
-      <div class="card"><h3>회사별 지점 수 Top 30 (본사+지방)</h3><div id="gapki-topbranch" class="plot"></div></div>
-    </div>
+    <div class="card"><h3>지역별 거점 분포 (Pusat 제외)</h3><div id="gapki-region" class="plot"></div></div>
 
     <div class="card">
       <h3>회원사 전체 명단 (검색·정렬)</h3>
@@ -74,21 +70,6 @@ export function renderGapki(root) {
     height: Math.max(320, regionSorted.length * 22 + 60),
     xaxis: { title: "거점 수" },
     margin: { l: 130, r: 50, t: 20, b: 40 },
-  });
-
-  // 회사별 지점 수 Top 30
-  plot("gapki-topbranch", [{
-    type: "bar",
-    orientation: "h",
-    y: topMulti.map(([k]) => k).reverse(),
-    x: topMulti.map(([, v]) => v).reverse(),
-    text: topMulti.map(([, v]) => v).reverse(),
-    textposition: "outside",
-    marker: { color: "#ff7f0e" },
-  }], {
-    height: 30 * 22 + 80,
-    xaxis: { title: "row 수 (본사+지방)" },
-    margin: { l: 240, r: 50, t: 20, b: 40 },
   });
 
   // 전체 명단
