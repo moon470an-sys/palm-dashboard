@@ -482,7 +482,19 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Cluster × Region 매트릭스 — 회사 수 (양방향 분포)</h3><div id="ov-bm-region" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉖ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉖ Cash Flow Waterfall — 회사 select × 5단계 분해</h3>
+    <p class="notice">
+      Revenue → EBITDA → CFO → FCF → 배당 후 Retained. 각 단계 누적 잔존 시각화. 회사 select로 개별 회사 분석 가능.
+    </p>
+    <div class="filter-bar">
+      <label>회사:</label>
+      <select id="ov-wf-co"></select>
+      <span class="badge" id="ov-wf-info"></span>
+    </div>
+    <div class="card"><h3>Waterfall: Revenue → 단계별 cash 흐름</h3><div id="ov-waterfall" class="plot plot-tall"></div></div>
+    <div class="card"><h3>FCF Conversion 전체 비교 — Revenue → FCF 변환율 (FCF / Revenue %)</h3><div id="ov-fcf-conv" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㉗ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1565,6 +1577,48 @@ export function renderOverview(root) {
   };
   psSel.addEventListener("change", renderPS);
   renderPS();
+
+  // ── ㉖ Cash Flow Waterfall (회사 select)
+  const wfSel = document.getElementById("ov-wf-co");
+  const wfInfo = document.getElementById("ov-wf-info");
+  wfSel.innerHTML = companies.map(c => `<option value="${c}">${c}</option>`).join("");
+  const renderWaterfall = () => {
+    const co = wfSel.value;
+    const r = fin.find(x => x.short === co && x.yr === ly);
+    if (!r) { wfInfo.textContent = `${co}: ${ly} 데이터 없음`; return; }
+    wfInfo.textContent = `${co} · ${ly} · 권역 ${r.region}`;
+    const rev = r.revenue || 0;
+    const ebitda = r.ebitda || 0;
+    const cfo = r.cfo || 0;
+    const capex = r.capex || 0;
+    const fcf = r.fcf || (cfo - capex);
+    const divTotal = (r.div_total != null && r.shares_outstanding_mn != null) ? r.div_total * r.shares_outstanding_mn / 1000 : 0;  // IDR bn
+    const retained = fcf - divTotal;
+    const measure = ["absolute", "relative", "relative", "relative", "relative", "relative", "total"];
+    const x = ["Revenue", "→ EBITDA", "→ CFO", "− CapEx", "= FCF", "− 배당", "Retained"];
+    const y = [rev, ebitda - rev, cfo - ebitda, -capex, 0, -divTotal, 0];
+    plot("ov-waterfall", [{
+      type: "waterfall", measure, x, y,
+      text: y.map(v => Math.round(v).toLocaleString()),
+      connector: { line: { color: "#888" } },
+      increasing: { marker: { color: "#2ca02c" } },
+      decreasing: { marker: { color: "#d62728" } },
+      totals: { marker: { color: "#1f77b4" } },
+    }], { yaxis: { title: "IDR bn", zeroline: true }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480 });
+  };
+  wfSel.addEventListener("change", renderWaterfall);
+  renderWaterfall();
+
+  // FCF Conversion (FCF / Revenue %) — 전사 비교 (한 번만)
+  const fcRowsConv = fin.filter(r => r.yr === ly && r.fcf != null && r.revenue).map(r => ({
+    short: r.short, fcf_conv: r.fcf / r.revenue * 100, region: r.region,
+  })).sort((a, b) => b.fcf_conv - a.fcf_conv);
+  plot("ov-fcf-conv", [{
+    x: fcRowsConv.map(r => r.fcf_conv).reverse(), y: fcRowsConv.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: fcRowsConv.map(r => r.fcf_conv >= 15 ? "#2ca02c" : r.fcf_conv >= 5 ? "#1f77b4" : r.fcf_conv >= 0 ? "#ffbb78" : "#d62728").reverse() },
+    text: fcRowsConv.map(r => r.fcf_conv.toFixed(1) + "%").reverse(), textposition: "outside",
+  }], { xaxis: { title: "FCF / Revenue (%)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, fcRowsConv.length * 22 + 60) });
 
   // ── ⑮ Peer Comparison
   const peerCoSel = document.getElementById("ov-peer-co");
