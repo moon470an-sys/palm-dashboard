@@ -393,17 +393,21 @@ export function renderOverview(root) {
       <div class="card"><h3>CAGR (%/yr) ranking</h3><div id="ov-trend-cagr" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑪ Balance Sheet 깊이 — 유동성 · 레버리지 · 부채/자산</h3>
+    <h3 class="section-h">⑪ Balance Sheet Deep Dive — 통합 (자본구조 · 자산 · 부채 만기 · 유동성)</h3>
+    <p class="notice">
+      자본구조 + 자산 구성 + 부채 만기 + 유동성 ratio + Net Debt 분해 통합. 5개 차트로 BS 전체 한눈에.
+    </p>
     <div class="grid-2">
-      <div class="card"><h3>Current Ratio (유동자산/유동부채) — 단기 유동성</h3><div id="ov-curr" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Debt / Total Assets (%)</h3><div id="ov-debt-assets" class="plot plot-tall"></div></div>
+      <div class="card"><h3>자본구조 — Equity / Short-term Liab / Long-term Liab stacked</h3><div id="ov-bs-cap" class="plot plot-tall"></div></div>
+      <div class="card"><h3>자산 구성 — Cash / Current(non-cash) / Non-Current (100%)</h3><div id="ov-bs-asset" class="plot plot-tall"></div></div>
     </div>
+    <div class="card"><h3>Net Debt vs Cash 양방향 (음수=Cash, 양수=Debt)</h3><div id="ov-bs-nd" class="plot plot-tall"></div></div>
     <div class="grid-2">
-      <div class="card"><h3>Net Debt / EBITDA (x) — 레버리지 (낮을수록 안전)</h3><div id="ov-nd-eb" class="plot plot-tall"></div></div>
-      <div class="card"><h3>자본 구조 — Equity vs Liabilities (회사별 stacked)</h3><div id="ov-capstack" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Leverage & Liquidity 매트릭스 (CurR / ND-EB / D-A grouped)</h3><div id="ov-bs-ratio" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Cash Position 매트릭스 (Cash/Mcap × Cash Ratio)</h3><div id="ov-bs-cash" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑪ Per-Share & 주가 시계열 — EPS · NAV · DPS · 종가</h3>
+    <h3 class="section-h">⑫ Per-Share & 주가 시계열 — EPS · NAV · DPS · 종가</h3>
     <div class="filter-bar">
       <label>주당 지표:</label>
       <select id="ov-ps-metric">
@@ -508,16 +512,6 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>3yr 평균 vs 변동성(StdDev) — Consistency Map</h3><div id="ov-consistency" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑳ Working Capital & 자산 구성</h3>
-    <p class="notice">
-      NWC (Net Working Capital) = 유동자산 − 유동부채. NWC/Revenue 높으면 운전자금에 매출 묶임. 자산 구성 = 유동/비유동/현금 비중 (plantation 회사는 비유동 ↑가 정상).
-    </p>
-    <div class="grid-2">
-      <div class="card"><h3>NWC (IDR bn) — 회사별 운전자금 규모</h3><div id="ov-nwc" class="plot plot-tall"></div></div>
-      <div class="card"><h3>NWC / Revenue (%) — 운전자금 강도</h3><div id="ov-nwc-rev" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>자산 구성 — Current / Non-Current / Cash (100% stacked)</h3><div id="ov-asset-mix" class="plot plot-tall"></div></div>
-
     <h3 class="section-h">㉑ Downstream Integration — 정제·다운스트림 통합도</h3>
     <p class="notice">
       0-6점: CPO refinery + PKO refinery + RBDPO/Olein/Stearin/PFAD 생산 가짓수. 높을수록 수직 통합 (upstream→downstream).
@@ -570,16 +564,6 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Cluster × Region 매트릭스 — 회사 수 (양방향 분포)</h3><div id="ov-bm-region" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉗ Liability Maturity — 단기 vs 장기 부채</h3>
-    <p class="notice">
-      Short-term liab 비중 ↑ 이면 refinancing 위험 ↑. Short-term liab / Equity 가 1.0 이상이면 단기 부담 큼.
-    </p>
-    <div class="card"><h3>회사별 부채 만기 구성 (100% stacked) — Current vs Long-term</h3><div id="ov-mat-stack" class="plot plot-tall"></div></div>
-    <div class="grid-2">
-      <div class="card"><h3>Short-term Liab / Equity (x) — 단기 부담</h3><div id="ov-stl-eq" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Long-term Liab 절대값 (IDR bn) ranking</h3><div id="ov-ltl-abs" class="plot plot-tall"></div></div>
-    </div>
-
     <h3 class="section-h">㉙ Profitability Stability — 흑자 지속성 & 변동 계수</h3>
     <p class="notice">
       전 기간 회사별 흑자/적자 연수 카운트 + Net Profit 변동 계수(CV = StdDev / |Mean|). CV ↑이면 변동 큰 회사.
@@ -590,16 +574,6 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>흑자 지속률 vs 평균 NP (영구 흑자 유지하면서 큰 이익 = 우량주)</h3><div id="ov-profit-quad" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉟ Cash Position — Cash 보유 & 유동성 안전 지표</h3>
-    <p class="notice">
-      Cash / Market Cap = "Cash Yield" (시총 대비 보유 현금). Cash Ratio = Cash / Current Liab (단기 부채 즉시 상환 능력).
-    </p>
-    <div class="grid-2">
-      <div class="card"><h3>Cash Balance (IDR bn) ranking</h3><div id="ov-cash-bal" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Cash / Market Cap (%) — Cash Yield</h3><div id="ov-cash-mcap" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>Cash Ratio (Cash / Current Liab) — 즉시 상환 능력</h3><div id="ov-cash-ratio" class="plot plot-tall"></div></div>
-
     <h3 class="section-h">㊱ Industry Concentration — Top 5 vs Long Tail</h3>
     <p class="notice">
       매출 누적 % 곡선으로 산업 집중도 시각화. Top 5 vs 나머지 share, 분위별 분포로 IDX 팜 산업 구조 파악.
@@ -608,16 +582,6 @@ export function renderOverview(root) {
     <div class="grid-2">
       <div class="card"><h3>Top 5 / Top 10 / Long Tail share</h3><div id="ov-conc-pie" class="plot plot-tall"></div></div>
       <div class="card"><h3>매출 분위별 평균 (5분위)</h3><div id="ov-conc-quintile" class="plot plot-tall"></div></div>
-    </div>
-
-    <h3 class="section-h">㊲ Net Debt Decomposition — Gross Debt vs Cash</h3>
-    <p class="notice">
-      Net Debt = Gross Debt − Cash. Cash가 Gross Debt 초과 시 Net Cash 상태 (negative net debt). 회사별 부채 vs 현금 양방향 시각화.
-    </p>
-    <div class="card"><h3>Gross Debt vs Cash 양방향 (회사별, 음수=Cash, 양수=Debt)</h3><div id="ov-nd-decomp" class="plot plot-tall"></div></div>
-    <div class="grid-2">
-      <div class="card"><h3>Cash / Gross Debt (%) — 부채 대비 현금 보유</h3><div id="ov-cash-debt" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Net Cash vs Net Debt 분류 (회사 수)</h3><div id="ov-netcash-pie" class="plot plot-tall"></div></div>
     </div>
 
     <h3 class="section-h">㊴ Quarterly Snapshot — 2026 Q1 가장 최신 데이터</h3>
@@ -1016,33 +980,51 @@ export function renderOverview(root) {
       marker: { colors: tmColors },
     }], { margin: { t: 10, l: 0, r: 0, b: 0 }, height: 520 });
 
-    // ── ⑩ Balance Sheet 깊이
-    const crRows = rows.filter(r => r.curr_ratio != null && r.curr_ratio > 0).sort((a, b) => b.curr_ratio - a.curr_ratio);
-    plot("ov-curr", [{
-      x: crRows.map(r => r.curr_ratio).reverse(), y: crRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: crRows.map(r => r.curr_ratio >= 2 ? "#2ca02c" : r.curr_ratio >= 1 ? "#ffbb78" : "#d62728").reverse() },
-      text: crRows.map(r => r.curr_ratio.toFixed(2) + "x").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Current ratio: %{x:.2f}x<extra></extra>",
-    }], { xaxis: { title: "Current Ratio (x) — 2.0+ 우수 · 1.0+ 정상 · <1.0 위험" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, crRows.length * 22 + 80) });
+    // ── ⑪ Balance Sheet Deep Dive (통합)
+    // 1. 자본구조 stacked: Equity / Short-term Liab / Long-term Liab
+    const bcRows = rows.filter(r => r.equity != null && r.ctl_bn != null && r.ltl != null).sort((a, b) => (b.assets || 0) - (a.assets || 0));
+    plot("ov-bs-cap", [
+      { x: bcRows.map(r => r.short), y: bcRows.map(r => r.equity), type: "bar", name: "Equity", marker: { color: "#2ca02c" } },
+      { x: bcRows.map(r => r.short), y: bcRows.map(r => r.ltl), type: "bar", name: "Long-term Liab", marker: { color: "#1f77b4" } },
+      { x: bcRows.map(r => r.short), y: bcRows.map(r => r.ctl_bn), type: "bar", name: "Short-term Liab", marker: { color: "#d62728" } },
+    ], { barmode: "stack", yaxis: { title: "IDR bn" }, xaxis: { tickangle: -45, automargin: true }, legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480 });
 
-    const daRows = rows.filter(r => r.debt_assets != null).sort((a, b) => b.debt_assets - a.debt_assets);
-    plot("ov-debt-assets", [{
-      x: daRows.map(r => r.debt_assets).reverse(), y: daRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: daRows.map(r => r.debt_assets).reverse(), colorscale: "Reds" },
-      text: daRows.map(r => r.debt_assets.toFixed(1) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Debt/Assets: %{x:.2f}%<extra></extra>",
-    }], { xaxis: { title: "Gross Debt / Total Assets (%)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, daRows.length * 22 + 80) });
+    // 2. 자산 구성 100% stacked
+    const baRows = rows.filter(r => r.ca_share != null && r.nca_share != null).sort((a, b) => (b.assets || 0) - (a.assets || 0));
+    plot("ov-bs-asset", [
+      { x: baRows.map(r => r.short), y: baRows.map(r => r.cash_share || 0), type: "bar", name: "Cash", marker: { color: "#2ca02c" } },
+      { x: baRows.map(r => r.short), y: baRows.map(r => (r.ca_share || 0) - (r.cash_share || 0)), type: "bar", name: "Current (non-cash)", marker: { color: "#1f77b4" } },
+      { x: baRows.map(r => r.short), y: baRows.map(r => r.nca_share || 0), type: "bar", name: "Non-Current", marker: { color: "#9467bd" } },
+    ], { barmode: "stack", yaxis: { title: "% of Total Assets", range: [0, 105] }, xaxis: { tickangle: -45, automargin: true }, legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480 });
 
-    const ndRows = rows.filter(r => r.nd_ebitda != null && Math.abs(r.nd_ebitda) < 30).sort((a, b) => a.nd_ebitda - b.nd_ebitda);
-    plot("ov-nd-eb", [{
-      x: ndRows.map(r => r.nd_ebitda).reverse(), y: ndRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: ndRows.map(r => r.nd_ebitda < 0 ? "#2ca02c" : r.nd_ebitda < 2 ? "#1f77b4" : r.nd_ebitda < 4 ? "#ffbb78" : "#d62728").reverse() },
-      text: ndRows.map(r => r.nd_ebitda.toFixed(2) + "x").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Net Debt/EBITDA: %{x:.2f}x<extra></extra>",
-    }], { xaxis: { title: "Net Debt / EBITDA (x) — 음수=현금 초과 · 2x 이하 우수 · 4x+ 위험", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, ndRows.length * 22 + 80) });
+    // 3. Net Debt vs Cash 양방향
+    const ndDecomp = rows.filter(r => r.debt != null && r.cash != null).sort((a, b) => (b.debt - b.cash) - (a.debt - a.cash));
+    plot("ov-bs-nd", [
+      { x: ndDecomp.map(r => r.debt), y: ndDecomp.map(r => r.short), type: "bar", orientation: "h", name: "Gross Debt (+)", marker: { color: "#d62728" } },
+      { x: ndDecomp.map(r => -r.cash), y: ndDecomp.map(r => r.short), type: "bar", orientation: "h", name: "Cash (−)", marker: { color: "#2ca02c" } },
+    ], { barmode: "relative", xaxis: { title: "IDR bn (음수=Cash, 양수=Debt)", zeroline: true }, legend: { orientation: "h", y: -0.1 }, margin: { l: 220, r: 40, t: 10, b: 50 }, height: Math.max(400, ndDecomp.length * 22 + 60) });
+
+    // 4. Leverage & Liquidity grouped (CurR, ND/EB, D/A 100% 정규화 표시)
+    const lrRows = rows.filter(r => r.curr_ratio != null && r.nd_ebitda != null && r.debt_assets != null).sort((a, b) => b.curr_ratio - a.curr_ratio);
+    plot("ov-bs-ratio", [
+      { x: lrRows.map(r => r.short), y: lrRows.map(r => r.curr_ratio), type: "bar", name: "Current Ratio (x)", marker: { color: "#2ca02c" } },
+      { x: lrRows.map(r => r.short), y: lrRows.map(r => r.nd_ebitda), type: "bar", name: "ND/EBITDA (x)", marker: { color: "#d62728" } },
+      { x: lrRows.map(r => r.short), y: lrRows.map(r => r.debt_assets / 100), type: "bar", name: "Debt/Assets (% ÷ 100)", marker: { color: "#1f77b4" } },
+    ], { barmode: "group", yaxis: { title: "값 (x or normalized)", zeroline: true }, xaxis: { tickangle: -45, automargin: true }, legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480 });
+
+    // 5. Cash Position 매트릭스: Cash/Mcap × Cash Ratio
+    const cpRows = rows.filter(r => r.cash_to_mcap != null && r.cash_ratio != null);
+    plot("ov-bs-cash", [{
+      x: cpRows.map(r => Math.min(200, r.cash_to_mcap)), y: cpRows.map(r => Math.min(10, r.cash_ratio)),
+      mode: "markers+text", type: "scatter",
+      text: cpRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: cpRows.map(r => Math.max(10, Math.min(48, Math.sqrt(r.cash || 100) / 4))),
+        color: cpRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>Cash/Mcap %{x:.1f}%<br>Cash Ratio %{y:.2f}x<extra></extra>",
+    }], { xaxis: { title: "Cash / Market Cap (%)" }, yaxis: { title: "Cash / Current Liab (x)" }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false });
 
     // ── ⑫ Risk & Red Flags
     const riskRows = [...rows].filter(r => r.risk_score != null).sort((a, b) => b.risk_score - a.risk_score);
@@ -1201,17 +1183,6 @@ export function renderOverview(root) {
       polar: { radialaxis: { visible: true, range: [0, 22] } },
       showlegend: true, legend: { orientation: "h", y: -0.18, font: { size: 9 } },
       margin: { l: 40, r: 40, t: 20, b: 60 }, height: 520,
-    });
-
-    // 자본구조 stacked (equity + liab = assets), 회사별
-    const csRows = rows.filter(r => r.equity != null && r.liab != null).sort((a, b) => (b.assets || 0) - (a.assets || 0));
-    plot("ov-capstack", [
-      { x: csRows.map(r => r.short), y: csRows.map(r => r.equity), type: "bar", name: "Equity", marker: { color: "#2ca02c" } },
-      { x: csRows.map(r => r.short), y: csRows.map(r => r.liab), type: "bar", name: "Liabilities", marker: { color: "#d62728" } },
-    ], {
-      barmode: "stack", yaxis: { title: "IDR bn" },
-      xaxis: { tickangle: -45, automargin: true },
-      legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
     });
 
     // ── ⑯ DuPont 3-factor
@@ -1456,38 +1427,6 @@ export function renderOverview(root) {
       text: ehRows.map(r => (r.ebitda_per_planted_ha / 1e6).toFixed(2) + "M").reverse(), textposition: "outside",
     }], { xaxis: { title: "EBITDA / Planted ha (IDR mn/ha)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, ehRows.length * 24 + 60) });
 
-    // ── ㊲ Net Debt Decomposition
-    const ndRows2 = rows.filter(r => r.debt != null && r.cash != null).sort((a, b) => (b.debt - b.cash) - (a.debt - a.cash));
-    plot("ov-nd-decomp", [
-      { x: ndRows2.map(r => r.debt), y: ndRows2.map(r => r.short), type: "bar", orientation: "h", name: "Gross Debt (+)", marker: { color: "#d62728" } },
-      { x: ndRows2.map(r => -r.cash), y: ndRows2.map(r => r.short), type: "bar", orientation: "h", name: "Cash (−)", marker: { color: "#2ca02c" } },
-    ], {
-      barmode: "relative", xaxis: { title: "IDR bn (음수=Cash, 양수=Debt)", zeroline: true },
-      legend: { orientation: "h", y: -0.1 },
-      margin: { l: 220, r: 40, t: 10, b: 50 }, height: Math.max(400, ndRows2.length * 22 + 60),
-    });
-
-    const cdRows = rows.filter(r => r.cash_to_debt != null && r.cash_to_debt > 0).sort((a, b) => b.cash_to_debt - a.cash_to_debt);
-    plot("ov-cash-debt", [{
-      x: cdRows.map(r => Math.min(500, r.cash_to_debt)).reverse(), y: cdRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: cdRows.map(r => r.cash_to_debt >= 100 ? "#2ca02c" : r.cash_to_debt >= 30 ? "#1f77b4" : r.cash_to_debt >= 10 ? "#ffbb78" : "#d62728").reverse() },
-      text: cdRows.map(r => r.cash_to_debt > 500 ? ">500%" : r.cash_to_debt.toFixed(1) + "%").reverse(), textposition: "outside",
-    }], { xaxis: { title: "Cash / Gross Debt (%) — 100%↑ = Net Cash position" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cdRows.length * 24 + 60) });
-
-    // Net Cash vs Net Debt pie
-    const netCashN = rows.filter(r => r.net_debt != null && r.net_debt < 0).length;
-    const lowNDN = rows.filter(r => r.net_debt != null && r.net_debt >= 0 && r.nd_ebitda != null && r.nd_ebitda < 2).length;
-    const medND = rows.filter(r => r.nd_ebitda != null && r.nd_ebitda >= 2 && r.nd_ebitda < 4).length;
-    const highND = rows.filter(r => r.nd_ebitda != null && r.nd_ebitda >= 4).length;
-    plot("ov-netcash-pie", [{
-      labels: ["Net Cash", "Net Debt 저 (<2x EBITDA)", "Net Debt 중 (2-4x)", "Net Debt 고 (4x+)"],
-      values: [netCashN, lowNDN, medND, highND],
-      type: "pie", hole: 0.45,
-      marker: { colors: ["#2ca02c", "#1f77b4", "#ffbb78", "#d62728"] },
-      textinfo: "label+value+percent",
-    }], { margin: { t: 20, b: 20, l: 0, r: 0 }, height: 480 });
-
     // ── ㊱ Industry Concentration
     const concRows = rows.filter(r => r.revenue > 0).sort((a, b) => b.revenue - a.revenue);
     const totalRev = concRows.reduce((s, r) => s + r.revenue, 0);
@@ -1555,61 +1494,6 @@ export function renderOverview(root) {
       yaxis2: { title: "분위 총 매출 (IDR bn)", overlaying: "y", side: "right" },
       legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 60, t: 10, b: 50 }, height: 480,
     });
-
-    // ── ㉟ Cash Position
-    const cbRows = rows.filter(r => r.cash != null && r.cash > 0).sort((a, b) => b.cash - a.cash);
-    plot("ov-cash-bal", [{
-      x: cbRows.map(r => r.cash).reverse(), y: cbRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: cbRows.map(r => r.cash).reverse(), colorscale: "Greens" },
-      text: cbRows.map(r => Math.round(r.cash).toLocaleString()).reverse(), textposition: "outside",
-    }], { xaxis: { title: "Cash & Equivalents (IDR bn)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, cbRows.length * 24 + 60) });
-
-    const cmRows = rows.filter(r => r.cash_to_mcap != null && r.cash_to_mcap > 0).sort((a, b) => b.cash_to_mcap - a.cash_to_mcap);
-    plot("ov-cash-mcap", [{
-      x: cmRows.map(r => Math.min(200, r.cash_to_mcap)).reverse(), y: cmRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: cmRows.map(r => r.cash_to_mcap >= 30 ? "#2ca02c" : r.cash_to_mcap >= 10 ? "#1f77b4" : "#ffbb78").reverse() },
-      text: cmRows.map(r => r.cash_to_mcap > 200 ? ">200%" : r.cash_to_mcap.toFixed(1) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Cash/Mcap %{x:.2f}%<extra></extra>",
-    }], { xaxis: { title: "Cash / Market Cap (%) — 30%↑ = 시총의 1/3 현금" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cmRows.length * 24 + 60) });
-
-    const crRows2 = rows.filter(r => r.cash_ratio != null && r.cash_ratio > 0).sort((a, b) => b.cash_ratio - a.cash_ratio);
-    plot("ov-cash-ratio", [{
-      x: crRows2.map(r => Math.min(10, r.cash_ratio)).reverse(), y: crRows2.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: crRows2.map(r => r.cash_ratio >= 1 ? "#2ca02c" : r.cash_ratio >= 0.3 ? "#1f77b4" : r.cash_ratio >= 0.1 ? "#ffbb78" : "#d62728").reverse() },
-      text: crRows2.map(r => r.cash_ratio > 10 ? ">10x" : r.cash_ratio.toFixed(2) + "x").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Cash Ratio %{x:.2f}x<extra></extra>",
-    }], { xaxis: { title: "Cash Ratio (Cash / Current Liab) — 1.0+ 우수 · 0.3+ 정상" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, crRows2.length * 24 + 60) });
-
-    // ── ㉗ Liability Maturity
-    const mtRows = rows.filter(r => r.lt_share != null).sort((a, b) => (b.liab || 0) - (a.liab || 0));
-    plot("ov-mat-stack", [
-      { x: mtRows.map(r => r.short), y: mtRows.map(r => r.st_share), type: "bar", name: "Current (단기)", marker: { color: "#d62728" } },
-      { x: mtRows.map(r => r.short), y: mtRows.map(r => r.lt_share), type: "bar", name: "Long-term (장기)", marker: { color: "#1f77b4" } },
-    ], {
-      barmode: "stack", yaxis: { title: "% of total liabilities", range: [0, 105] },
-      xaxis: { tickangle: -45, automargin: true },
-      legend: { orientation: "h", y: -0.35 },
-      margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
-    });
-
-    const stRows = rows.filter(r => r.st_to_equity != null && Math.abs(r.st_to_equity) < 50).sort((a, b) => b.st_to_equity - a.st_to_equity);
-    plot("ov-stl-eq", [{
-      x: stRows.map(r => r.st_to_equity).reverse(), y: stRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: stRows.map(r => r.st_to_equity > 1.5 ? "#d62728" : r.st_to_equity > 0.8 ? "#ffbb78" : "#2ca02c").reverse() },
-      text: stRows.map(r => r.st_to_equity.toFixed(2) + "x").reverse(), textposition: "outside",
-    }], { xaxis: { title: "Short-term Liab / Equity (x)" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, stRows.length * 22 + 60) });
-
-    const ltlRows = rows.filter(r => r.ltl != null && r.ltl > 0).sort((a, b) => b.ltl - a.ltl);
-    plot("ov-ltl-abs", [{
-      x: ltlRows.map(r => r.ltl).reverse(), y: ltlRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: ltlRows.map(r => r.ltl).reverse(), colorscale: "Blues" },
-      text: ltlRows.map(r => Math.round(r.ltl).toLocaleString()).reverse(), textposition: "outside",
-    }], { xaxis: { title: "Long-term Liabilities (IDR bn)" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, ltlRows.length * 22 + 60) });
 
     // ── ㉕ Business Model Cluster
     const BM_LIST = ["Upstream", "Integrated", "Downstream", "Other"];
@@ -1793,34 +1677,6 @@ export function renderOverview(root) {
       { x: deRows.map(r => r.short), y: deRows.map(r => r.export_pct || 0), type: "bar", name: "Export %", marker: { color: "#ff7f0e" } },
     ], {
       barmode: "stack", yaxis: { title: "Sales mix (%)", range: [0, 105] },
-      xaxis: { tickangle: -45, automargin: true },
-      legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
-    });
-
-    // ── ⑳ Working Capital + Asset Composition
-    const nwcRows = rows.filter(r => r.nwc != null).sort((a, b) => b.nwc - a.nwc);
-    plot("ov-nwc", [{
-      x: nwcRows.map(r => r.nwc).reverse(), y: nwcRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: nwcRows.map(r => r.nwc >= 0 ? "#2ca02c" : "#d62728").reverse() },
-      text: nwcRows.map(r => Math.round(r.nwc).toLocaleString()).reverse(), textposition: "outside",
-    }], { xaxis: { title: "Net Working Capital (IDR bn)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, nwcRows.length * 22 + 60) });
-
-    const nwcRevRows = rows.filter(r => r.nwc_per_rev != null && Math.abs(r.nwc_per_rev) < 500).sort((a, b) => b.nwc_per_rev - a.nwc_per_rev);
-    plot("ov-nwc-rev", [{
-      x: nwcRevRows.map(r => r.nwc_per_rev).reverse(), y: nwcRevRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: nwcRevRows.map(r => r.nwc_per_rev > 50 ? "#ffbb78" : r.nwc_per_rev >= 0 ? "#1f77b4" : "#d62728").reverse() },
-      text: nwcRevRows.map(r => r.nwc_per_rev.toFixed(1) + "%").reverse(), textposition: "outside",
-    }], { xaxis: { title: "NWC / Revenue (%)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, nwcRevRows.length * 22 + 60) });
-
-    const amRows2 = rows.filter(r => r.ca_share != null && r.nca_share != null).sort((a, b) => (b.assets || 0) - (a.assets || 0));
-    plot("ov-asset-mix", [
-      { x: amRows2.map(r => r.short), y: amRows2.map(r => r.cash_share || 0), type: "bar", name: "Cash", marker: { color: "#2ca02c" } },
-      { x: amRows2.map(r => r.short), y: amRows2.map(r => (r.ca_share || 0) - (r.cash_share || 0)), type: "bar", name: "Current (non-cash)", marker: { color: "#1f77b4" } },
-      { x: amRows2.map(r => r.short), y: amRows2.map(r => r.nca_share || 0), type: "bar", name: "Non-Current", marker: { color: "#9467bd" } },
-    ], {
-      barmode: "stack", yaxis: { title: "% of Total Assets", range: [0, 105] },
       xaxis: { tickangle: -45, automargin: true },
       legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
     });
