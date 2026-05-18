@@ -74,6 +74,11 @@ export function renderRspo(root) {
     </div>
     <div class="card"><h3>만료 임박 (90일·1년 내 + 이미 만료) — Active 회원 갱신 추적</h3><div id="rspo-expiry" class="plot plot-tall"></div></div>
 
+    <div class="card">
+      <h3>90일 내 만료 임박 회원 명단 (Active만, 갱신 행동 필요)</h3>
+      <div id="rspo-expiry-table"></div>
+    </div>
+
     <div class="grid-2">
       <div class="card"><h3>Parent Entity Top 15 — 모회사별 자회사 수 (그룹 영향력)</h3><div id="rspo-parent-n" class="plot plot-tall"></div></div>
       <div class="card"><h3>Parent Entity Top 15 — 모회사별 CSPO 합산 (ton/yr)</h3><div id="rspo-parent-cspo" class="plot plot-tall"></div></div>
@@ -203,6 +208,31 @@ export function renderRspo(root) {
     marker: { color: parentTopCspo.map(p => p[1].cspo).reverse(), colorscale: "Greens" },
     text: parentTopCspo.map(p => `${(p[1].cspo/1000).toFixed(0)}k`).reverse(), textposition: "outside",
   }], { yaxis: { autorange: "reversed" }, xaxis: { title: "CSPO Volume 합산 (ton/yr)" } });
+
+  // 90일 내 만료 임박 회원 상세 (Active만)
+  const expSoonRows = idMembers
+    .filter(m => m.license_status === "ACTIVE" && m.end_date && m.end_date.slice(0, 10) <= in90 && m.end_date.slice(0, 10) > todayStr)
+    .map(m => ({
+      member: (m.member_name || "").substring(0, 60),
+      parent: (m.parent_entity_name || "").substring(0, 35),
+      cb: (m.certification_body || "").substring(0, 30),
+      cert_no: m.current_cert_number || "",
+      area: Math.round(m.area_ha || 0),
+      cspo: Math.round(m.cspo_volume_ton || 0),
+      end_date: m.end_date.slice(0, 10),
+      days_left: Math.ceil((new Date(m.end_date) - today) / 86400000),
+    }))
+    .sort((a, b) => a.days_left - b.days_left);
+  makeTable("rspo-expiry-table", [
+    { data: "member", title: "회원" },
+    { data: "parent", title: "Parent" },
+    { data: "cb", title: "인증기관" },
+    { data: "cert_no", title: "Cert No" },
+    { data: "area", title: "면적(ha)", render: (d) => Number(d).toLocaleString() },
+    { data: "cspo", title: "CSPO(t/yr)", render: (d) => Number(d).toLocaleString() },
+    { data: "end_date", title: "만료일" },
+    { data: "days_left", title: "남은 일수", render: (d) => `<b style="color:${d<=30?'#d62728':d<=60?'#ff7f0e':'#1f77b4'}">${d}일</b>` },
+  ], expSoonRows, { pageLength: 20, order: [[7, "asc"]] });
 
   // table
   const rows = idMembers.map(m => ({
