@@ -109,6 +109,13 @@ export function renderOverview(root) {
     r.dp_turnover = (r.revenue != null && r.assets) ? r.revenue / r.assets : null;  // x
     r.dp_leverage = (r.assets != null && r.equity && r.equity > 0) ? r.assets / r.equity : null;  // x
     r.dp_roe_calc = (r.dp_margin != null && r.dp_turnover != null && r.dp_leverage != null) ? r.dp_margin * r.dp_turnover * r.dp_leverage * 100 : null;  // % (재현된 ROE)
+    // Margin cascade (모두 % of Revenue)
+    r.m_gross = (r.gross_profit != null && r.revenue) ? r.gross_profit / r.revenue * 100 : null;
+    r.m_ebitda = (r.ebitda != null && r.revenue) ? r.ebitda / r.revenue * 100 : null;
+    r.m_ebit = (r.ebit != null && r.revenue) ? r.ebit / r.revenue * 100 : null;
+    r.m_net = (r.net_profit != null && r.revenue) ? r.net_profit / r.revenue * 100 : null;
+    // Operating leverage proxy: EBITDA - EBIT (≈ D&A)
+    r.da_implied = (r.ebitda != null && r.ebit != null) ? r.ebitda - r.ebit : null;
     // Risk Score 0-100 (높을수록 위험)
     let s = 0;
     if (r.net_profit != null && r.net_profit < 0) s += 30;
@@ -347,7 +354,17 @@ export function renderOverview(root) {
       <div class="card"><h3>Diversification × ROE — 분산이 수익성에 영향?</h3><div id="ov-geo-roe" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑱ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑱ Margin Cascade — Gross → EBITDA → EBIT → Net</h3>
+    <p class="notice">
+      매출 100%에서 각 단계까지의 잔존률. Gross → EBITDA 차이 = SG&A · EBITDA → EBIT 차이 = 감가상각(D&A) · EBIT → Net 차이 = 이자·세금.
+    </p>
+    <div class="card"><h3>회사별 4-단계 마진 동시 비교 (정렬: Net Margin desc)</h3><div id="ov-margin-cascade" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Gross → Net 변환율 (회사별 마진 손실 폭)</h3><div id="ov-margin-loss" class="plot plot-tall"></div></div>
+      <div class="card"><h3>EBITDA Margin × EBIT Margin scatter (operating leverage proxy)</h3><div id="ov-eb-scatter" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">⑲ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -968,6 +985,50 @@ export function renderOverview(root) {
       xaxis: { title: "Diversification (1 - HHI)" },
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // ── ⑱ Margin Cascade
+    const mcRows = rows.filter(r => r.m_net != null).sort((a, b) => b.m_net - a.m_net);
+    plot("ov-margin-cascade", [
+      { x: mcRows.map(r => r.short), y: mcRows.map(r => r.m_gross), type: "bar", name: "Gross %", marker: { color: "#2ca02c" } },
+      { x: mcRows.map(r => r.short), y: mcRows.map(r => r.m_ebitda), type: "bar", name: "EBITDA %", marker: { color: "#1f77b4" } },
+      { x: mcRows.map(r => r.short), y: mcRows.map(r => r.m_ebit), type: "bar", name: "EBIT %", marker: { color: "#ff7f0e" } },
+      { x: mcRows.map(r => r.short), y: mcRows.map(r => r.m_net), type: "bar", name: "Net %", marker: { color: "#d62728" } },
+    ], {
+      barmode: "group", yaxis: { title: "Margin (%)", zeroline: true },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.3 },
+      margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
+    });
+
+    // Gross → Net 손실 폭 (Gross - Net) = SG&A + D&A + Interest + Tax 총합
+    const lossRows = rows.filter(r => r.m_gross != null && r.m_net != null).sort((a, b) => (b.m_gross - b.m_net) - (a.m_gross - a.m_net));
+    plot("ov-margin-loss", [{
+      x: lossRows.map(r => r.m_gross - r.m_net).reverse(), y: lossRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: "#8c564b" },
+      text: lossRows.map(r => (r.m_gross - r.m_net).toFixed(1) + "pp").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Gross %{customdata[0]:.1f}% → Net %{customdata[1]:.1f}%<br>손실 %{x:.1f}pp<extra></extra>",
+      customdata: lossRows.map(r => [r.m_gross, r.m_net]).reverse(),
+    }], { xaxis: { title: "Gross − Net Margin (pp) — SG&A·D&A·이자·세금 누적" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, lossRows.length * 22 + 60) });
+
+    // EBITDA vs EBIT scatter (operating leverage = D&A 비중)
+    const ebRows = rows.filter(r => r.m_ebitda != null && r.m_ebit != null);
+    plot("ov-eb-scatter", [{
+      x: ebRows.map(r => r.m_ebitda), y: ebRows.map(r => r.m_ebit),
+      mode: "markers+text", type: "scatter",
+      text: ebRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: ebRows.map(r => Math.max(10, Math.min(48, Math.sqrt(r.assets || 100) / 4))),
+        color: ebRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>EBITDA %{x:.2f}%<br>EBIT %{y:.2f}%<br>차이=D&A 비중<extra></extra>",
+    }], {
+      xaxis: { title: "EBITDA Margin (%)", zeroline: true },
+      yaxis: { title: "EBIT Margin (%)", zeroline: true },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+      shapes: [{ type: "line", x0: -50, y0: -50, x1: 100, y1: 100, line: { color: "#ccc", dash: "dot", width: 1 } }],
     });
 
     // ── 종합 ranking 테이블
