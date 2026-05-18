@@ -1332,8 +1332,8 @@ export function renderOverview(root) {
       customdata: npg.map(r => [Math.round(r.np0).toLocaleString(), Math.round(r.np1).toLocaleString(), r.np_g]).reverse(),
     }], { xaxis: { title: `Net profit ${fromY} → ${toY} YoY (%), clamp ±500%`, zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, npg.length * 22 + 80) });
 
-    // Growth × Margin scatter
-    const gm = growthRows.filter(r => r.rev_g != null && r.margin != null);
+    // Growth × Margin scatter — BTEK outlier 제외 (가독성)
+    const gm = growthRows.filter(r => r.rev_g != null && r.margin != null && r.short !== "Bumi Teknokultura Unggul");
     plot("ov-grow-margin", [{
       x: gm.map(r => r.rev_g), y: gm.map(r => r.margin),
       mode: "markers+text", type: "scatter",
