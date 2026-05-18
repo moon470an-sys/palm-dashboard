@@ -111,7 +111,7 @@ export function renderIspo(root) {
     type: "bar", orientation: "h",
     marker: { color: provSorted.map(p => p[1]), colorscale: "Greens" },
     text: provSorted.map(p => Math.round(p[1]).toLocaleString()), textposition: "outside",
-  }], { yaxis: { autorange: "reversed" }, xaxis: { title: "면적 (ha)" } });
+  }], { yaxis: { autorange: "reversed", automargin: true }, xaxis: { title: "면적 (ha)" }, margin: { l: 200, r: 80, t: 10, b: 40 } });
 
   // 주별 CPO 생산 Capa (유효 인증)
   const cpoProvMap = {};
@@ -122,7 +122,7 @@ export function renderIspo(root) {
     type: "bar", orientation: "h",
     marker: { color: cpoProvSorted.map(p => p[1]), colorscale: "YlOrRd" },
     text: cpoProvSorted.map(p => Math.round(p[1]).toLocaleString()), textposition: "outside",
-  }], { yaxis: { autorange: "reversed" }, xaxis: { title: "CPO Capa (ton/yr)" } });
+  }], { yaxis: { autorange: "reversed", automargin: true }, xaxis: { title: "CPO Capa (ton/yr)" }, margin: { l: 200, r: 80, t: 10, b: 40 } });
 
   // 주별 PKS 처리능력
   const pksProvMap = {};
@@ -133,7 +133,7 @@ export function renderIspo(root) {
     type: "bar", orientation: "h",
     marker: { color: pksProvSorted.map(p => p[1]), colorscale: "Blues" },
     text: pksProvSorted.map(p => Math.round(p[1]).toLocaleString()), textposition: "outside",
-  }], { yaxis: { autorange: "reversed" }, xaxis: { title: "Mill capacity (tph)" } });
+  }], { yaxis: { autorange: "reversed", automargin: true }, xaxis: { title: "Mill capacity (tph)" }, margin: { l: 200, r: 80, t: 10, b: 40 } });
 
   // quarterly trend (total scope)
   const qTotal = q.filter(x => x.scope === "total");
