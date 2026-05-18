@@ -22,7 +22,7 @@ export function renderAnnual(root) {
   }
   const companies = listCompanies();
   const years = listYears();
-  const DEFAULT_YEAR = "2026 Q1";
+  const DEFAULT_YEAR = "2025";
 
   root.innerHTML = `
     <h2>📊 Annual Report (IDX 상장 ${state.ar.companies.length}개사)</h2>
