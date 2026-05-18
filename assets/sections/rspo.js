@@ -24,7 +24,7 @@ export function renderRspo(root) {
       ${kpiHTML("PC 면적 (P&C)", `${(pcArea/1e6).toFixed(2)}M ha`, `${fmtInt(pcArea)} ha`)}
       ${kpiHTML("CSPO Volume", `${fmtInt(Math.round(cspoTotal))} ton/yr`, "Certified Sustainable Palm Oil")}
       ${kpiHTML("Indonesia 점유", `${(idGlobal/globalTotal*100).toFixed(1)}%`, `${fmtInt(idGlobal)} / ${fmtInt(globalTotal)}`, "warn")}
-      ${kpiHTML("ISPO 매칭됨", fmtInt(1388), "rapidfuzz ≥88")}
+      ${kpiHTML("국가 수 (글로벌)", fmtInt(Object.keys(countryMap).length))}
     </div>
 
     <div class="filter-bar">
