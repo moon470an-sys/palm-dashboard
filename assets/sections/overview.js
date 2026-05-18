@@ -263,7 +263,14 @@ export function renderOverview(root) {
 
     <div class="kpis" id="ov-kpis"></div>
 
-    <h2 class="group-h">📊 핵심 재무<span class="group-h-sub">매출 · 손익 · 자산/부채 · 현금흐름 (지표 31/31)</span></h2>
+    <nav class="sub-tabs" id="ov-sub-tabs" aria-label="종합 탭 섹션">
+      <a href="#" data-sub="ov-grp-fin" class="active">📊 핵심 재무</a>
+      <a href="#" data-sub="ov-grp-ind">🏭 산업 구조</a>
+      <a href="#" data-sub="ov-grp-farm">🌴 농장·생산</a>
+      <a href="#" data-sub="ov-grp-eval">🏆 평가</a>
+    </nav>
+
+    <h2 class="group-h" id="ov-grp-fin">📊 핵심 재무<span class="group-h-sub">매출 · 손익 · 자산/부채 · 현금흐름 (지표 31/31)</span></h2>
 
     <h3 class="section-h">① 회사별 랭킹 — 기준연도 (지표 select)</h3>
     <div class="card"><h3>전체 회사 막대 (정렬)</h3><div id="ov-rank" class="plot plot-tall"></div></div>
@@ -328,7 +335,7 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>배당 분석 — Payout % / Div Total bn / FCF Coverage (3축 grouped)</h3><div id="ov-val-div" class="plot plot-tall"></div></div>
 
-    <h2 class="group-h">🏭 산업 구조 & 다년 추세<span class="group-h-sub">권역·BM 분포 · 매출 집중도 · 다년 trend</span></h2>
+    <h2 class="group-h" id="ov-grp-ind">🏭 산업 구조 & 다년 추세<span class="group-h-sub">권역·BM 분포 · 매출 집중도 · 다년 trend</span></h2>
 
     <h3 class="section-h">⑥ Industry Structure — 권역·Business Model·집중도</h3>
     <p class="notice">
@@ -408,7 +415,7 @@ export function renderOverview(root) {
       <div class="card"><h3>DPS 지급 회사 (기준연도, 0 제외)</h3><div id="ov-dps" class="plot plot-tall"></div></div>
     </div>
 
-    <h2 class="group-h">🌴 농장 · 생산 Capa · 효율<span class="group-h-sub">Planted ha · Mill 처리능력 · CPO 수율 · OER (plantation/mill 보고 회사 기준)</span></h2>
+    <h2 class="group-h" id="ov-grp-farm">🌴 농장 · 생산 Capa · 효율<span class="group-h-sub">Planted ha · Mill 처리능력 · CPO 수율 · OER (plantation/mill 보고 회사 기준)</span></h2>
 
     <h3 class="section-h">⑪ 농장 규모 · 생산 Capa · 효율</h3>
     <p class="notice">
@@ -426,7 +433,7 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Mill 운영 Capa: 처리능력 tph × 자체 FFB (색=3rd party share)</h3><div id="ov-op-mill" class="plot plot-tall"></div></div>
 
-    <h2 class="group-h">🏆 종합 평가 & 비교 도구<span class="group-h-sub">Quality/Risk · 회사 비교 · 분해 · 일관성</span></h2>
+    <h2 class="group-h" id="ov-grp-eval">🏆 종합 평가 & 비교 도구<span class="group-h-sub">Quality/Risk · 회사 비교 · 분해 · 일관성</span></h2>
 
     <h3 class="section-h">⑫ Quality & Risk 종합 평가 (통합)</h3>
     <p class="notice">
@@ -1285,6 +1292,17 @@ export function renderOverview(root) {
   yearSel.addEventListener("change", renderYearScoped);
   metricSel.addEventListener("change", renderYearScoped);
   renderYearScoped();
+
+  // 종합 탭 sub-nav — 4 group으로 scroll
+  document.querySelectorAll("#ov-sub-tabs a").forEach(a => {
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      const sub = a.dataset.sub;
+      document.querySelectorAll("#ov-sub-tabs a").forEach(x => x.classList.toggle("active", x.dataset.sub === sub));
+      const target = document.getElementById(sub);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 
   // ── ⑨ Growth (YoY) — annual years pair select
   const pairSel = document.getElementById("ov-growth-pair");
