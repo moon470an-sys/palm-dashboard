@@ -195,6 +195,9 @@ export function renderOverview(root) {
     r.cash_to_mcap = (r.cash != null && r.mcap && r.mcap > 0) ? r.cash / r.mcap * 100 : null;  // Cash yield %
     r.cash_ratio = (r.cash != null && r.ctl_bn && r.ctl_bn > 0) ? r.cash / r.ctl_bn : null;  // Cash / Current Liab
     r.cash_to_debt = (r.cash != null && r.debt && r.debt > 0) ? r.cash / r.debt * 100 : null;  // Cash vs Gross Debt %
+    // Tax + Interest burden (NP / EBIT %) — 효율 측정
+    r.np_to_ebit = (r.net_profit != null && r.ebit && r.ebit > 0) ? r.net_profit / r.ebit * 100 : null;
+    r.burden_share = r.np_to_ebit != null ? 100 - r.np_to_ebit : null;  // 잃은 비율 (세금+이자)
     // Risk Score 0-100 (높을수록 위험)
     let s = 0;
     if (r.net_profit != null && r.net_profit < 0) s += 30;
@@ -700,7 +703,17 @@ export function renderOverview(root) {
       <div class="card"><h3>Quality × Dividend Yield 4분면 (Quality + Income)</h3><div id="ov-qv-dy" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㊹ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊹ Tax & Interest Burden — EBIT → NP 전환율</h3>
+    <p class="notice">
+      NP/EBIT 비율 = EBIT 100원이 NP로 얼마나 남는가. 80%+ 효율 · 50-80% 정상 · 50%↓ 세금/이자 부담 큼. 음수 = 적자.
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>NP / EBIT (%) 랭킹 — 효율 (양수만)</h3><div id="ov-np-ebit" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Burden Share (1 − NP/EBIT) % — 세금+이자 손실</h3><div id="ov-burden" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>EBIT vs NP scatter (이상: y=x 라인 가까이, 멀수록 부담 큼)</h3><div id="ov-ebit-np" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㊺ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1321,6 +1334,43 @@ export function renderOverview(root) {
       xaxis: { title: "Diversification (1 - HHI)" },
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // ── ㊹ Tax & Interest Burden
+    const neRows = rows.filter(r => r.np_to_ebit != null && r.np_to_ebit > 0).sort((a, b) => b.np_to_ebit - a.np_to_ebit);
+    plot("ov-np-ebit", [{
+      x: neRows.map(r => Math.min(150, r.np_to_ebit)).reverse(), y: neRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: neRows.map(r => r.np_to_ebit >= 80 ? "#2ca02c" : r.np_to_ebit >= 50 ? "#1f77b4" : r.np_to_ebit >= 25 ? "#ffbb78" : "#d62728").reverse() },
+      text: neRows.map(r => r.np_to_ebit > 150 ? ">150%" : r.np_to_ebit.toFixed(1) + "%").reverse(), textposition: "outside",
+    }], { xaxis: { title: "NP / EBIT (%) — 80%+ 우수 · 50-80% 정상" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, neRows.length * 24 + 60) });
+
+    const bsRows = rows.filter(r => r.burden_share != null && r.burden_share >= 0 && r.burden_share <= 200).sort((a, b) => b.burden_share - a.burden_share);
+    plot("ov-burden", [{
+      x: bsRows.map(r => r.burden_share).reverse(), y: bsRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: bsRows.map(r => r.burden_share <= 20 ? "#2ca02c" : r.burden_share <= 50 ? "#1f77b4" : r.burden_share <= 75 ? "#ffbb78" : "#d62728").reverse() },
+      text: bsRows.map(r => r.burden_share.toFixed(1) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>세금+이자 손실 %{x:.1f}%<extra></extra>",
+    }], { xaxis: { title: "Burden Share (%) — 낮을수록 효율" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, bsRows.length * 24 + 60) });
+
+    // EBIT vs NP scatter
+    const enRows = rows.filter(r => r.ebit != null && r.net_profit != null);
+    const maxV = Math.max(...enRows.map(r => Math.max(Math.abs(r.ebit), Math.abs(r.net_profit))));
+    plot("ov-ebit-np", [{
+      x: enRows.map(r => r.ebit), y: enRows.map(r => r.net_profit),
+      mode: "markers+text", type: "scatter",
+      text: enRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: enRows.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
+        color: enRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>EBIT %{x:,.0f} bn<br>NP %{y:,.0f} bn<extra></extra>",
+    }], {
+      xaxis: { title: "EBIT (IDR bn)" }, yaxis: { title: "Net Profit (IDR bn)" },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
+      shapes: [{ type: "line", x0: -maxV, y0: -maxV, x1: maxV, y1: maxV, line: { color: "#ccc", dash: "dot", width: 1 } }],
     });
 
     // ── ㊸ Quality vs Valuation 매트릭스
