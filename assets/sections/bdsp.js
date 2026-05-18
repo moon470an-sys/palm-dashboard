@@ -114,7 +114,7 @@ export function renderBdsp(root) {
       <div class="card"><h3>Treemap: 권역 → 주 → 군 (면적, 기준연도)</h3><div id="bdsp-treemap" class="plot plot-tall"></div></div>
     </div>
 
-    <div class="card"><h3>Top 20 효율 군 (Kabupaten 생산성 kg/ha, 2024) — 단위면적당 CPO 생산</h3><div id="bdsp-kab-yield" class="plot plot-tall"></div></div>
+    <div class="card"><h3>Top 20 효율 군 (Kabupaten 생산성 kg/ha, ${ly}) — 단위면적당 CPO 생산</h3><div id="bdsp-kab-yield" class="plot plot-tall"></div></div>
 
     <div class="grid-2">
       <div class="card"><h3>BDSP raw (nasional + provinsi)</h3><div id="bdsp-table"></div></div>
