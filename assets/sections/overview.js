@@ -723,7 +723,14 @@ export function renderOverview(root) {
       <div class="card"><h3>Net Debt / Revenue 다년 평균 (%) — 부채 부담 강도</h3><div id="ov-nd-rev" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㊻ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊻ EBITDA vs Revenue Growth — Operating Leverage</h3>
+    <p class="notice">
+      EBITDA CAGR > Revenue CAGR = positive operating leverage (효율 개선). 반대면 비용 압박 진행.
+    </p>
+    <div class="card"><h3>EBITDA CAGR vs Revenue CAGR scatter (대각선 위 = positive leverage)</h3><div id="ov-opl" class="plot plot-tall"></div></div>
+    <div class="card"><h3>Operating Leverage ratio (EBITDA CAGR − Revenue CAGR pp) ranking</h3><div id="ov-opl-rank" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㊼ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -2227,6 +2234,43 @@ export function renderOverview(root) {
     marker: { color: nmD.map(r => r.nm_delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
     text: nmD.map(r => (r.nm_delta >= 0 ? "+" : "") + r.nm_delta.toFixed(1) + "pp").reverse(), textposition: "outside",
   }], { xaxis: { title: "Net Margin Δ (pp, latest − first)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, nmD.length * 24 + 60) });
+
+  // ── ㊻ EBITDA vs Revenue Growth (Operating Leverage)
+  const opLev = companies.map(co => {
+    const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.revenue > 0 && r.ebitda != null && r.ebitda > 0).sort((a, b) => a.yr.localeCompare(b.yr));
+    if (s.length < 2) return null;
+    const years = s.length - 1;
+    const revCagr = (Math.pow(s[s.length-1].revenue / s[0].revenue, 1/years) - 1) * 100;
+    const ebCagr = (Math.pow(s[s.length-1].ebitda / s[0].ebitda, 1/years) - 1) * 100;
+    return { short: co, region: s[s.length-1].region, revCagr, ebCagr, opl: ebCagr - revCagr, revenue: s[s.length-1].revenue };
+  }).filter(Boolean).filter(r => isFinite(r.revCagr) && isFinite(r.ebCagr));
+
+  const opMax = Math.max(...opLev.map(r => Math.max(Math.abs(r.revCagr), Math.abs(r.ebCagr))));
+  plot("ov-opl", [{
+    x: opLev.map(r => r.revCagr), y: opLev.map(r => r.ebCagr),
+    mode: "markers+text", type: "scatter",
+    text: opLev.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+    marker: {
+      size: opLev.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
+      color: opLev.map(r => r.opl >= 0 ? "#2ca02c" : "#d62728"),
+      opacity: 0.8, line: { color: "#fff", width: 1 },
+    },
+    hovertemplate: "%{text}<br>Rev CAGR %{x:+.1f}%<br>EBITDA CAGR %{y:+.1f}%<br>OpL %{customdata:+.1f}pp<extra></extra>",
+    customdata: opLev.map(r => r.opl),
+  }], {
+    xaxis: { title: "Revenue CAGR (%/yr)", zeroline: true },
+    yaxis: { title: "EBITDA CAGR (%/yr)", zeroline: true },
+    margin: { l: 70, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
+    shapes: [{ type: "line", x0: -opMax, y0: -opMax, x1: opMax, y1: opMax, line: { color: "#ccc", dash: "dot", width: 1 } }],
+  });
+
+  const opSorted = [...opLev].sort((a, b) => b.opl - a.opl);
+  plot("ov-opl-rank", [{
+    x: opSorted.map(r => r.opl).reverse(), y: opSorted.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: opSorted.map(r => r.opl >= 5 ? "#2ca02c" : r.opl >= 0 ? "#1f77b4" : r.opl >= -5 ? "#ffbb78" : "#d62728").reverse() },
+    text: opSorted.map(r => (r.opl >= 0 ? "+" : "") + r.opl.toFixed(1) + "pp").reverse(), textposition: "outside",
+  }], { xaxis: { title: "OpL = EBITDA CAGR − Revenue CAGR (pp)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, opSorted.length * 24 + 60) });
 
   // ── ㊺ Net Debt 다년
   const ndSeries = companies.map(co => {
