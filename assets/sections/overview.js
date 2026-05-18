@@ -405,7 +405,7 @@ export function renderOverview(root) {
       <div class="card"><h3>DPS 지급 회사 (기준연도, 0 제외)</h3><div id="ov-dps" class="plot plot-tall"></div></div>
     </div>
 
-    <h2 class="group-h">🌴 농장 · 생산 Capa · 효율<span class="group-h-sub">Planted ha · Mill 처리능력 · CPO 수율 · OER (24/31 보고)</span></h2>
+    <h2 class="group-h">🌴 농장 · 생산 Capa · 효율<span class="group-h-sub">Planted ha · Mill 처리능력 · CPO 수율 · OER (plantation/mill 보고 회사 기준)</span></h2>
 
     <h3 class="section-h">⑪ 농장 규모 · 생산 Capa · 효율</h3>
     <p class="notice">
