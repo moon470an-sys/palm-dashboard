@@ -690,7 +690,17 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>EBITDA / Planted ha (IDR M/ha) — 운영 수익 효율</h3><div id="ov-ebitda-ha" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㊸ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊸ Quality vs Valuation — 저평가 우량주 식별</h3>
+    <p class="notice">
+      Quality Score (높을수록 좋음) × P/E (낮을수록 저평가) 매트릭스. 좌상단 = 저평가 우량주 (Hidden Gem). 우하단 = 고평가 부실주 (피해야 함).
+    </p>
+    <div class="card"><h3>Quality × P/E 4분면 (Hidden Gem 식별)</h3><div id="ov-qv-pe" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Quality × P/B 4분면</h3><div id="ov-qv-pb" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Quality × Dividend Yield 4분면 (Quality + Income)</h3><div id="ov-qv-dy" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㊹ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1312,6 +1322,56 @@ export function renderOverview(root) {
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
+
+    // ── ㊸ Quality vs Valuation 매트릭스
+    const QBAND_COLOR_LOCAL = (b) => ({ A: "#2ca02c", B: "#1f77b4", C: "#ffbb78", D: "#d62728" }[b] || "#7f7f7f");
+    const qvPe = rows.filter(r => r.quality_score != null && r.pe != null && r.pe > 0 && r.pe < 100);
+    plot("ov-qv-pe", [{
+      x: qvPe.map(r => r.pe), y: qvPe.map(r => r.quality_score),
+      mode: "markers+text", type: "scatter",
+      text: qvPe.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: qvPe.map(r => Math.max(10, Math.min(48, Math.sqrt(r.mcap || 100) / 4))),
+        color: qvPe.map(r => QBAND_COLOR_LOCAL(r.quality_band)),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>P/E %{x:.2f}x<br>Quality %{y:.1f}<extra></extra>",
+    }], {
+      xaxis: { title: "P/E (낮을수록 저평가)" },
+      yaxis: { title: "Quality Score" },
+      margin: { l: 60, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
+      annotations: [
+        { x: 5, y: 90, text: "Hidden Gem", showarrow: false, font: { color: "#2ca02c", size: 11 } },
+        { x: 60, y: 90, text: "Premium Quality", showarrow: false, font: { color: "#1f77b4", size: 11 } },
+        { x: 60, y: 10, text: "비싸고 부실", showarrow: false, font: { color: "#d62728", size: 11 } },
+      ],
+    });
+
+    const qvPb = rows.filter(r => r.quality_score != null && r.pb != null && r.pb > 0 && r.pb < 20);
+    plot("ov-qv-pb", [{
+      x: qvPb.map(r => r.pb), y: qvPb.map(r => r.quality_score),
+      mode: "markers+text", type: "scatter",
+      text: qvPb.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: qvPb.map(r => Math.max(10, Math.min(48, Math.sqrt(r.mcap || 100) / 4))),
+        color: qvPb.map(r => QBAND_COLOR_LOCAL(r.quality_band)),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>P/B %{x:.2f}x<br>Quality %{y:.1f}<extra></extra>",
+    }], { xaxis: { title: "P/B (낮을수록 저평가)" }, yaxis: { title: "Quality Score" }, margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false });
+
+    const qvDy = rows.filter(r => r.quality_score != null && r.div_yield != null && r.div_yield > 0);
+    plot("ov-qv-dy", [{
+      x: qvDy.map(r => r.div_yield), y: qvDy.map(r => r.quality_score),
+      mode: "markers+text", type: "scatter",
+      text: qvDy.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: qvDy.map(r => Math.max(10, Math.min(48, Math.sqrt(r.mcap || 100) / 4))),
+        color: qvDy.map(r => QBAND_COLOR_LOCAL(r.quality_band)),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>Div Yield %{x:.2f}%<br>Quality %{y:.1f}<extra></extra>",
+    }], { xaxis: { title: "Dividend Yield (%) — 우측이 고배당" }, yaxis: { title: "Quality Score" }, margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false });
 
     // ── ㊷ 단위 면적당 효율 (Mature ha 기준)
     const rmRows = rows.filter(r => r.rev_per_mature_ha != null && r.rev_per_mature_ha > 0).sort((a, b) => b.rev_per_mature_ha - a.rev_per_mature_ha);
