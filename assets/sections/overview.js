@@ -44,7 +44,10 @@ export function renderOverview(root) {
     const k = `${o.company}|${o.report_year}`;
     opLookup[k] = o;
   });
-  const fin = (state.ar.financials || []).map(r => {
+  // 종합 탭 전역 outlier 제외: Bumi Teknokultura Unggul (BTEK) — 모든 차트/KPI에서 빠짐
+  const fin = (state.ar.financials || [])
+    .filter(r => r.company !== "PT Bumi Teknokultura Unggul Tbk")
+    .map(r => {
     const revenue = num(r.revenue_idr_bn);
     const cfo = num(r.cfo_idr_bn);
     const capex = num(r.capex_idr_bn);
@@ -601,11 +604,8 @@ export function renderOverview(root) {
       height: Math.max(480, sorted.length * 22 + 80),
     });
 
-    // ── ③ 수익성·구조·산업 위계 — Bumi Teknokultura Unggul outlier 제외 (가독성)
-    const rows3 = rows.filter(r => r.short !== "Bumi Teknokultura Unggul");
-
     // ── Bubble: revenue × net_margin, size=assets
-    const bubble = rows3.filter(r => r.revenue != null && r.net_margin != null);
+    const bubble = rows.filter(r => r.revenue != null && r.net_margin != null);
     plot("ov-bubble", [{
       x: bubble.map(r => r.revenue), y: bubble.map(r => r.net_margin),
       mode: "markers+text", type: "scatter",
@@ -623,7 +623,7 @@ export function renderOverview(root) {
     });
 
     // ── ROE vs ROA scatter
-    const re = rows3.filter(r => r.roe != null && r.roa != null);
+    const re = rows.filter(r => r.roe != null && r.roa != null);
     plot("ov-roe-roa", [{
       x: re.map(r => r.roa), y: re.map(r => r.roe),
       mode: "markers+text", type: "scatter",
@@ -637,7 +637,7 @@ export function renderOverview(root) {
     });
 
     // ── Leverage vs profitability
-    const lev = rows3.filter(r => r.debt_eq != null && r.net_margin != null);
+    const lev = rows.filter(r => r.debt_eq != null && r.net_margin != null);
     plot("ov-lev", [{
       x: lev.map(r => r.debt_eq), y: lev.map(r => r.net_margin),
       mode: "markers+text", type: "scatter",
@@ -651,7 +651,7 @@ export function renderOverview(root) {
     });
 
     // ── Treemap 총자산
-    const ta = rows3.filter(r => r.assets > 0);
+    const ta = rows.filter(r => r.assets > 0);
     plot("ov-tree-asset", [{
       type: "treemap",
       labels: ta.map(r => r.short),
@@ -662,7 +662,7 @@ export function renderOverview(root) {
       marker: { colors: ta.map(r => colorMap[r.short]) },
     }], { margin: { t: 10, l: 0, r: 0, b: 0 }, height: 480 });
 
-    const tm = rows3.filter(r => r.mcap > 0);
+    const tm = rows.filter(r => r.mcap > 0);
     plot("ov-tree-mcap", [{
       type: "treemap",
       labels: tm.map(r => r.short),
@@ -1332,8 +1332,8 @@ export function renderOverview(root) {
       customdata: npg.map(r => [Math.round(r.np0).toLocaleString(), Math.round(r.np1).toLocaleString(), r.np_g]).reverse(),
     }], { xaxis: { title: `Net profit ${fromY} → ${toY} YoY (%), clamp ±500%`, zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, npg.length * 22 + 80) });
 
-    // Growth × Margin scatter — BTEK outlier 제외 (가독성)
-    const gm = growthRows.filter(r => r.rev_g != null && r.margin != null && r.short !== "Bumi Teknokultura Unggul");
+    // Growth × Margin scatter
+    const gm = growthRows.filter(r => r.rev_g != null && r.margin != null);
     plot("ov-grow-margin", [{
       x: gm.map(r => r.rev_g), y: gm.map(r => r.margin),
       mode: "markers+text", type: "scatter",
