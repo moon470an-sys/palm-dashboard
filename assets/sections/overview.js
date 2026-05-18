@@ -306,16 +306,23 @@ export function renderOverview(root) {
       <div class="card"><h3>시가총액 Treemap (전사 · 누락 회사 제외)</h3><div id="ov-tree-mcap" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑥ Cash Flow & 효율성 (CFO · CapEx · FCF)</h3>
-    <div class="grid-2">
-      <div class="card"><h3>CFO vs CapEx — 회사별 (기준연도)</h3><div id="ov-cfocapex" class="plot plot-tall"></div></div>
-      <div class="card"><h3>FCF (= CFO − CapEx) 랭킹</h3><div id="ov-fcf-rank" class="plot plot-tall"></div></div>
+    <h3 class="section-h">⑥ Cash Flow Deep Dive — 통합 (분해 · Waterfall · 효율 · Quality)</h3>
+    <p class="notice">
+      CFO 흐름 + 자본 사용 + 효율 매트릭스 + earnings quality 4축 통합. 회사 select로 waterfall 분석.
+    </p>
+    <div class="filter-bar">
+      <label>Waterfall 회사:</label>
+      <select id="ov-cf-co"></select>
+      <span class="badge" id="ov-cf-info"></span>
     </div>
     <div class="grid-2">
-      <div class="card"><h3>CapEx Intensity (CapEx/매출 %) — 투자 강도</h3><div id="ov-capex-int" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Cash Conversion (CFO/Net Profit %) — 이익 → 현금 전환</h3><div id="ov-cash-conv" class="plot plot-tall"></div></div>
+      <div class="card"><h3>CFO 분해 100% (CapEx + Dividend + Retained)</h3><div id="ov-cf-alloc" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Cash Flow Waterfall (선택 회사)</h3><div id="ov-cf-waterfall" class="plot plot-tall"></div></div>
     </div>
-    <div class="card"><h3>FCF Margin × FCF Yield scatter (회사별 · 기준연도)</h3><div id="ov-fcf-scatter" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>FCF Margin × FCF Yield (효율, 크기=mcap)</h3><div id="ov-cf-fcf-scatter" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Earnings Quality: Top 8 회사 CFO(막대) vs NP(라인)</h3><div id="ov-cf-eq" class="plot plot-tall"></div></div>
+    </div>
 
     <h3 class="section-h">⑦ Valuation & Returns — 통합 (Multiples · Dividend · Quality 매트릭스)</h3>
     <p class="notice">
@@ -563,18 +570,6 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Cluster × Region 매트릭스 — 회사 수 (양방향 분포)</h3><div id="ov-bm-region" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉖ Cash Flow Waterfall — 회사 select × 5단계 분해</h3>
-    <p class="notice">
-      Revenue → EBITDA → CFO → FCF → 배당 후 Retained. 각 단계 누적 잔존 시각화. 회사 select로 개별 회사 분석 가능.
-    </p>
-    <div class="filter-bar">
-      <label>회사:</label>
-      <select id="ov-wf-co"></select>
-      <span class="badge" id="ov-wf-info"></span>
-    </div>
-    <div class="card"><h3>Waterfall: Revenue → 단계별 cash 흐름</h3><div id="ov-waterfall" class="plot plot-tall"></div></div>
-    <div class="card"><h3>FCF Conversion 전체 비교 — Revenue → FCF 변환율 (FCF / Revenue %)</h3><div id="ov-fcf-conv" class="plot plot-tall"></div></div>
-
     <h3 class="section-h">㉗ Liability Maturity — 단기 vs 장기 부채</h3>
     <p class="notice">
       Short-term liab 비중 ↑ 이면 refinancing 위험 ↑. Short-term liab / Equity 가 1.0 이상이면 단기 부담 큼.
@@ -594,38 +589,6 @@ export function renderOverview(root) {
       <div class="card"><h3>Net Profit 변동 계수 (CV) — 변동성 ranking</h3><div id="ov-np-cv" class="plot plot-tall"></div></div>
     </div>
     <div class="card"><h3>흑자 지속률 vs 평균 NP (영구 흑자 유지하면서 큰 이익 = 우량주)</h3><div id="ov-profit-quad" class="plot plot-tall"></div></div>
-
-    <h3 class="section-h">㉚ Capital Allocation Map — CFO를 어디에 쓰나</h3>
-    <p class="notice">
-      CFO = CapEx (성장 재투자) + Dividend (주주 환원) + Retained (Cash 누적). 100% stacked로 자본 사용 패턴 식별.
-      Reinvestment Rate (CapEx/CFO) ↑ = Growth firm · Return Rate (Div/CFO) ↑ = Mature/Income firm.
-    </p>
-    <div class="card"><h3>CFO 분해 (100% stacked) — CapEx / Dividend / Retained</h3><div id="ov-cap-alloc" class="plot plot-tall"></div></div>
-    <div class="grid-2">
-      <div class="card"><h3>Reinvestment vs Return scatter — Growth vs Income</h3><div id="ov-reinv-return" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Total Deployment (CapEx+Div) / CFO % — Cash Burn 위험</h3><div id="ov-deploy" class="plot plot-tall"></div></div>
-    </div>
-
-    <h3 class="section-h">㉜ Earnings Quality Trend — CFO vs Net Profit 다년 비교</h3>
-    <p class="notice">
-      이상적 회사: CFO ≈ Net Profit (이익이 현금으로 잘 전환). CFO ≪ NP = 매출채권/재고 누적 (현금화 지연). CFO ≫ NP = 비현금 비용 큼.
-      Avg CFO/NP 100% 근처 + 변동 작으면 earnings quality 우수.
-    </p>
-    <div class="card"><h3>Top 8 회사 CFO vs NP overlay (기준연도 NP 상위)</h3><div id="ov-eq-overlay" class="plot plot-tall"></div></div>
-    <div class="grid-2">
-      <div class="card"><h3>다년 평균 CFO/NP (%) — Quality 지속성</h3><div id="ov-eq-avg" class="plot plot-tall"></div></div>
-      <div class="card"><h3>CFO vs NP divergence — 누적 차이 (CFO 합 − NP 합) bn</h3><div id="ov-eq-div" class="plot plot-tall"></div></div>
-    </div>
-
-    <h3 class="section-h">㉝ CapEx Cycle — 다년 투자 사이클 패턴</h3>
-    <p class="notice">
-      CapEx 다년 변화로 회사의 expansion vs harvest phase 식별. 최근/평균 CapEx 비율: 1.5x+ = 증액 사이클, 0.5x↓ = 감액 사이클.
-    </p>
-    <div class="card"><h3>Top 8 CapEx 회사 다년 시계열 (전 기간 합산 상위)</h3><div id="ov-capex-trend" class="plot plot-tall"></div></div>
-    <div class="grid-2">
-      <div class="card"><h3>최근/평균 CapEx (x) — Expansion vs Harvest</h3><div id="ov-capex-cycle" class="plot plot-tall"></div></div>
-      <div class="card"><h3>총 누적 CapEx (전 기간 IDR bn) ranking</h3><div id="ov-capex-cum" class="plot plot-tall"></div></div>
-    </div>
 
     <h3 class="section-h">㉟ Cash Position — Cash 보유 & 유동성 안전 지표</h3>
     <p class="notice">
@@ -709,13 +672,6 @@ export function renderOverview(root) {
       8개 핵심 카테고리에서 기준연도 1위 회사 + Top 3 시각 카드. 각 카테고리별 강자 한눈에.
     </p>
     <div class="card"><h3>Award Cards</h3><div id="ov-awards" class="awards"></div></div>
-
-    <h3 class="section-h">㊾ Sustaining vs Growth CapEx (CapEx / D&A)</h3>
-    <p class="notice">
-      D&A (감가상각) ≈ EBITDA − EBIT. CapEx/D&A 1.0x ≈ sustaining only (자산 유지), 1.0x↑ = growth investment, 1.0x↓ = harvest / 자산 축소.
-    </p>
-    <div class="card"><h3>CapEx / D&A (x) — 회사별 투자 강도 ranking</h3><div id="ov-capex-da" class="plot plot-tall"></div></div>
-    <div class="card"><h3>CapEx Intensity × D&A Intensity scatter (모두 %)</h3><div id="ov-capda-scatter" class="plot plot-tall"></div></div>
 
     <h3 class="section-h">㊿ Percentile Rank Matrix — 회사 강약 시각화</h3>
     <p class="notice">
@@ -898,74 +854,49 @@ export function renderOverview(root) {
       marker: { colors: tm.map(r => colorMap[r.short]) },
     }], { margin: { t: 10, l: 0, r: 0, b: 0 }, height: 480 });
 
-    // ── ⑥ Cash Flow & 효율성
-    // CFO vs CapEx grouped bar (정렬 by CFO desc)
-    const cfRows = rows.filter(r => r.cfo != null || r.capex != null)
-      .sort((a, b) => (b.cfo || 0) - (a.cfo || 0));
-    plot("ov-cfocapex", [
-      { x: cfRows.map(r => r.short), y: cfRows.map(r => r.cfo), type: "bar", name: "CFO", marker: { color: "#2ca02c" } },
-      { x: cfRows.map(r => r.short), y: cfRows.map(r => r.capex), type: "bar", name: "CapEx (절대값)", marker: { color: "#d62728" } },
+    // ── ⑥ Cash Flow Deep Dive (통합)
+    // 1. CFO 분해 100% (CapEx + Div + Retained)
+    const cfaRows = rows.filter(r => r.cap_capex_share != null).sort((a, b) => (b.cfo || 0) - (a.cfo || 0));
+    plot("ov-cf-alloc", [
+      { x: cfaRows.map(r => r.short), y: cfaRows.map(r => r.cap_capex_share), type: "bar", name: "CapEx", marker: { color: "#ff7f0e" } },
+      { x: cfaRows.map(r => r.short), y: cfaRows.map(r => r.cap_div_share), type: "bar", name: "Dividend", marker: { color: "#1f77b4" } },
+      { x: cfaRows.map(r => r.short), y: cfaRows.map(r => Math.max(0, r.cap_retained_share)), type: "bar", name: "Retained (≥0)", marker: { color: "#2ca02c" } },
     ], {
-      barmode: "group", yaxis: { title: "IDR bn", zeroline: true },
+      barmode: "stack", yaxis: { title: "% of CFO" },
       xaxis: { tickangle: -45, automargin: true },
-      legend: { orientation: "h", y: -0.35 }, margin: { l: 60, r: 20, t: 10, b: 130 }, height: 480,
+      legend: { orientation: "h", y: -0.35 },
+      margin: { l: 60, r: 20, t: 10, b: 130 }, height: 480,
     });
 
-    // FCF ranking
-    const fcfRows = rows.filter(r => r.fcf != null).sort((a, b) => b.fcf - a.fcf);
-    plot("ov-fcf-rank", [{
-      x: fcfRows.map(r => r.fcf).reverse(), y: fcfRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: fcfRows.map(r => r.fcf >= 0 ? "#2ca02c" : "#d62728").reverse() },
-      text: fcfRows.map(r => Math.round(r.fcf).toLocaleString()).reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>FCF: %{x:,.0f} bn<extra></extra>",
-    }], {
-      xaxis: { title: "FCF = CFO − |CapEx| (IDR bn)", zeroline: true },
-      margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(480, fcfRows.length * 22 + 80),
-    });
+    // 2. Cash Flow Waterfall (회사 select — 동적, renderYearScoped 외부에서 처리)
 
-    // CapEx Intensity (CapEx/Revenue %)
-    const ciRows = rows.filter(r => r.capex_intensity != null).sort((a, b) => b.capex_intensity - a.capex_intensity);
-    plot("ov-capex-int", [{
-      x: ciRows.map(r => r.capex_intensity).reverse(), y: ciRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: ciRows.map(r => r.capex_intensity).reverse(), colorscale: "Reds" },
-      text: ciRows.map(r => r.capex_intensity.toFixed(1) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>CapEx/Rev: %{x:.2f}%<extra></extra>",
-    }], {
-      xaxis: { title: "CapEx / Revenue (%)" },
-      margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(480, ciRows.length * 22 + 80),
-    });
-
-    // Cash Conversion (CFO/NP %)
-    const ccRows = rows.filter(r => r.cash_conv != null && Math.abs(r.cash_conv) < 1000)
-      .sort((a, b) => b.cash_conv - a.cash_conv);
-    plot("ov-cash-conv", [{
-      x: ccRows.map(r => r.cash_conv).reverse(), y: ccRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: ccRows.map(r => r.cash_conv >= 100 ? "#2ca02c" : (r.cash_conv >= 0 ? "#ffbb78" : "#d62728")).reverse() },
-      text: ccRows.map(r => r.cash_conv.toFixed(0) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>CFO/NP: %{x:.1f}%<extra></extra>",
-    }], {
-      xaxis: { title: "CFO / Net Profit (%) — 100% 이상이면 이익 → 현금 변환 우수" },
-      margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(480, ccRows.length * 22 + 80),
-    });
-
-    // FCF margin × FCF yield scatter
+    // 3. FCF margin × FCF yield scatter (살림)
     const fsRows = rows.filter(r => r.fcf_margin != null && r.fcf_yield != null);
-    plot("ov-fcf-scatter", [{
+    plot("ov-cf-fcf-scatter", [{
       x: fsRows.map(r => r.fcf_margin), y: fsRows.map(r => r.fcf_yield),
       mode: "markers+text", type: "scatter",
       text: fsRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
       marker: {
         size: fsRows.map(r => Math.max(10, Math.min(50, Math.sqrt(r.mcap || 100) / 4))),
-        color: fsRows.map(r => colorMap[r.short]), opacity: 0.75, line: { color: "#fff", width: 1 },
+        color: fsRows.map(r => REGION_COLOR[r.region] || colorMap[r.short]), opacity: 0.75, line: { color: "#fff", width: 1 },
       },
       hovertemplate: "%{text}<br>FCF margin %{x:.2f}%<br>FCF yield %{y:.2f}%<extra></extra>",
     }], {
       xaxis: { title: "FCF / Revenue (%)", zeroline: true },
       yaxis: { title: "FCF / Market Cap (%) — Yield", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // 4. Earnings Quality overlay: Top 8 NP companies — CFO bar + NP line (기준연도)
+    const top8NPLy = [...rows].filter(r => r.net_profit != null).sort((a, b) => b.net_profit - a.net_profit).slice(0, 8);
+    plot("ov-cf-eq", [
+      { x: top8NPLy.map(r => r.short), y: top8NPLy.map(r => r.cfo), type: "bar", name: "CFO", marker: { color: "#2ca02c" } },
+      { x: top8NPLy.map(r => r.short), y: top8NPLy.map(r => r.net_profit), type: "scatter", mode: "lines+markers", name: "Net Profit", line: { color: "#d62728", width: 2.5 }, marker: { color: "#d62728", size: 8 } },
+    ], {
+      yaxis: { title: "IDR bn", zeroline: true },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.3 },
+      margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
     });
 
     // ── ⑦ Valuation & Returns (통합)
@@ -1430,35 +1361,6 @@ export function renderOverview(root) {
       margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
 
-    // ── ㊾ Sustaining vs Growth CapEx
-    const cdaRows = rows.filter(r => r.capex_da != null && r.capex_da > 0 && r.capex_da < 30).sort((a, b) => b.capex_da - a.capex_da);
-    plot("ov-capex-da", [{
-      x: cdaRows.map(r => r.capex_da).reverse(), y: cdaRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: cdaRows.map(r => r.capex_da >= 1.5 ? "#ff7f0e" : r.capex_da >= 0.8 ? "#1f77b4" : "#2ca02c").reverse() },
-      text: cdaRows.map(r => r.capex_da.toFixed(2) + "x").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>CapEx/D&A %{x:.2f}x<extra></extra>",
-    }], { xaxis: { title: "CapEx / D&A (x) — 1x sustaining, 1.5x+ growth, <0.8x harvest" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cdaRows.length * 24 + 60) });
-
-    // Scatter: capex intensity vs D&A intensity
-    const cdSc = rows.filter(r => r.capex_intensity != null && r.da_implied != null && r.revenue);
-    plot("ov-capda-scatter", [{
-      x: cdSc.map(r => r.da_implied / r.revenue * 100),
-      y: cdSc.map(r => r.capex_intensity),
-      mode: "markers+text", type: "scatter",
-      text: cdSc.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: cdSc.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
-        color: cdSc.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
-        opacity: 0.8, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>D&A %{x:.2f}% of Rev<br>CapEx %{y:.2f}% of Rev<extra></extra>",
-    }], {
-      xaxis: { title: "D&A / Revenue (%)" }, yaxis: { title: "CapEx / Revenue (%)" },
-      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
-      shapes: [{ type: "line", x0: 0, y0: 0, x1: 20, y1: 20, line: { color: "#ccc", dash: "dot", width: 1 } }],
-    });
-
     // ── ㊽ Best in Class Awards
     const AWARDS = [
       { key: "revenue", label: "매출 (Revenue)", icon: "💰", fmt: (v) => `${Math.round(v).toLocaleString()} bn`, higher: true },
@@ -1680,49 +1582,6 @@ export function renderOverview(root) {
       text: crRows2.map(r => r.cash_ratio > 10 ? ">10x" : r.cash_ratio.toFixed(2) + "x").reverse(), textposition: "outside",
       hovertemplate: "%{y}<br>Cash Ratio %{x:.2f}x<extra></extra>",
     }], { xaxis: { title: "Cash Ratio (Cash / Current Liab) — 1.0+ 우수 · 0.3+ 정상" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, crRows2.length * 24 + 60) });
-
-    // ── ㉚ Capital Allocation
-    const caRows = rows.filter(r => r.cap_capex_share != null).sort((a, b) => (b.cfo || 0) - (a.cfo || 0));
-    plot("ov-cap-alloc", [
-      { x: caRows.map(r => r.short), y: caRows.map(r => r.cap_capex_share), type: "bar", name: "CapEx", marker: { color: "#ff7f0e" } },
-      { x: caRows.map(r => r.short), y: caRows.map(r => r.cap_div_share), type: "bar", name: "Dividend", marker: { color: "#1f77b4" } },
-      { x: caRows.map(r => r.short), y: caRows.map(r => Math.max(0, r.cap_retained_share)), type: "bar", name: "Retained (≥0)", marker: { color: "#2ca02c" } },
-    ], {
-      barmode: "stack", yaxis: { title: "% of CFO" },
-      xaxis: { tickangle: -45, automargin: true },
-      legend: { orientation: "h", y: -0.35 },
-      margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
-    });
-
-    const rrRows = rows.filter(r => r.cap_capex_share != null && r.cap_div_share != null);
-    plot("ov-reinv-return", [{
-      x: rrRows.map(r => r.cap_capex_share), y: rrRows.map(r => r.cap_div_share),
-      mode: "markers+text", type: "scatter",
-      text: rrRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: rrRows.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.cfo) || 100) / 4))),
-        color: rrRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
-        opacity: 0.8, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>CapEx %{x:.1f}%<br>Div %{y:.1f}% (of CFO)<extra></extra>",
-    }], {
-      xaxis: { title: "Reinvestment (CapEx / CFO %) — Growth" },
-      yaxis: { title: "Return (Dividend / CFO %) — Income" },
-      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
-      annotations: [
-        { x: 75, y: 5, text: "성장형 (재투자)", showarrow: false, font: { color: "#ff7f0e", size: 11 } },
-        { x: 10, y: 60, text: "배당주", showarrow: false, font: { color: "#1f77b4", size: 11 } },
-      ],
-    });
-
-    const dpRows2 = rows.filter(r => r.payout_total != null).sort((a, b) => b.payout_total - a.payout_total);
-    plot("ov-deploy", [{
-      x: dpRows2.map(r => Math.min(300, r.payout_total)).reverse(), y: dpRows2.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: dpRows2.map(r => r.payout_total > 100 ? "#d62728" : r.payout_total > 70 ? "#ffbb78" : "#2ca02c").reverse() },
-      text: dpRows2.map(r => r.payout_total > 300 ? ">300%" : r.payout_total.toFixed(0) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Deploy %{x:.1f}% (CapEx+Div / CFO)<extra></extra>",
-    }], { xaxis: { title: "Total Deployment / CFO (%) — 100%↑ 시 CFO 초과 사용" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, dpRows2.length * 24 + 60) });
 
     // ── ㉗ Liability Maturity
     const mtRows = rows.filter(r => r.lt_share != null).sort((a, b) => (b.liab || 0) - (a.liab || 0));
@@ -2213,9 +2072,9 @@ export function renderOverview(root) {
   psSel.addEventListener("change", renderPS);
   renderPS();
 
-  // ── ㉖ Cash Flow Waterfall (회사 select)
-  const wfSel = document.getElementById("ov-wf-co");
-  const wfInfo = document.getElementById("ov-wf-info");
+  // ── ⑥ Cash Flow Waterfall (통합 섹션의 인터랙티브 차트)
+  const wfSel = document.getElementById("ov-cf-co");
+  const wfInfo = document.getElementById("ov-cf-info");
   wfSel.innerHTML = companies.map(c => `<option value="${c}">${c}</option>`).join("");
   const renderWaterfall = () => {
     const co = wfSel.value;
@@ -2226,13 +2085,11 @@ export function renderOverview(root) {
     const ebitda = r.ebitda || 0;
     const cfo = r.cfo || 0;
     const capex = r.capex || 0;
-    const fcf = r.fcf || (cfo - capex);
-    const divTotal = (r.div_total != null && r.shares_outstanding_mn != null) ? r.div_total * r.shares_outstanding_mn / 1000 : 0;  // IDR bn
-    const retained = fcf - divTotal;
+    const divTotal = (r.div_total != null && r.shares_outstanding_mn != null) ? r.div_total * r.shares_outstanding_mn / 1000 : 0;
     const measure = ["absolute", "relative", "relative", "relative", "relative", "relative", "total"];
     const x = ["Revenue", "→ EBITDA", "→ CFO", "− CapEx", "= FCF", "− 배당", "Retained"];
     const y = [rev, ebitda - rev, cfo - ebitda, -capex, 0, -divTotal, 0];
-    plot("ov-waterfall", [{
+    plot("ov-cf-waterfall", [{
       type: "waterfall", measure, x, y,
       text: y.map(v => Math.round(v).toLocaleString()),
       connector: { line: { color: "#888" } },
@@ -2517,108 +2374,6 @@ export function renderOverview(root) {
     });
   }
 
-  // ── ㉝ CapEx Cycle
-  const capexCum = companies.map(co => {
-    const series = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.capex != null).sort((a, b) => a.yr.localeCompare(b.yr));
-    if (series.length === 0) return null;
-    const total = series.reduce((s, r) => s + r.capex, 0);
-    const avg = total / series.length;
-    const latest = series[series.length - 1].capex;
-    const ratio = avg > 0 ? latest / avg : null;
-    return { short: co, region: series[series.length - 1].region, series, total, avg, latest, ratio };
-  }).filter(Boolean);
-
-  // Top 8 capex (전 기간 합)
-  const cxTop8 = [...capexCum].sort((a, b) => b.total - a.total).slice(0, 8);
-  plot("ov-capex-trend", cxTop8.map(s => ({
-    x: s.series.map(r => r.yr), y: s.series.map(r => r.capex),
-    name: s.short, type: "scatter", mode: "lines+markers",
-    line: { color: colorMap[s.short], width: 2.5 }, marker: { color: colorMap[s.short], size: 8 },
-  })), {
-    yaxis: { title: "CapEx (IDR bn)" },
-    legend: { orientation: "h", y: -0.18 },
-    margin: { l: 70, r: 20, t: 10, b: 60 }, height: 480,
-  });
-
-  // Cycle ratio (latest / avg)
-  const cxCycle = capexCum.filter(r => r.ratio != null && r.ratio > 0 && isFinite(r.ratio)).sort((a, b) => b.ratio - a.ratio);
-  plot("ov-capex-cycle", [{
-    x: cxCycle.map(r => Math.min(10, r.ratio)).reverse(), y: cxCycle.map(r => r.short).reverse(),
-    type: "bar", orientation: "h",
-    marker: { color: cxCycle.map(r => r.ratio >= 1.5 ? "#ff7f0e" : r.ratio >= 0.8 ? "#1f77b4" : "#2ca02c").reverse() },
-    text: cxCycle.map(r => r.ratio > 10 ? ">10x" : r.ratio.toFixed(2) + "x").reverse(), textposition: "outside",
-    hovertemplate: "%{y}<br>Latest %{customdata[0]:,.0f} bn / Avg %{customdata[1]:,.0f} bn<br>= %{x:.2f}x<extra></extra>",
-    customdata: cxCycle.map(r => [r.latest, r.avg]).reverse(),
-  }], { xaxis: { title: "Latest / Avg CapEx (x) — 1.5x+ Expansion, <0.8x Harvest", range: [0, 10.5] }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cxCycle.length * 24 + 60) });
-
-  // Total cumulative
-  const cxCum = [...capexCum].sort((a, b) => b.total - a.total);
-  plot("ov-capex-cum", [{
-    x: cxCum.map(r => r.total).reverse(), y: cxCum.map(r => r.short).reverse(),
-    type: "bar", orientation: "h",
-    marker: { color: cxCum.map(r => r.total).reverse(), colorscale: "Oranges" },
-    text: cxCum.map(r => Math.round(r.total).toLocaleString()).reverse(), textposition: "outside",
-    hovertemplate: "%{y}<br>총 CapEx %{x:,.0f} bn<extra></extra>",
-  }], { xaxis: { title: "총 누적 CapEx (IDR bn, 전 기간)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, cxCum.length * 24 + 60) });
-
-  // ── ㉜ Earnings Quality Trend
-  // Top 8 NP companies — CFO + NP overlay
-  const top8NP = fin.filter(r => r.yr === ly && r.net_profit != null)
-    .sort((a, b) => b.net_profit - a.net_profit).slice(0, 8).map(r => r.short);
-  const eqTraces = [];
-  top8NP.forEach(co => {
-    const series = fin.filter(r => r.short === co && annualYears.includes(r.yr)).sort((a, b) => a.yr.localeCompare(b.yr));
-    eqTraces.push({
-      x: series.map(r => `${r.yr}\n${co.slice(0, 8)}`), y: series.map(r => r.cfo),
-      type: "bar", name: `CFO — ${co}`, marker: { color: colorMap[co], opacity: 0.6 }, legendgroup: co, showlegend: false,
-    });
-    eqTraces.push({
-      x: series.map(r => `${r.yr}\n${co.slice(0, 8)}`), y: series.map(r => r.net_profit),
-      type: "scatter", mode: "lines+markers", name: co, line: { color: colorMap[co], width: 2.5 }, marker: { color: colorMap[co], size: 8 }, legendgroup: co,
-    });
-  });
-  plot("ov-eq-overlay", eqTraces, {
-    yaxis: { title: "IDR bn", zeroline: true },
-    xaxis: { tickangle: -45, automargin: true },
-    legend: { orientation: "h", y: -0.35 },
-    margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480, barmode: "group",
-  });
-
-  // 다년 평균 CFO/NP (annualYears)
-  const eqAvg = companies.map(co => {
-    const series = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.cfo != null && r.net_profit != null && r.net_profit > 0);
-    if (series.length === 0) return null;
-    const ratios = series.map(r => r.cfo / r.net_profit * 100);
-    const m = ratios.reduce((s, v) => s + v, 0) / ratios.length;
-    return { short: co, region: series[series.length - 1].region, avg_eq: m, n: series.length };
-  }).filter(Boolean).sort((a, b) => b.avg_eq - a.avg_eq);
-
-  plot("ov-eq-avg", [{
-    x: eqAvg.map(r => Math.min(400, r.avg_eq)).reverse(), y: eqAvg.map(r => r.short).reverse(),
-    type: "bar", orientation: "h",
-    marker: { color: eqAvg.map(r => r.avg_eq >= 80 && r.avg_eq <= 150 ? "#2ca02c" : r.avg_eq >= 50 ? "#1f77b4" : r.avg_eq >= 0 ? "#ffbb78" : "#d62728").reverse() },
-    text: eqAvg.map(r => r.avg_eq > 400 ? ">400%" : r.avg_eq.toFixed(0) + "%").reverse(), textposition: "outside",
-    hovertemplate: "%{y}<br>Avg CFO/NP %{x:.1f}% (n=%{customdata})<extra></extra>",
-    customdata: eqAvg.map(r => r.n).reverse(),
-  }], { xaxis: { title: "다년 평균 CFO/NP (%) — 80-150% 우수" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, eqAvg.length * 24 + 60) });
-
-  // Divergence: CFO 합 − NP 합 (전 기간)
-  const eqDiv = companies.map(co => {
-    const series = fin.filter(r => r.short === co);
-    const cfoSum = series.reduce((s, r) => s + (r.cfo || 0), 0);
-    const npSum = series.reduce((s, r) => s + (r.net_profit || 0), 0);
-    return { short: co, region: series[series.length - 1]?.region, div: cfoSum - npSum, cfoSum, npSum };
-  }).sort((a, b) => Math.abs(b.div) - Math.abs(a.div));
-
-  plot("ov-eq-div", [{
-    x: eqDiv.map(r => r.div).reverse(), y: eqDiv.map(r => r.short).reverse(),
-    type: "bar", orientation: "h",
-    marker: { color: eqDiv.map(r => r.div >= 0 ? "#2ca02c" : "#d62728").reverse() },
-    text: eqDiv.map(r => (r.div >= 0 ? "+" : "") + Math.round(r.div).toLocaleString()).reverse(), textposition: "outside",
-    hovertemplate: "%{y}<br>CFO−NP %{x:,.0f} bn<br>CFO 합 %{customdata[0]:,.0f} bn / NP 합 %{customdata[1]:,.0f} bn<extra></extra>",
-    customdata: eqDiv.map(r => [r.cfoSum, r.npSum]).reverse(),
-  }], { xaxis: { title: "누적 CFO − NP (IDR bn) — 양수=CFO ≥ NP", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, eqDiv.length * 24 + 60) });
-
   // ── ㉙ Profitability Stability (전 기간 NP 변동성)
   const profitStab = companies.map(co => {
     const series = fin.filter(r => r.short === co && r.net_profit != null);
@@ -2670,17 +2425,6 @@ export function renderOverview(root) {
     yaxis: { title: "평균 Net Profit (IDR bn)", zeroline: true },
     margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
   });
-
-  // FCF Conversion (FCF / Revenue %) — 전사 비교 (한 번만)
-  const fcRowsConv = fin.filter(r => r.yr === ly && r.fcf != null && r.revenue).map(r => ({
-    short: r.short, fcf_conv: r.fcf / r.revenue * 100, region: r.region,
-  })).sort((a, b) => b.fcf_conv - a.fcf_conv);
-  plot("ov-fcf-conv", [{
-    x: fcRowsConv.map(r => r.fcf_conv).reverse(), y: fcRowsConv.map(r => r.short).reverse(),
-    type: "bar", orientation: "h",
-    marker: { color: fcRowsConv.map(r => r.fcf_conv >= 15 ? "#2ca02c" : r.fcf_conv >= 5 ? "#1f77b4" : r.fcf_conv >= 0 ? "#ffbb78" : "#d62728").reverse() },
-    text: fcRowsConv.map(r => r.fcf_conv.toFixed(1) + "%").reverse(), textposition: "outside",
-  }], { xaxis: { title: "FCF / Revenue (%)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, fcRowsConv.length * 22 + 60) });
 
   // ── ⑮ Peer Comparison
   const peerCoSel = document.getElementById("ov-peer-co");
