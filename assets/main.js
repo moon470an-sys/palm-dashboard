@@ -96,7 +96,8 @@ const setBoot = (msg) => { if (bootProgress) bootProgress.textContent = msg; };
     initNav();
   } catch (e) {
     console.error("[boot]", e);
-    document.querySelector(".boot .msg").textContent = "로드 실패: " + e.message;
+    document.querySelector(".boot .msg").innerHTML =
+      `로드 실패: ${String(e.message).replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;","\"":"&quot;"}[c]))}<br/><small>새로고침(F5) 또는 콘솔(F12) 확인</small>`;
     return;
   }
   document.querySelector(".boot")?.remove();
