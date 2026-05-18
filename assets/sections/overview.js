@@ -515,9 +515,11 @@ export function renderOverview(root) {
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
-  // ── 시계열 차트는 한 번만
+  // ── 시계열 차트 — 2020~2021 제외 (raw 데이터 sparse), legend 우측
+  const TS_EXCLUDE_YR = new Set(["2020", "2021"]);
   const seriesByCo = (metric) => companies.map(co => {
-    const rows = fin.filter(r => r.short === co).sort((a, b) => a.yr.localeCompare(b.yr));
+    const rows = fin.filter(r => r.short === co && !TS_EXCLUDE_YR.has(r.yr))
+      .sort((a, b) => a.yr.localeCompare(b.yr));
     return {
       x: rows.map(r => r.yr), y: rows.map(r => r[metric]),
       name: co, type: "scatter", mode: "lines+markers",
@@ -526,15 +528,17 @@ export function renderOverview(root) {
     };
   }).filter(t => t.y.some(v => v != null));
 
+  const TS_LAYOUT = {
+    legend: { orientation: "v", x: 1.02, xanchor: "left", y: 1, yanchor: "top", font: { size: 10 } },
+    margin: { l: 70, r: 180, t: 10, b: 40 }, height: 480,
+  };
   plot("ov-rev-ts", seriesByCo("revenue"), {
     yaxis: { title: "Revenue (IDR bn)" },
-    legend: { orientation: "h", y: -0.18, font: { size: 9 } },
-    margin: { l: 70, r: 20, t: 10, b: 80 }, height: 480,
+    ...TS_LAYOUT,
   });
   plot("ov-np-ts", seriesByCo("net_profit"), {
     yaxis: { title: "Net profit (IDR bn)", zeroline: true },
-    legend: { orientation: "h", y: -0.18, font: { size: 9 } },
-    margin: { l: 70, r: 20, t: 10, b: 80 }, height: 480,
+    ...TS_LAYOUT,
   });
 
   // ── 기준연도 변동 차트 (rerender 함수)
