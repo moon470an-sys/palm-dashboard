@@ -65,6 +65,11 @@ export function renderOverview(root) {
       area_sumatra: num(op.sumatra_area_ha) || 0, area_kalimantan: num(op.kalimantan_area_ha) || 0,
       area_sulawesi: num(op.sulawesi_area_ha) || 0, area_other: num(op.other_region_area_ha) || 0,
       mills_n: num(op.mills_count), mill_cap_tph: num(op.mill_capacity_tph),
+      rbdpo_t: num(op.rbdpo_production_t) || 0, olein_t: num(op.olein_production_t) || 0,
+      stearin_t: num(op.stearin_production_t) || 0, pfad_t: num(op.pfad_production_t) || 0,
+      pko_t: num(op.pko_production_t) || 0, pke_t: num(op.pke_production_t) || 0,
+      cpo_refinery: num(op.cpo_refinery_count) || 0, pko_refinery: num(op.pko_refinery_count) || 0,
+      domestic_pct: num(op.domestic_sales_pct), export_pct: num(op.export_sales_pct),
       oer_pct: num(op.oer_reported_pct), cpo_price_kg: num(op.average_cpo_selling_price_local_per_kg),
       rev_per_ha: (revenue && planted) ? revenue * 1e9 / planted : null,  // IDR per ha
       cpo_per_ha: (cpo && planted) ? cpo / planted : null,  // ton/ha CPO
@@ -125,6 +130,12 @@ export function renderOverview(root) {
     r.ca_share = (ca2 != null && r.assets) ? ca2 / r.assets * 100 : null;
     r.nca_share = (nca != null && r.assets) ? nca / r.assets * 100 : null;
     r.cash_share = (r.cash != null && r.assets) ? r.cash / r.assets * 100 : null;
+    // Downstream Integration Score 0-6 (refinery count + refined product 가짓수)
+    r.downstream_score = (r.cpo_refinery > 0 ? 1 : 0) + (r.pko_refinery > 0 ? 1 : 0)
+      + (r.rbdpo_t > 0 ? 1 : 0) + (r.olein_t > 0 ? 1 : 0)
+      + (r.stearin_t > 0 ? 1 : 0) + (r.pfad_t > 0 ? 1 : 0);
+    r.refined_total_t = (r.rbdpo_t || 0) + (r.olein_t || 0) + (r.stearin_t || 0) + (r.pfad_t || 0);
+    r.refined_per_cpo = (r.refined_total_t > 0 && r.cpo_t > 0) ? r.refined_total_t / r.cpo_t * 100 : null;
     // Risk Score 0-100 (높을수록 위험)
     let s = 0;
     if (r.net_profit != null && r.net_profit < 0) s += 30;
@@ -393,7 +404,18 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>자산 구성 — Current / Non-Current / Cash (100% stacked)</h3><div id="ov-asset-mix" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉑ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉑ Downstream Integration — 정제·다운스트림 통합도</h3>
+    <p class="notice">
+      0-6점: CPO refinery + PKO refinery + RBDPO/Olein/Stearin/PFAD 생산 가짓수. 높을수록 수직 통합 (upstream→downstream).
+      Refined/CPO = 정제유 생산량 / CPO 생산량 (downstream 변환율).
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>Downstream Integration Score 0–6</h3><div id="ov-dsi" class="plot plot-tall"></div></div>
+      <div class="card"><h3>회사별 정제유 mix (RBDPO/Olein/Stearin/PFAD/PKO)</h3><div id="ov-refined-mix" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>Domestic vs Export 매출 비중 (operations 보고된 회사)</h3><div id="ov-dom-exp" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㉒ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1014,6 +1036,39 @@ export function renderOverview(root) {
       xaxis: { title: "Diversification (1 - HHI)" },
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // ── ㉑ Downstream Integration
+    const dsRows = [...rows].sort((a, b) => b.downstream_score - a.downstream_score);
+    plot("ov-dsi", [{
+      x: dsRows.map(r => r.downstream_score).reverse(), y: dsRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: dsRows.map(r => r.downstream_score >= 4 ? "#2ca02c" : r.downstream_score >= 2 ? "#1f77b4" : r.downstream_score >= 1 ? "#ffbb78" : "#9ca3af").reverse() },
+      text: dsRows.map(r => r.downstream_score).reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Downstream %{x}/6<extra></extra>",
+    }], { xaxis: { title: "Downstream Integration Score (0=pure upstream, 6=완전 통합)", range: [0, 7] }, margin: { l: 220, r: 60, t: 10, b: 50 }, height: Math.max(400, dsRows.length * 22 + 60) });
+
+    const rfRows = rows.filter(r => r.refined_total_t > 0).sort((a, b) => b.refined_total_t - a.refined_total_t);
+    plot("ov-refined-mix", [
+      { x: rfRows.map(r => r.short), y: rfRows.map(r => r.rbdpo_t), type: "bar", name: "RBDPO", marker: { color: "#2ca02c" } },
+      { x: rfRows.map(r => r.short), y: rfRows.map(r => r.olein_t), type: "bar", name: "Olein", marker: { color: "#1f77b4" } },
+      { x: rfRows.map(r => r.short), y: rfRows.map(r => r.stearin_t), type: "bar", name: "Stearin", marker: { color: "#ff7f0e" } },
+      { x: rfRows.map(r => r.short), y: rfRows.map(r => r.pfad_t), type: "bar", name: "PFAD", marker: { color: "#d62728" } },
+      { x: rfRows.map(r => r.short), y: rfRows.map(r => r.pko_t), type: "bar", name: "PKO", marker: { color: "#9467bd" } },
+    ], {
+      barmode: "stack", yaxis: { title: "정제유 생산 (ton)" },
+      xaxis: { tickangle: -30, automargin: true },
+      legend: { orientation: "h", y: -0.25 }, margin: { l: 70, r: 20, t: 10, b: 100 }, height: 480,
+    });
+
+    const deRows = rows.filter(r => r.domestic_pct != null || r.export_pct != null).sort((a, b) => (b.export_pct || 0) - (a.export_pct || 0));
+    plot("ov-dom-exp", [
+      { x: deRows.map(r => r.short), y: deRows.map(r => r.domestic_pct || 0), type: "bar", name: "Domestic %", marker: { color: "#1f77b4" } },
+      { x: deRows.map(r => r.short), y: deRows.map(r => r.export_pct || 0), type: "bar", name: "Export %", marker: { color: "#ff7f0e" } },
+    ], {
+      barmode: "stack", yaxis: { title: "Sales mix (%)", range: [0, 105] },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
     });
 
     // ── ⑳ Working Capital + Asset Composition
