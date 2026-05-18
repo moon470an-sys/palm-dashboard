@@ -116,6 +116,15 @@ export function renderOverview(root) {
     r.m_net = (r.net_profit != null && r.revenue) ? r.net_profit / r.revenue * 100 : null;
     // Operating leverage proxy: EBITDA - EBIT (≈ D&A)
     r.da_implied = (r.ebitda != null && r.ebit != null) ? r.ebitda - r.ebit : null;
+    // Working Capital + Asset composition
+    const ca2 = num(r.current_assets_idr_bn);
+    const cl2 = num(r.current_liabilities_idr_bn);
+    const nca = num(r.non_current_assets_idr_bn);
+    r.nwc = (ca2 != null && cl2 != null) ? ca2 - cl2 : null;
+    r.nwc_per_rev = (r.nwc != null && r.revenue) ? r.nwc / r.revenue * 100 : null;  // %
+    r.ca_share = (ca2 != null && r.assets) ? ca2 / r.assets * 100 : null;
+    r.nca_share = (nca != null && r.assets) ? nca / r.assets * 100 : null;
+    r.cash_share = (r.cash != null && r.assets) ? r.cash / r.assets * 100 : null;
     // Risk Score 0-100 (높을수록 위험)
     let s = 0;
     if (r.net_profit != null && r.net_profit < 0) s += 30;
@@ -374,7 +383,17 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>3yr 평균 vs 변동성(StdDev) — Consistency Map</h3><div id="ov-consistency" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑳ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑳ Working Capital & 자산 구성</h3>
+    <p class="notice">
+      NWC (Net Working Capital) = 유동자산 − 유동부채. NWC/Revenue 높으면 운전자금에 매출 묶임. 자산 구성 = 유동/비유동/현금 비중 (plantation 회사는 비유동 ↑가 정상).
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>NWC (IDR bn) — 회사별 운전자금 규모</h3><div id="ov-nwc" class="plot plot-tall"></div></div>
+      <div class="card"><h3>NWC / Revenue (%) — 운전자금 강도</h3><div id="ov-nwc-rev" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>자산 구성 — Current / Non-Current / Cash (100% stacked)</h3><div id="ov-asset-mix" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㉑ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -995,6 +1014,34 @@ export function renderOverview(root) {
       xaxis: { title: "Diversification (1 - HHI)" },
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // ── ⑳ Working Capital + Asset Composition
+    const nwcRows = rows.filter(r => r.nwc != null).sort((a, b) => b.nwc - a.nwc);
+    plot("ov-nwc", [{
+      x: nwcRows.map(r => r.nwc).reverse(), y: nwcRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: nwcRows.map(r => r.nwc >= 0 ? "#2ca02c" : "#d62728").reverse() },
+      text: nwcRows.map(r => Math.round(r.nwc).toLocaleString()).reverse(), textposition: "outside",
+    }], { xaxis: { title: "Net Working Capital (IDR bn)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, nwcRows.length * 22 + 60) });
+
+    const nwcRevRows = rows.filter(r => r.nwc_per_rev != null && Math.abs(r.nwc_per_rev) < 500).sort((a, b) => b.nwc_per_rev - a.nwc_per_rev);
+    plot("ov-nwc-rev", [{
+      x: nwcRevRows.map(r => r.nwc_per_rev).reverse(), y: nwcRevRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: nwcRevRows.map(r => r.nwc_per_rev > 50 ? "#ffbb78" : r.nwc_per_rev >= 0 ? "#1f77b4" : "#d62728").reverse() },
+      text: nwcRevRows.map(r => r.nwc_per_rev.toFixed(1) + "%").reverse(), textposition: "outside",
+    }], { xaxis: { title: "NWC / Revenue (%)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, nwcRevRows.length * 22 + 60) });
+
+    const amRows2 = rows.filter(r => r.ca_share != null && r.nca_share != null).sort((a, b) => (b.assets || 0) - (a.assets || 0));
+    plot("ov-asset-mix", [
+      { x: amRows2.map(r => r.short), y: amRows2.map(r => r.cash_share || 0), type: "bar", name: "Cash", marker: { color: "#2ca02c" } },
+      { x: amRows2.map(r => r.short), y: amRows2.map(r => (r.ca_share || 0) - (r.cash_share || 0)), type: "bar", name: "Current (non-cash)", marker: { color: "#1f77b4" } },
+      { x: amRows2.map(r => r.short), y: amRows2.map(r => r.nca_share || 0), type: "bar", name: "Non-Current", marker: { color: "#9467bd" } },
+    ], {
+      barmode: "stack", yaxis: { title: "% of Total Assets", range: [0, 105] },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
     });
 
     // ── ⑲ Multi-Year Average (3yr) — 회사별, 최근 3 annual year
