@@ -6,12 +6,31 @@ const fmtBn = (n) => n == null ? "-" : `${Number(n).toLocaleString(undefined, { 
 const shortName = (s) => (s || "").replace(/^PT\s+/i, "").replace(/\s+Tbk\.?$/i, "").trim();
 const num = (v) => (v == null || v === "" || isNaN(Number(v))) ? null : Number(v);
 
+// core_region 텍스트 → primary region 분류 (가장 먼저 언급된 지역 우선, 다지역이면 Diversified)
+const REGION_COLOR = { Sumatra: "#2ca02c", Kalimantan: "#ff7f0e", Java: "#1f77b4", Sulawesi: "#9467bd", Papua: "#d62728", Diversified: "#8c564b", Other: "#7f7f7f" };
+function classifyRegion(coreRegion) {
+  if (!coreRegion) return "Other";
+  const t = coreRegion.toLowerCase();
+  const hits = [];
+  if (/sumatr|riau|jambi|aceh|lampung|bengkulu|bangka/i.test(coreRegion)) hits.push("Sumatra");
+  if (/kalimantan|borneo/i.test(coreRegion)) hits.push("Kalimantan");
+  if (/\bjava\b|jakarta|banten|surabaya|cikarang|bogor|mojokerto|west java|east java|central java|subang|pati/i.test(coreRegion)) hits.push("Java");
+  if (/sulawesi/i.test(coreRegion)) hits.push("Sulawesi");
+  if (/papua/i.test(coreRegion)) hits.push("Papua");
+  if (hits.length === 0) return "Other";
+  if (hits.length >= 3) return "Diversified";
+  if (hits.length === 2 && /diversified|nationwide|multiple/i.test(coreRegion)) return "Diversified";
+  return hits[0];
+}
+
 const PALETTE = ["#2ca02c","#1f77b4","#ff7f0e","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f","#bcbd22","#17becf",
                  "#aec7e8","#ffbb78","#98df8a","#ff9896","#c5b0d5","#c49c94","#f7b6d2","#c7c7c7","#dbdb8d","#9edae5",
                  "#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d","#666666","#fb9a99","#a6cee3",
                  "#b2df8a","#fdbf6f","#cab2d6","#ffff99"];
 
 export function renderOverview(root) {
+  // 회사 메타 — companies.json (회사명 → core_region 등)
+  const meta = Object.fromEntries((state.ar.companies || []).map(c => [c.company, c]));
   const fin = (state.ar.financials || []).map(r => {
     const revenue = num(r.revenue_idr_bn);
     const cfo = num(r.cfo_idr_bn);
@@ -25,8 +44,11 @@ export function renderOverview(root) {
     const mcapReported = num(r.market_cap_idr_bn);
     // mcap (bn IDR) = shares (mn) * price / 1000
     const mcap = mcapReported ?? (shares != null && px != null ? shares * px / 1000 : null);
+    const cMeta = meta[r.company] || {};
     return {
       ...r, company: r.company, short: shortName(r.company),
+      hq: cMeta.hq || "", core_region: cMeta.core_region || "", region: classifyRegion(cMeta.core_region),
+      business_model: cMeta.business_model || "", primary_business: cMeta.primary_business || "",
       revenue, net_profit: np,
       gross_profit: num(r.gross_profit_idr_bn), ebit: num(r.ebit_idr_bn),
       ebitda: num(r.ebitda_reported_idr_bn ?? r.ebitda_calculated_idr_bn),
@@ -138,8 +160,16 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>P/E × ROE — Value vs Quality 매트릭스</h3><div id="ov-pe-roe" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑧ 종합 Ranking 테이블</h3>
-    <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 동시)</h3><div id="ov-table"></div></div>
+    <h3 class="section-h">⑧ 권역(Region) 분석 — Sumatra · Kalimantan · Java · Sulawesi · Papua · Diversified</h3>
+    <div class="grid-2">
+      <div class="card"><h3>권역별 회사 수 + 매출 합 (기준연도)</h3><div id="ov-region-bar" class="plot plot-tall"></div></div>
+      <div class="card"><h3>권역별 평균 ROE & 순이익률 (효율성)</h3><div id="ov-region-eff" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>권역별 매출 시계열 (stacked area)</h3><div id="ov-region-ts" class="plot plot-tall"></div></div>
+    <div class="card"><h3>회사 → 권역 → 매출 Treemap (기준연도)</h3><div id="ov-region-tree" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">⑨ 종합 Ranking 테이블</h3>
+    <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + 권역)</h3><div id="ov-table"></div></div>
   `;
 
   // ── 시계열 차트는 한 번만
@@ -417,9 +447,62 @@ export function renderOverview(root) {
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
 
+    // ── ⑧ Region analysis
+    const REGIONS = ["Sumatra", "Kalimantan", "Java", "Sulawesi", "Papua", "Diversified", "Other"];
+    const regionAgg = {};
+    REGIONS.forEach(rg => { regionAgg[rg] = { n: 0, rev: 0, np: 0, assets: 0, roeSum: 0, roeN: 0, marginSum: 0, marginN: 0 }; });
+    rows.forEach(r => {
+      const a = regionAgg[r.region] || regionAgg.Other;
+      a.n++;
+      a.rev += r.revenue || 0; a.np += r.net_profit || 0; a.assets += r.assets || 0;
+      if (r.roe != null) { a.roeSum += r.roe; a.roeN++; }
+      if (r.net_margin != null) { a.marginSum += r.net_margin; a.marginN++; }
+    });
+    const regionsActive = REGIONS.filter(rg => regionAgg[rg].n > 0);
+
+    plot("ov-region-bar", [
+      { x: regionsActive, y: regionsActive.map(rg => regionAgg[rg].rev), type: "bar", name: "매출 합 (bn)", marker: { color: regionsActive.map(rg => REGION_COLOR[rg]) }, yaxis: "y" },
+      { x: regionsActive, y: regionsActive.map(rg => regionAgg[rg].n), type: "scatter", mode: "lines+markers", name: "회사 수", line: { color: "#333", width: 2 }, yaxis: "y2" },
+    ], {
+      yaxis: { title: "매출 합 (IDR bn)" },
+      yaxis2: { title: "회사 수", overlaying: "y", side: "right" },
+      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 60, t: 10, b: 50 }, height: 480,
+    });
+
+    plot("ov-region-eff", [
+      { x: regionsActive, y: regionsActive.map(rg => regionAgg[rg].roeN ? regionAgg[rg].roeSum / regionAgg[rg].roeN : null), type: "bar", name: "평균 ROE %", marker: { color: "#1f77b4" } },
+      { x: regionsActive, y: regionsActive.map(rg => regionAgg[rg].marginN ? regionAgg[rg].marginSum / regionAgg[rg].marginN : null), type: "bar", name: "평균 순이익률 %", marker: { color: "#2ca02c" } },
+    ], {
+      barmode: "group", yaxis: { title: "%", zeroline: true },
+      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480,
+    });
+
+    // 권역별 매출 시계열 (모든 연도)
+    const regionTsTraces = REGIONS.map(rg => {
+      const y = allYears.map(yr => fin.filter(r => r.region === rg && r.yr === yr).reduce((s, r) => s + (r.revenue || 0), 0));
+      return { x: allYears, y, name: rg, type: "scatter", mode: "lines", stackgroup: "rev", line: { color: REGION_COLOR[rg], width: 0 }, fillcolor: REGION_COLOR[rg] };
+    }).filter(t => t.y.some(v => v > 0));
+    plot("ov-region-ts", regionTsTraces, { yaxis: { title: "매출 합 (IDR bn)" }, legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480 });
+
+    // Treemap: region → company
+    const tmRows = rows.filter(r => r.revenue > 0);
+    const tmLabels = [], tmParents = [], tmValues = [], tmColors = [];
+    regionsActive.forEach(rg => {
+      tmLabels.push(rg); tmParents.push(""); tmValues.push(0); tmColors.push(REGION_COLOR[rg]);
+    });
+    tmRows.forEach(r => {
+      tmLabels.push(r.short); tmParents.push(r.region); tmValues.push(r.revenue); tmColors.push(REGION_COLOR[r.region]);
+    });
+    plot("ov-region-tree", [{
+      type: "treemap", labels: tmLabels, parents: tmParents, values: tmValues, branchvalues: "total",
+      textinfo: "label+value+percent parent",
+      hovertemplate: "%{label}<br>%{value:,.0f} bn<extra></extra>",
+      marker: { colors: tmColors },
+    }], { margin: { t: 10, l: 0, r: 0, b: 0 }, height: 520 });
+
     // ── 종합 ranking 테이블
     const tableRows = [...rows].sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).map(r => ({
-      회사: r.short,
+      회사: r.short, 권역: r.region,
       매출: r.revenue, 순이익: r.net_profit, EBITDA: r.ebitda,
       자산: r.assets, 부채: r.liab, 자본: r.equity, 시가총액: r.mcap,
       CFO: r.cfo, CapEx: r.capex, FCF: r.fcf,
@@ -430,6 +513,7 @@ export function renderOverview(root) {
     const pctFmt = (d) => d == null ? "-" : Number(d).toFixed(2);
     makeTable("ov-table", [
       { data: "회사", title: "회사" },
+      { data: "권역", title: "권역" },
       { data: "매출", title: "매출 bn", render: numFmt },
       { data: "순이익", title: "순이익 bn", render: numFmt },
       { data: "EBITDA", title: "EBITDA bn", render: numFmt },
