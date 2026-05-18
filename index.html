@@ -4,6 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>🌴 Indonesia Palm Integrated Dashboard</title>
+  <link rel="preconnect" href="https://cdn.plot.ly" crossorigin />
+  <link rel="preconnect" href="https://cdn.datatables.net" crossorigin />
+  <link rel="preconnect" href="https://unpkg.com" crossorigin />
+  <link rel="preconnect" href="https://code.jquery.com" crossorigin />
+  <link rel="preload" as="fetch" href="data/json/meta.json" crossorigin />
+  <link rel="preload" as="fetch" href="data/json/ar/financials.json" crossorigin />
+  <link rel="preload" as="fetch" href="data/json/ar/companies.json" crossorigin />
   <link rel="stylesheet" href="assets/styles.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
@@ -36,12 +43,12 @@
     Source: ISPO(Ditjenbun) · RSPO PRISMA API · BDSP(bdsp2.pertanian.go.id) · GAPKI · Annual Report(palm_longlist)
   </footer>
 
-  <div class="boot"><div class="msg">Loading dashboard…</div></div>
+  <div class="boot"><div class="msg">Loading dashboard… <span id="boot-progress" style="font-size:13px;color:#666;"></span></div></div>
 
-  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
+  <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
   <script type="module" src="assets/main.js"></script>
 </body>
 </html>

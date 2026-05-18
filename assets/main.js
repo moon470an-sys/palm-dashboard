@@ -48,13 +48,34 @@ function initNav() {
   showTab(RENDERERS[hash] ? hash : "overview");
 }
 
+// 외부 라이브러리 준비 대기 (defer 로드 + 모듈은 비동기 실행되므로 race 조건 방지)
+function waitForLibs() {
+  return new Promise((resolve) => {
+    const check = () => {
+      if (typeof window.Plotly !== "undefined" && typeof window.jQuery !== "undefined" && typeof window.DataTable !== "undefined") {
+        resolve();
+      } else {
+        setTimeout(check, 30);
+      }
+    };
+    check();
+  });
+}
+
+const bootProgress = document.getElementById("boot-progress");
+const setBoot = (msg) => { if (bootProgress) bootProgress.textContent = msg; };
+
 (async () => {
   try {
+    setBoot("데이터 로드 중…");
     await loadAll();
+    setBoot("라이브러리 준비 중…");
+    await waitForLibs();
     if (state.meta?.generated_at) {
       document.getElementById("meta-time").textContent =
         state.meta.generated_at.slice(0, 19).replace("T", " ");
     }
+    setBoot("첫 탭 렌더 중…");
     initNav();
   } catch (e) {
     console.error("[boot]", e);

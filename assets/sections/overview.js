@@ -434,16 +434,19 @@ export function renderOverview(root) {
       <div id="ov-risk-table"></div>
     </div>
 
-    <h3 class="section-h">⑬ Operations — Planted ha · CPO · Revenue/ha (실물 운영)</h3>
+    <h3 class="section-h">⑬ Operations Deep Dive — 통합 (Planted · 지역 · 수령 · 공장 · 정제 · 효율)</h3>
+    <p class="notice">
+      7개 분산 섹션 통합: Planted Area + 지역 분포 + Tree Maturity + Plasma + Mill 운영 + Downstream + 단위면적당 효율.
+    </p>
+    <div class="card"><h3>회사별 Planted Area + 지역 mix (Sumatra/Kalimantan/Sulawesi/Other stacked)</h3><div id="ov-op-area" class="plot plot-tall"></div></div>
     <div class="grid-2">
-      <div class="card"><h3>Planted Area (ha) 랭킹 — 회사 규모 실물 지표</h3><div id="ov-planted" class="plot plot-tall"></div></div>
-      <div class="card"><h3>CPO Production (ton) 랭킹</h3><div id="ov-cpo-prod" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Tree Maturity & Plasma (Mature/Immature/Plasma %)</h3><div id="ov-op-tree" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Downstream Integration Score + Domestic/Export sales mix</h3><div id="ov-op-down" class="plot plot-tall"></div></div>
     </div>
     <div class="grid-2">
-      <div class="card"><h3>Revenue / Planted ha (IDR/ha) — 토지당 매출 효율</h3><div id="ov-rev-ha" class="plot plot-tall"></div></div>
-      <div class="card"><h3>CPO Yield (ton/ha) — 단위 면적당 CPO 생산성</h3><div id="ov-cpo-yield" class="plot plot-tall"></div></div>
+      <div class="card"><h3>생산 효율: CPO/Mature ha × OER % (크기=Mills capacity)</h3><div id="ov-op-prod" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Mill 운영: 처리능력(tph) × 자체 FFB (색=3rd party share)</h3><div id="ov-op-mill" class="plot plot-tall"></div></div>
     </div>
-    <div class="card"><h3>Mills × Capacity scatter (회사별 mill 수 × 처리 능력 tph)</h3><div id="ov-mills" class="plot plot-tall"></div></div>
 
     <h3 class="section-h">⑭ Composite Quality Score — 5축 종합 평가</h3>
     <p class="notice">
@@ -481,17 +484,6 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Margin × Turnover scatter (색=레버리지, 크기=ROE) — 효율 vs 회전</h3><div id="ov-dp-scatter" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑰ Geographic Concentration — 회사별 농장 지역 분산</h3>
-    <p class="notice">
-      각 회사의 plantation area를 Sumatra/Kalimantan/Sulawesi/Other 4지역으로 분해.
-      HHI(Herfindahl-Hirschman Index) = Σ(share²): 1.0 = 단일지역 집중, 0.25 = 균등 4분할.
-    </p>
-    <div class="card"><h3>회사별 지역 area 분포 — 100% stacked</h3><div id="ov-geo-stack" class="plot plot-tall"></div></div>
-    <div class="grid-2">
-      <div class="card"><h3>Geographic HHI — 집중도 ranking (높을수록 단일 지역 집중)</h3><div id="ov-geo-hhi" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Diversification × ROE — 분산이 수익성에 영향?</h3><div id="ov-geo-roe" class="plot plot-tall"></div></div>
-    </div>
-
     <h3 class="section-h">⑱ Margin Cascade — Gross → EBITDA → EBIT → Net</h3>
     <p class="notice">
       매출 100%에서 각 단계까지의 잔존률. Gross → EBITDA 차이 = SG&A · EBITDA → EBIT 차이 = 감가상각(D&A) · EBIT → Net 차이 = 이자·세금.
@@ -512,47 +504,6 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>3yr 평균 vs 변동성(StdDev) — Consistency Map</h3><div id="ov-consistency" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉑ Downstream Integration — 정제·다운스트림 통합도</h3>
-    <p class="notice">
-      0-6점: CPO refinery + PKO refinery + RBDPO/Olein/Stearin/PFAD 생산 가짓수. 높을수록 수직 통합 (upstream→downstream).
-      Refined/CPO = 정제유 생산량 / CPO 생산량 (downstream 변환율).
-    </p>
-    <div class="grid-2">
-      <div class="card"><h3>Downstream Integration Score 0–6</h3><div id="ov-dsi" class="plot plot-tall"></div></div>
-      <div class="card"><h3>회사별 정제유 mix (RBDPO/Olein/Stearin/PFAD/PKO)</h3><div id="ov-refined-mix" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>Domestic vs Export 매출 비중 (operations 보고된 회사)</h3><div id="ov-dom-exp" class="plot plot-tall"></div></div>
-
-    <h3 class="section-h">㉒ Tree Age & Replanting Profile</h3>
-    <p class="notice">
-      Mature(생산기) vs Immature(미성숙기) 비중 + 평균 수령(years) + Plasma(외부 smallholder) 비중. Mature 비중↑이면 단기 생산↑ 하지만 노후 위험↑.
-    </p>
-    <div class="card"><h3>Mature vs Immature 비중 (회사별)</h3><div id="ov-maturity" class="plot plot-tall"></div></div>
-    <div class="grid-2">
-      <div class="card"><h3>평균 Tree Age (years) — 노화 ranking</h3><div id="ov-tree-age" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Nucleus vs Plasma 비중 — Smallholder 통합도</h3><div id="ov-nuc-plasma" class="plot plot-tall"></div></div>
-    </div>
-
-    <h3 class="section-h">㉓ OER & CPO Price — 공장 효율 + 판가 spread</h3>
-    <p class="notice">
-      OER (Oil Extraction Rate, %) = CPO / FFB 처리량. 업계 평균 21-23%. 평균 CPO 판매가(IDR/kg)는 회사별 마켓 포지셔닝 + 품질 + 계약 구조 차이.
-    </p>
-    <div class="grid-2">
-      <div class="card"><h3>OER (%) — 공장 추출 효율</h3><div id="ov-oer" class="plot plot-tall"></div></div>
-      <div class="card"><h3>평균 CPO 판매가 (IDR/kg)</h3><div id="ov-cpo-price" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>OER × Net Margin scatter (효율이 수익성에 영향?)</h3><div id="ov-oer-margin" class="plot plot-tall"></div></div>
-
-    <h3 class="section-h">㉔ Mill Utilization & Third-party FFB</h3>
-    <p class="notice">
-      Mill Utilization (%) = FFB processed / (capacity tph × 8760h). 30-50% = 정상, 60%+ = 풀가동.
-      Third-party FFB share = 외부 plasma/협력 농장 FFB / 총 처리 FFB. 100%에 가까울수록 자체 plantation 없이 가공 중심.
-    </p>
-    <div class="grid-2">
-      <div class="card"><h3>Mill Utilization (%) ranking</h3><div id="ov-mill-util" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Third-party FFB Share (%) — 외부 FFB 의존도</h3><div id="ov-third-party" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>Mill Capacity (tph) × FFB Production scatter — 자체 FFB가 mill capacity 충족?</h3><div id="ov-cap-prod" class="plot plot-tall"></div></div>
 
     <h3 class="section-h">㉕ Business Model Cluster — Upstream / Integrated / Downstream / Other</h3>
     <p class="notice">
@@ -603,16 +554,6 @@ export function renderOverview(root) {
       <div class="card"><h3>Gross Margin Δ ranking (latest − first pp)</h3><div id="ov-gm-delta" class="plot plot-tall"></div></div>
       <div class="card"><h3>Net Margin Δ ranking (latest − first pp)</h3><div id="ov-nm-delta" class="plot plot-tall"></div></div>
     </div>
-
-    <h3 class="section-h">㊷ 단위 면적당 효율 — Revenue/Mature ha · CPO/Mature ha · EBITDA/Planted ha</h3>
-    <p class="notice">
-      Planted ha 전체가 아닌 생산 가능한 Mature ha 기준으로 효율 측정. EBITDA per planted ha는 운영 마진 기준.
-    </p>
-    <div class="grid-2">
-      <div class="card"><h3>Revenue / Mature ha (IDR M/ha)</h3><div id="ov-rev-mat" class="plot plot-tall"></div></div>
-      <div class="card"><h3>CPO / Mature ha (ton/ha) — 진짜 yield</h3><div id="ov-cpo-mat" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>EBITDA / Planted ha (IDR M/ha) — 운영 수익 효율</h3><div id="ov-ebitda-ha" class="plot plot-tall"></div></div>
 
     <h3 class="section-h">㊹ Tax & Interest Burden — EBIT → NP 전환율</h3>
     <p class="notice">
@@ -1075,60 +1016,67 @@ export function renderOverview(root) {
       { data: "재무_risk_note", title: "재무 risk note" },
     ], riskTbl, { pageLength: 20, order: [[2, "desc"]] });
 
-    // ── ⑬ Operations (planted ha, CPO, revenue/ha)
-    const plRows = rows.filter(r => r.planted_ha > 0).sort((a, b) => b.planted_ha - a.planted_ha);
-    plot("ov-planted", [{
-      x: plRows.map(r => r.planted_ha).reverse(), y: plRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: plRows.map(r => REGION_COLOR[r.region] || "#7f7f7f").reverse() },
-      text: plRows.map(r => Math.round(r.planted_ha).toLocaleString() + " ha").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>%{x:,.0f} ha<extra></extra>",
-    }], { xaxis: { title: "Planted Area (ha)" }, margin: { l: 220, r: 100, t: 10, b: 40 }, height: Math.max(400, plRows.length * 24 + 80) });
+    // ── ⑬ Operations Deep Dive (통합)
+    // 1. Planted Area + 지역 mix (회사별 stacked, planted_ha 큰 순)
+    const opAreaRows = rows.filter(r => r.planted_ha > 0).sort((a, b) => b.planted_ha - a.planted_ha);
+    plot("ov-op-area", [
+      { x: opAreaRows.map(r => r.short), y: opAreaRows.map(r => r.area_sumatra), type: "bar", name: "Sumatra", marker: { color: "#2ca02c" } },
+      { x: opAreaRows.map(r => r.short), y: opAreaRows.map(r => r.area_kalimantan), type: "bar", name: "Kalimantan", marker: { color: "#ff7f0e" } },
+      { x: opAreaRows.map(r => r.short), y: opAreaRows.map(r => r.area_sulawesi), type: "bar", name: "Sulawesi", marker: { color: "#9467bd" } },
+      { x: opAreaRows.map(r => r.short), y: opAreaRows.map(r => r.area_other), type: "bar", name: "Other/미보고", marker: { color: "#7f7f7f" } },
+    ], { barmode: "stack", yaxis: { title: "Planted Area (ha)" }, xaxis: { tickangle: -45, automargin: true }, legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480 });
 
-    const cpoRows = rows.filter(r => r.cpo_t > 0).sort((a, b) => b.cpo_t - a.cpo_t);
-    plot("ov-cpo-prod", [{
-      x: cpoRows.map(r => r.cpo_t).reverse(), y: cpoRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: cpoRows.map(r => r.cpo_t).reverse(), colorscale: "YlOrRd" },
-      text: cpoRows.map(r => Math.round(r.cpo_t).toLocaleString() + " t").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>%{x:,.0f} ton CPO<extra></extra>",
-    }], { xaxis: { title: "CPO Production (ton)" }, margin: { l: 220, r: 100, t: 10, b: 40 }, height: Math.max(400, cpoRows.length * 24 + 80) });
+    // 2. Tree Maturity & Plasma (Mature/Immature/Plasma 3-metric grouped)
+    const trRows = rows.filter(r => r.mature_share != null || r.plasma_share != null).sort((a, b) => (b.mature_share || 0) - (a.mature_share || 0));
+    plot("ov-op-tree", [
+      { x: trRows.map(r => r.short), y: trRows.map(r => r.mature_share), type: "bar", name: "Mature %", marker: { color: "#2ca02c" } },
+      { x: trRows.map(r => r.short), y: trRows.map(r => r.immature_share), type: "bar", name: "Immature %", marker: { color: "#ffbb78" } },
+      { x: trRows.map(r => r.short), y: trRows.map(r => r.plasma_share), type: "bar", name: "Plasma %", marker: { color: "#1f77b4" } },
+    ], { barmode: "group", yaxis: { title: "%", range: [0, 105] }, xaxis: { tickangle: -45, automargin: true }, legend: { orientation: "h", y: -0.35 }, margin: { l: 60, r: 20, t: 10, b: 130 }, height: 480 });
 
-    const rhRows = rows.filter(r => r.rev_per_ha != null).sort((a, b) => b.rev_per_ha - a.rev_per_ha);
-    plot("ov-rev-ha", [{
-      x: rhRows.map(r => r.rev_per_ha / 1e6).reverse(),  // IDR mn/ha
-      y: rhRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: rhRows.map(r => r.rev_per_ha).reverse(), colorscale: "Greens" },
-      text: rhRows.map(r => (r.rev_per_ha / 1e6).toFixed(1) + "M").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Revenue/ha: %{x:.2f} IDR mn/ha<extra></extra>",
-    }], { xaxis: { title: "Revenue / Planted ha (IDR mn/ha)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, rhRows.length * 24 + 80) });
-
-    const cyRows = rows.filter(r => r.cpo_per_ha != null).sort((a, b) => b.cpo_per_ha - a.cpo_per_ha);
-    plot("ov-cpo-yield", [{
-      x: cyRows.map(r => r.cpo_per_ha).reverse(), y: cyRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: cyRows.map(r => r.cpo_per_ha).reverse(), colorscale: "Viridis" },
-      text: cyRows.map(r => r.cpo_per_ha.toFixed(2) + " t/ha").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>CPO Yield: %{x:.3f} ton/ha<extra></extra>",
-    }], { xaxis: { title: "CPO Production / Planted ha (ton/ha)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, cyRows.length * 24 + 80) });
-
-    const millRows = rows.filter(r => r.mills_n != null && r.mill_cap_tph != null);
-    plot("ov-mills", [{
-      x: millRows.map(r => r.mills_n), y: millRows.map(r => r.mill_cap_tph),
-      mode: "markers+text", type: "scatter",
-      text: millRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: millRows.map(r => Math.max(10, Math.min(50, Math.sqrt(r.planted_ha || 100) / 30))),
-        color: millRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
-        opacity: 0.75, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>Mills %{x} · 처리능력 %{y} tph<br>크기=planted ha<extra></extra>",
-    }], {
-      xaxis: { title: "Mills count" },
-      yaxis: { title: "Mill Capacity (tph)" },
-      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    // 3. Downstream + Domestic/Export (회사별 4 bar)
+    const dsRows2 = rows.filter(r => r.downstream_score > 0 || r.domestic_pct != null || r.export_pct != null)
+      .sort((a, b) => (b.downstream_score || 0) - (a.downstream_score || 0));
+    plot("ov-op-down", [
+      { x: dsRows2.map(r => r.short), y: dsRows2.map(r => r.downstream_score), type: "bar", name: "Downstream Score (0-6)", marker: { color: "#9467bd" }, yaxis: "y" },
+      { x: dsRows2.map(r => r.short), y: dsRows2.map(r => r.domestic_pct), type: "scatter", mode: "markers", name: "Domestic %", marker: { color: "#1f77b4", size: 10 }, yaxis: "y2" },
+      { x: dsRows2.map(r => r.short), y: dsRows2.map(r => r.export_pct), type: "scatter", mode: "markers", name: "Export %", marker: { color: "#ff7f0e", size: 10 }, yaxis: "y2" },
+    ], {
+      yaxis: { title: "Downstream Score", range: [0, 7] },
+      yaxis2: { title: "Sales mix %", overlaying: "y", side: "right", range: [0, 105] },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.35 }, margin: { l: 60, r: 60, t: 10, b: 130 }, height: 480,
     });
+
+    // 4. 생산 효율: CPO/Mature ha × OER % (size=mill cap)
+    const peScatter = rows.filter(r => r.cpo_per_mature_ha != null && r.oer_pct != null && r.oer_pct > 0);
+    const oerN = (v) => v > 1 ? v : v * 100;
+    plot("ov-op-prod", [{
+      x: peScatter.map(r => r.cpo_per_mature_ha), y: peScatter.map(r => oerN(r.oer_pct)),
+      mode: "markers+text", type: "scatter",
+      text: peScatter.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: peScatter.map(r => Math.max(10, Math.min(48, Math.sqrt(r.mill_cap_tph || 50) * 2))),
+        color: peScatter.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>CPO/Mature ha %{x:.2f} t/ha<br>OER %{y:.2f}%<extra></extra>",
+    }], { xaxis: { title: "CPO / Mature ha (ton/ha)" }, yaxis: { title: "OER (%)" }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false });
+
+    // 5. Mill 운영: Capacity tph × 자체 FFB (색=3rd party share)
+    const millScatter = rows.filter(r => r.mill_cap_tph != null && r.ffb_t > 0);
+    plot("ov-op-mill", [{
+      x: millScatter.map(r => r.mill_cap_tph), y: millScatter.map(r => r.ffb_t),
+      mode: "markers+text", type: "scatter",
+      text: millScatter.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: millScatter.map(r => Math.max(10, Math.min(48, Math.sqrt(r.planted_ha || 100) / 30))),
+        color: millScatter.map(r => r.third_party_share || 0),
+        colorscale: "RdYlGn_r", showscale: true, colorbar: { title: "3rd party %" },
+        opacity: 0.85, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>Mill cap %{x} tph<br>자체 FFB %{y:,.0f} ton<br>3rd party %{marker.color:.1f}%<extra></extra>",
+    }], { xaxis: { title: "Mill Capacity (tph)", type: "log" }, yaxis: { title: "Own FFB Production (ton)", type: "log" }, margin: { l: 70, r: 50, t: 10, b: 50 }, height: 480, showlegend: false });
 
     // ── ⑭ Composite Quality Score
     const qRows = [...rows].sort((a, b) => b.quality_score - a.quality_score);
@@ -1234,48 +1182,6 @@ export function renderOverview(root) {
       xaxis: { title: "Net Margin (%) — 효율", zeroline: true },
       yaxis: { title: "Asset Turnover (x) — 회전", zeroline: true },
       margin: { l: 70, r: 50, t: 10, b: 50 }, height: 520, showlegend: false,
-    });
-
-    // ── ⑰ Geographic Concentration
-    const geoRows = rows.filter(r => r.area_total_reported > 0).sort((a, b) => b.area_total_reported - a.area_total_reported);
-    plot("ov-geo-stack", [
-      { x: geoRows.map(r => r.short), y: geoRows.map(r => r.area_sumatra / r.area_total_reported * 100), type: "bar", name: "Sumatra", marker: { color: "#2ca02c" } },
-      { x: geoRows.map(r => r.short), y: geoRows.map(r => r.area_kalimantan / r.area_total_reported * 100), type: "bar", name: "Kalimantan", marker: { color: "#ff7f0e" } },
-      { x: geoRows.map(r => r.short), y: geoRows.map(r => r.area_sulawesi / r.area_total_reported * 100), type: "bar", name: "Sulawesi", marker: { color: "#9467bd" } },
-      { x: geoRows.map(r => r.short), y: geoRows.map(r => r.area_other / r.area_total_reported * 100), type: "bar", name: "Other", marker: { color: "#7f7f7f" } },
-    ], {
-      barmode: "stack", yaxis: { title: "지역 점유 (%)", range: [0, 100] },
-      xaxis: { tickangle: -45, automargin: true },
-      legend: { orientation: "h", y: -0.35 },
-      margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
-    });
-
-    // HHI ranking
-    const hhiRows = [...geoRows].sort((a, b) => b.geo_hhi - a.geo_hhi);
-    plot("ov-geo-hhi", [{
-      x: hhiRows.map(r => r.geo_hhi).reverse(), y: hhiRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: hhiRows.map(r => r.geo_hhi > 0.8 ? "#d62728" : r.geo_hhi > 0.5 ? "#ffbb78" : "#2ca02c").reverse() },
-      text: hhiRows.map(r => r.geo_hhi.toFixed(2)).reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>HHI %{x:.3f}<extra></extra>",
-    }], { xaxis: { title: "Geographic HHI (0.25 균등 — 1.0 단일지역)", range: [0, 1.1] }, margin: { l: 220, r: 60, t: 10, b: 40 }, height: Math.max(400, hhiRows.length * 22 + 60) });
-
-    // Diversification × ROE scatter
-    const drRows = geoRows.filter(r => r.geo_diversification != null && r.roe != null);
-    plot("ov-geo-roe", [{
-      x: drRows.map(r => r.geo_diversification), y: drRows.map(r => r.roe),
-      mode: "markers+text", type: "scatter",
-      text: drRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: drRows.map(r => Math.max(10, Math.min(48, Math.sqrt(r.area_total_reported || 100) / 30))),
-        color: drRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
-        opacity: 0.8, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>Diversification %{x:.3f}<br>ROE %{y:.2f}%<extra></extra>",
-    }], {
-      xaxis: { title: "Diversification (1 - HHI)" },
-      yaxis: { title: "ROE (%)", zeroline: true },
-      margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
 
     // ── ⓪ IPO Vintage
@@ -1402,31 +1308,6 @@ export function renderOverview(root) {
     });
 
 
-    // ── ㊷ 단위 면적당 효율 (Mature ha 기준)
-    const rmRows = rows.filter(r => r.rev_per_mature_ha != null && r.rev_per_mature_ha > 0).sort((a, b) => b.rev_per_mature_ha - a.rev_per_mature_ha);
-    plot("ov-rev-mat", [{
-      x: rmRows.map(r => r.rev_per_mature_ha / 1e6).reverse(), y: rmRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: rmRows.map(r => r.rev_per_mature_ha).reverse(), colorscale: "Greens" },
-      text: rmRows.map(r => (r.rev_per_mature_ha / 1e6).toFixed(1) + "M").reverse(), textposition: "outside",
-    }], { xaxis: { title: "Revenue / Mature ha (IDR mn/ha)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, rmRows.length * 24 + 60) });
-
-    const cmRows2 = rows.filter(r => r.cpo_per_mature_ha != null && r.cpo_per_mature_ha > 0).sort((a, b) => b.cpo_per_mature_ha - a.cpo_per_mature_ha);
-    plot("ov-cpo-mat", [{
-      x: cmRows2.map(r => r.cpo_per_mature_ha).reverse(), y: cmRows2.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: cmRows2.map(r => r.cpo_per_mature_ha >= 4 ? "#2ca02c" : r.cpo_per_mature_ha >= 3 ? "#1f77b4" : r.cpo_per_mature_ha >= 2 ? "#ffbb78" : "#d62728").reverse() },
-      text: cmRows2.map(r => r.cpo_per_mature_ha.toFixed(2) + " t/ha").reverse(), textposition: "outside",
-    }], { xaxis: { title: "CPO / Mature ha (ton/ha) — 4+ 우수" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cmRows2.length * 24 + 60) });
-
-    const ehRows = rows.filter(r => r.ebitda_per_planted_ha != null && r.ebitda_per_planted_ha > 0).sort((a, b) => b.ebitda_per_planted_ha - a.ebitda_per_planted_ha);
-    plot("ov-ebitda-ha", [{
-      x: ehRows.map(r => r.ebitda_per_planted_ha / 1e6).reverse(), y: ehRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: ehRows.map(r => r.ebitda_per_planted_ha).reverse(), colorscale: "Viridis" },
-      text: ehRows.map(r => (r.ebitda_per_planted_ha / 1e6).toFixed(2) + "M").reverse(), textposition: "outside",
-    }], { xaxis: { title: "EBITDA / Planted ha (IDR mn/ha)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, ehRows.length * 24 + 60) });
-
     // ── ㊱ Industry Concentration
     const concRows = rows.filter(r => r.revenue > 0).sort((a, b) => b.revenue - a.revenue);
     const totalRev = concRows.reduce((s, r) => s + r.revenue, 0);
@@ -1540,145 +1421,6 @@ export function renderOverview(root) {
       barmode: "stack", yaxis: { title: "회사 수" },
       legend: { orientation: "h", y: -0.18 },
       margin: { l: 70, r: 20, t: 10, b: 60 }, height: 480,
-    });
-
-    // ── ㉔ Mill Utilization & Third-party FFB
-    const muRows = rows.filter(r => r.mill_util != null && r.mill_util > 0 && r.mill_util < 200).sort((a, b) => b.mill_util - a.mill_util);
-    plot("ov-mill-util", [{
-      x: muRows.map(r => r.mill_util).reverse(), y: muRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: muRows.map(r => r.mill_util > 60 ? "#2ca02c" : r.mill_util > 40 ? "#1f77b4" : r.mill_util > 20 ? "#ffbb78" : "#d62728").reverse() },
-      text: muRows.map(r => r.mill_util.toFixed(1) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Util %{x:.2f}%<br>(processed / 연 capacity)<extra></extra>",
-    }], { xaxis: { title: "Mill Utilization (%) — 60%+ 풀가동" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, muRows.length * 22 + 60) });
-
-    const tpRows = rows.filter(r => r.third_party_share != null).sort((a, b) => b.third_party_share - a.third_party_share);
-    plot("ov-third-party", [{
-      x: tpRows.map(r => r.third_party_share).reverse(), y: tpRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: tpRows.map(r => r.third_party_share > 70 ? "#d62728" : r.third_party_share > 40 ? "#ffbb78" : r.third_party_share > 15 ? "#1f77b4" : "#2ca02c").reverse() },
-      text: tpRows.map(r => r.third_party_share.toFixed(1) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>3rd Party %{x:.1f}%<br>자체 FFB %{customdata:.1f}%<extra></extra>",
-      customdata: tpRows.map(r => 100 - r.third_party_share).reverse(),
-    }], { xaxis: { title: "Third-party FFB Share (%) — 외부 FFB 의존도" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, tpRows.length * 22 + 60) });
-
-    // Cap × Production scatter
-    const cpScRows = rows.filter(r => r.mill_cap_tph != null && r.ffb_t > 0);
-    plot("ov-cap-prod", [{
-      x: cpScRows.map(r => r.mill_cap_tph), y: cpScRows.map(r => r.ffb_t),
-      mode: "markers+text", type: "scatter",
-      text: cpScRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: cpScRows.map(r => Math.max(10, Math.min(48, Math.sqrt(r.planted_ha || 100) / 30))),
-        color: cpScRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
-        opacity: 0.8, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>Capacity %{x} tph<br>Own FFB %{y:,.0f} ton<extra></extra>",
-    }], {
-      xaxis: { title: "Mill Capacity (tph)", type: "log" },
-      yaxis: { title: "Own FFB Production (ton)", type: "log" },
-      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
-    });
-
-    // ── ㉓ OER & CPO Price
-    const oerRows = rows.filter(r => r.oer_pct != null && r.oer_pct > 0).sort((a, b) => b.oer_pct - a.oer_pct);
-    // oer_pct가 0-1 (소수) 또는 0-100 (퍼센트)로 들어올 수 있음 — 정규화
-    const oerNorm = (v) => v > 1 ? v : v * 100;
-    plot("ov-oer", [{
-      x: oerRows.map(r => oerNorm(r.oer_pct)).reverse(),
-      y: oerRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: oerRows.map(r => oerNorm(r.oer_pct) > 23 ? "#2ca02c" : oerNorm(r.oer_pct) > 20 ? "#1f77b4" : oerNorm(r.oer_pct) > 18 ? "#ffbb78" : "#d62728").reverse() },
-      text: oerRows.map(r => oerNorm(r.oer_pct).toFixed(2) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>OER %{x:.2f}%<extra></extra>",
-    }], { xaxis: { title: "Oil Extraction Rate (%) — 업계 23%+ 우수" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, oerRows.length * 22 + 60) });
-
-    const cpRows = rows.filter(r => r.cpo_price_kg != null && r.cpo_price_kg > 0).sort((a, b) => b.cpo_price_kg - a.cpo_price_kg);
-    plot("ov-cpo-price", [{
-      x: cpRows.map(r => r.cpo_price_kg).reverse(),
-      y: cpRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: cpRows.map(r => r.cpo_price_kg).reverse(), colorscale: "YlGn" },
-      text: cpRows.map(r => r.cpo_price_kg.toLocaleString()).reverse(), textposition: "outside",
-    }], { xaxis: { title: "평균 CPO 판매가 (IDR/kg)" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, cpRows.length * 22 + 60) });
-
-    const omRows = rows.filter(r => r.oer_pct != null && r.oer_pct > 0 && r.net_margin != null);
-    plot("ov-oer-margin", [{
-      x: omRows.map(r => oerNorm(r.oer_pct)), y: omRows.map(r => r.net_margin),
-      mode: "markers+text", type: "scatter",
-      text: omRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: omRows.map(r => Math.max(10, Math.min(48, Math.sqrt(r.cpo_t || 100) / 20))),
-        color: omRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
-        opacity: 0.8, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>OER %{x:.2f}%<br>Net Margin %{y:.2f}%<extra></extra>",
-    }], {
-      xaxis: { title: "OER (%)" }, yaxis: { title: "Net Margin (%)", zeroline: true },
-      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
-    });
-
-    // ── ㉒ Tree Age & Replanting
-    const mrRows = rows.filter(r => r.mature_share != null).sort((a, b) => b.mature_share - a.mature_share);
-    plot("ov-maturity", [
-      { x: mrRows.map(r => r.short), y: mrRows.map(r => r.mature_share), type: "bar", name: "Mature %", marker: { color: "#2ca02c" } },
-      { x: mrRows.map(r => r.short), y: mrRows.map(r => r.immature_share), type: "bar", name: "Immature %", marker: { color: "#ffbb78" } },
-    ], {
-      barmode: "stack", yaxis: { title: "% of (mature + immature) area", range: [0, 105] },
-      xaxis: { tickangle: -45, automargin: true },
-      legend: { orientation: "h", y: -0.35 },
-      margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
-    });
-
-    const taRows = rows.filter(r => r.avg_tree_age != null).sort((a, b) => b.avg_tree_age - a.avg_tree_age);
-    plot("ov-tree-age", [{
-      x: taRows.map(r => r.avg_tree_age).reverse(), y: taRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: taRows.map(r => r.avg_tree_age > 20 ? "#d62728" : r.avg_tree_age > 15 ? "#ffbb78" : r.avg_tree_age > 8 ? "#1f77b4" : "#2ca02c").reverse() },
-      text: taRows.map(r => r.avg_tree_age.toFixed(1) + " yrs").reverse(), textposition: "outside",
-    }], { xaxis: { title: "평균 Tree Age (years) — Palm 수령 25yr+ replanting 권장" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, taRows.length * 22 + 60) });
-
-    const npRows = rows.filter(r => r.plasma_share != null).sort((a, b) => b.plasma_share - a.plasma_share);
-    plot("ov-nuc-plasma", [{
-      x: npRows.map(r => r.plasma_share).reverse(), y: npRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: npRows.map(r => r.plasma_share).reverse(), colorscale: "Oranges" },
-      text: npRows.map(r => r.plasma_share.toFixed(1) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Plasma %{x:.1f}% (Nucleus %{customdata:.1f}%)<extra></extra>",
-      customdata: npRows.map(r => 100 - r.plasma_share).reverse(),
-    }], { xaxis: { title: "Plasma 비중 (%) — 외부 smallholder farmer 의존도" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, npRows.length * 22 + 60) });
-
-    // ── ㉑ Downstream Integration
-    const dsRows = [...rows].sort((a, b) => b.downstream_score - a.downstream_score);
-    plot("ov-dsi", [{
-      x: dsRows.map(r => r.downstream_score).reverse(), y: dsRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: dsRows.map(r => r.downstream_score >= 4 ? "#2ca02c" : r.downstream_score >= 2 ? "#1f77b4" : r.downstream_score >= 1 ? "#ffbb78" : "#9ca3af").reverse() },
-      text: dsRows.map(r => r.downstream_score).reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Downstream %{x}/6<extra></extra>",
-    }], { xaxis: { title: "Downstream Integration Score (0=pure upstream, 6=완전 통합)", range: [0, 7] }, margin: { l: 220, r: 60, t: 10, b: 50 }, height: Math.max(400, dsRows.length * 22 + 60) });
-
-    const rfRows = rows.filter(r => r.refined_total_t > 0).sort((a, b) => b.refined_total_t - a.refined_total_t);
-    plot("ov-refined-mix", [
-      { x: rfRows.map(r => r.short), y: rfRows.map(r => r.rbdpo_t), type: "bar", name: "RBDPO", marker: { color: "#2ca02c" } },
-      { x: rfRows.map(r => r.short), y: rfRows.map(r => r.olein_t), type: "bar", name: "Olein", marker: { color: "#1f77b4" } },
-      { x: rfRows.map(r => r.short), y: rfRows.map(r => r.stearin_t), type: "bar", name: "Stearin", marker: { color: "#ff7f0e" } },
-      { x: rfRows.map(r => r.short), y: rfRows.map(r => r.pfad_t), type: "bar", name: "PFAD", marker: { color: "#d62728" } },
-      { x: rfRows.map(r => r.short), y: rfRows.map(r => r.pko_t), type: "bar", name: "PKO", marker: { color: "#9467bd" } },
-    ], {
-      barmode: "stack", yaxis: { title: "정제유 생산 (ton)" },
-      xaxis: { tickangle: -30, automargin: true },
-      legend: { orientation: "h", y: -0.25 }, margin: { l: 70, r: 20, t: 10, b: 100 }, height: 480,
-    });
-
-    const deRows = rows.filter(r => r.domestic_pct != null || r.export_pct != null).sort((a, b) => (b.export_pct || 0) - (a.export_pct || 0));
-    plot("ov-dom-exp", [
-      { x: deRows.map(r => r.short), y: deRows.map(r => r.domestic_pct || 0), type: "bar", name: "Domestic %", marker: { color: "#1f77b4" } },
-      { x: deRows.map(r => r.short), y: deRows.map(r => r.export_pct || 0), type: "bar", name: "Export %", marker: { color: "#ff7f0e" } },
-    ], {
-      barmode: "stack", yaxis: { title: "Sales mix (%)", range: [0, 105] },
-      xaxis: { tickangle: -45, automargin: true },
-      legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
     });
 
     // ── ⑲ Multi-Year Average (3yr) — 회사별, 최근 3 annual year

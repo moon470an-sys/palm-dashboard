@@ -101,11 +101,42 @@ export function makeTable(elId, columns, rows, opts = {}) {
   });
 }
 
+// Lazy renderer: viewport에 들어올 때만 Plotly 실행. 100+ 차트 페이지에서 초기 로드 시간 대폭 단축.
+const _lazyObserver = (typeof IntersectionObserver !== "undefined")
+  ? new IntersectionObserver((entries, obs) => {
+      entries.forEach(e => {
+        if (e.isIntersecting && e.target.__lazyPlot) {
+          const fn = e.target.__lazyPlot;
+          delete e.target.__lazyPlot;
+          obs.unobserve(e.target);
+          fn();
+        }
+      });
+    }, { rootMargin: "200px 0px" })  // 200px 전에 미리 렌더
+  : null;
+
 export function plot(elId, traces, layout = {}) {
-  // eslint-disable-next-line no-undef
-  Plotly.newPlot(elId, traces, {
-    margin: { t: 20, b: 40, l: 60, r: 30 }, height: 320,
-    font: { size: 11 }, paper_bgcolor: "#fff", plot_bgcolor: "#fff",
-    ...layout,
-  }, { responsive: true, displayModeBar: false });
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const draw = () => {
+    // eslint-disable-next-line no-undef
+    Plotly.newPlot(elId, traces, {
+      margin: { t: 20, b: 40, l: 60, r: 30 }, height: 320,
+      font: { size: 11 }, paper_bgcolor: "#fff", plot_bgcolor: "#fff",
+      ...layout,
+    }, { responsive: true, displayModeBar: false });
+  };
+  // Re-render시 기존 lazy task 취소 (selector 갱신 등)
+  if (el.__lazyPlot) { _lazyObserver?.unobserve(el); delete el.__lazyPlot; }
+  // 이미 가시 영역이면 즉시 그림 (체크: getBoundingClientRect)
+  if (!_lazyObserver) { draw(); return; }
+  const rect = el.getBoundingClientRect();
+  const inView = rect.top < (window.innerHeight + 200) && rect.bottom > -200;
+  if (inView) { draw(); }
+  else {
+    // 자리표시 minHeight 보장 (layout shift 방지)
+    if (!el.style.minHeight) el.style.minHeight = (layout.height || 320) + "px";
+    el.__lazyPlot = draw;
+    _lazyObserver.observe(el);
+  }
 }
