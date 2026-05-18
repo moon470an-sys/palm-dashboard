@@ -484,15 +484,16 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Margin × Turnover scatter (색=레버리지, 크기=ROE) — 효율 vs 회전</h3><div id="ov-dp-scatter" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑮ Margin 분석 통합 (Cascade · Compression · Operating Leverage)</h3>
+    <h3 class="section-h">⑮ Margin 분석 통합 (Cascade · Compression · Operating Leverage · Tax/Interest)</h3>
     <p class="notice">
-      4단계 마진 분해 + 다년 압축 detector + Operating Leverage 통합. Gross→EBITDA→EBIT→Net 각 단계 + 시간에 따른 마진 변화.
+      4단계 마진 분해 + 다년 압축 detector + Operating Leverage + EBIT→NP 전환율 통합. Cascade의 EBIT→Net 차이는 세금·이자 부담을 나타냄.
     </p>
     <div class="card"><h3>4-단계 마진 동시 비교 (Gross/EBITDA/EBIT/Net % grouped)</h3><div id="ov-mrg-cascade" class="plot plot-tall"></div></div>
     <div class="grid-2">
       <div class="card"><h3>Margin Compression: Gross Δ × Net Δ (좌하단=동시 압축)</h3><div id="ov-mrg-compress" class="plot plot-tall"></div></div>
       <div class="card"><h3>Operating Leverage: Revenue CAGR × EBITDA CAGR (대각선 위=positive)</h3><div id="ov-mrg-opl" class="plot plot-tall"></div></div>
     </div>
+    <div class="card"><h3>EBIT vs NP scatter (y=x 라인 가까이=세금/이자 부담 작음)</h3><div id="ov-mrg-ebit-np" class="plot plot-tall"></div></div>
 
     <h3 class="section-h">⑯ Consistency 분석 — 3yr 평균 + 전기간 안정성 통합</h3>
     <p class="notice">
@@ -514,24 +515,15 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>2026 Q1 Annualized (×4) vs 2025 Full-Year — 가속/감속</h3><div id="ov-q1-annualized" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑱ Tax & Interest Burden — EBIT → NP 전환율</h3>
-    <p class="notice">
-      NP/EBIT 비율 = EBIT 100원이 NP로 얼마나 남는가. 80%+ 효율 · 50-80% 정상 · 50%↓ 세금/이자 부담 큼. 음수 = 적자.
-    </p>
-    <div class="grid-2">
-      <div class="card"><h3>NP / EBIT (%) 랭킹 — 효율 (양수만)</h3><div id="ov-np-ebit" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Burden Share (1 − NP/EBIT) % — 세금+이자 손실</h3><div id="ov-burden" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>EBIT vs NP scatter (이상: y=x 라인 가까이, 멀수록 부담 큼)</h3><div id="ov-ebit-np" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑲ Best in Class Awards — 카테고리별 1위 회사</h3>
+    <h3 class="section-h">⑱ Best in Class Awards — 카테고리별 1위 회사</h3>
     <p class="notice">
       8개 핵심 카테고리에서 기준연도 1위 회사 + Top 3 시각 카드. 각 카테고리별 강자 한눈에.
     </p>
     <div class="card"><h3>Award Cards</h3><div id="ov-awards" class="awards"></div></div>
 
 
-    <h3 class="section-h">⑳ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑲ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1120,44 +1112,6 @@ export function renderOverview(root) {
     }).join("");
     document.getElementById("ov-awards").innerHTML = awardsHTML;
 
-    // ── ㊹ Tax & Interest Burden
-    const neRows = rows.filter(r => r.np_to_ebit != null && r.np_to_ebit > 0).sort((a, b) => b.np_to_ebit - a.np_to_ebit);
-    plot("ov-np-ebit", [{
-      x: neRows.map(r => Math.min(150, r.np_to_ebit)).reverse(), y: neRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: neRows.map(r => r.np_to_ebit >= 80 ? "#2ca02c" : r.np_to_ebit >= 50 ? "#1f77b4" : r.np_to_ebit >= 25 ? "#ffbb78" : "#d62728").reverse() },
-      text: neRows.map(r => r.np_to_ebit > 150 ? ">150%" : r.np_to_ebit.toFixed(1) + "%").reverse(), textposition: "outside",
-    }], { xaxis: { title: "NP / EBIT (%) — 80%+ 우수 · 50-80% 정상" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, neRows.length * 24 + 60) });
-
-    const bsRows = rows.filter(r => r.burden_share != null && r.burden_share >= 0 && r.burden_share <= 200).sort((a, b) => b.burden_share - a.burden_share);
-    plot("ov-burden", [{
-      x: bsRows.map(r => r.burden_share).reverse(), y: bsRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: bsRows.map(r => r.burden_share <= 20 ? "#2ca02c" : r.burden_share <= 50 ? "#1f77b4" : r.burden_share <= 75 ? "#ffbb78" : "#d62728").reverse() },
-      text: bsRows.map(r => r.burden_share.toFixed(1) + "%").reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>세금+이자 손실 %{x:.1f}%<extra></extra>",
-    }], { xaxis: { title: "Burden Share (%) — 낮을수록 효율" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, bsRows.length * 24 + 60) });
-
-    // EBIT vs NP scatter
-    const enRows = rows.filter(r => r.ebit != null && r.net_profit != null);
-    const maxV = Math.max(...enRows.map(r => Math.max(Math.abs(r.ebit), Math.abs(r.net_profit))));
-    plot("ov-ebit-np", [{
-      x: enRows.map(r => r.ebit), y: enRows.map(r => r.net_profit),
-      mode: "markers+text", type: "scatter",
-      text: enRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: enRows.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
-        color: enRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
-        opacity: 0.8, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>EBIT %{x:,.0f} bn<br>NP %{y:,.0f} bn<extra></extra>",
-    }], {
-      xaxis: { title: "EBIT (IDR bn)" }, yaxis: { title: "Net Profit (IDR bn)" },
-      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
-      shapes: [{ type: "line", x0: -maxV, y0: -maxV, x1: maxV, y1: maxV, line: { color: "#ccc", dash: "dot", width: 1 } }],
-    });
-
-
     // ── ⑲ Multi-Year Average (3yr) — 회사별, 최근 3 annual year
     const last3 = annualYears.slice(-3);
     const mean = (a) => { const x = a.filter(v => v != null); return x.length ? x.reduce((s, v) => s + v, 0) / x.length : null; };
@@ -1262,6 +1216,25 @@ export function renderOverview(root) {
       xaxis: { title: "Revenue CAGR (%/yr)", zeroline: true }, yaxis: { title: "EBITDA CAGR (%/yr)", zeroline: true },
       margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
       shapes: [{ type: "line", x0: -opMax, y0: -opMax, x1: opMax, y1: opMax, line: { color: "#ccc", dash: "dot", width: 1 } }],
+    });
+
+    // 4. EBIT vs NP scatter (Tax/Interest 부담 시각화 — y=x 라인 가까이=부담 작음)
+    const enRows = rows.filter(r => r.ebit != null && r.net_profit != null);
+    const enMax = Math.max(...enRows.map(r => Math.max(Math.abs(r.ebit), Math.abs(r.net_profit))));
+    plot("ov-mrg-ebit-np", [{
+      x: enRows.map(r => r.ebit), y: enRows.map(r => r.net_profit),
+      mode: "markers+text", type: "scatter",
+      text: enRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: enRows.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
+        color: enRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>EBIT %{x:,.0f} bn<br>NP %{y:,.0f} bn<extra></extra>",
+    }], {
+      xaxis: { title: "EBIT (IDR bn)" }, yaxis: { title: "Net Profit (IDR bn)" },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
+      shapes: [{ type: "line", x0: -enMax, y0: -enMax, x1: enMax, y1: enMax, line: { color: "#ccc", dash: "dot", width: 1 } }],
     });
 
     // ── 종합 ranking 테이블
