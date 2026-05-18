@@ -72,8 +72,15 @@ const setBoot = (msg) => { if (bootProgress) bootProgress.textContent = msg; };
     setBoot("라이브러리 준비 중…");
     await waitForLibs();
     if (state.meta?.generated_at) {
-      document.getElementById("meta-time").textContent =
-        state.meta.generated_at.slice(0, 19).replace("T", " ");
+      const ts = state.meta.generated_at.slice(0, 19).replace("T", " ");
+      document.getElementById("meta-time").textContent = ts;
+      const ft = document.getElementById("footer-time");
+      if (ft) ft.textContent = ts;
+    }
+    if (state.meta?.db_size_bytes) {
+      const mb = (state.meta.db_size_bytes / 1024 / 1024).toFixed(1) + " MB";
+      const fd = document.getElementById("footer-db");
+      if (fd) fd.textContent = mb;
     }
     setBoot("첫 탭 렌더 중…");
     initNav();
