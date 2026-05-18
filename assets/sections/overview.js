@@ -666,7 +666,17 @@ export function renderOverview(root) {
       <div class="card"><h3>최신 / 첫 mcap 비율 (x) — 시총 배수</h3><div id="ov-mcap-mult" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㊶ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊶ Margin Compression Detector</h3>
+    <p class="notice">
+      Gross + Net margin 동시 감소 회사 = 비용 압박 + 마진 saved 등 구조적 문제. 양쪽 모두 −pp 큰 회사 위험.
+    </p>
+    <div class="card"><h3>Gross Δ × Net Δ scatter — 4분면 (좌하단=동시 압축)</h3><div id="ov-compr-quad" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Gross Margin Δ ranking (latest − first pp)</h3><div id="ov-gm-delta" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Net Margin Δ ranking (latest − first pp)</h3><div id="ov-nm-delta" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㊷ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -2006,6 +2016,58 @@ export function renderOverview(root) {
   };
   wfSel.addEventListener("change", renderWaterfall);
   renderWaterfall();
+
+  // ── ㊶ Margin Compression Detector
+  const marginDelta = companies.map(co => {
+    const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.m_gross != null && r.m_net != null).sort((a, b) => a.yr.localeCompare(b.yr));
+    if (s.length < 2) return null;
+    return {
+      short: co, region: s[s.length - 1].region,
+      gm_delta: s[s.length - 1].m_gross - s[0].m_gross,
+      nm_delta: s[s.length - 1].m_net - s[0].m_net,
+      gm_first: s[0].m_gross, gm_last: s[s.length - 1].m_gross,
+      nm_first: s[0].m_net, nm_last: s[s.length - 1].m_net,
+      revenue: s[s.length - 1].revenue,
+    };
+  }).filter(Boolean);
+
+  plot("ov-compr-quad", [{
+    x: marginDelta.map(r => r.gm_delta), y: marginDelta.map(r => r.nm_delta),
+    mode: "markers+text", type: "scatter",
+    text: marginDelta.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+    marker: {
+      size: marginDelta.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
+      color: marginDelta.map(r => (r.gm_delta < 0 && r.nm_delta < 0) ? "#d62728" : (r.gm_delta >= 0 && r.nm_delta >= 0) ? "#2ca02c" : "#ffbb78"),
+      opacity: 0.8, line: { color: "#fff", width: 1 },
+    },
+    hovertemplate: "%{text}<br>Gross Δ %{x:+.2f}pp<br>Net Δ %{y:+.2f}pp<extra></extra>",
+  }], {
+    xaxis: { title: "Gross Margin Δ (pp)", zeroline: true },
+    yaxis: { title: "Net Margin Δ (pp)", zeroline: true },
+    margin: { l: 70, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
+    annotations: [
+      { x: -20, y: -20, text: "동시 압축 (위험)", showarrow: false, font: { color: "#d62728", size: 11 } },
+      { x: 20, y: 20, text: "동시 확대", showarrow: false, font: { color: "#2ca02c", size: 11 } },
+    ],
+  });
+
+  const gmD = [...marginDelta].sort((a, b) => b.gm_delta - a.gm_delta);
+  plot("ov-gm-delta", [{
+    x: gmD.map(r => r.gm_delta).reverse(), y: gmD.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: gmD.map(r => r.gm_delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
+    text: gmD.map(r => (r.gm_delta >= 0 ? "+" : "") + r.gm_delta.toFixed(1) + "pp").reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>Gross %{customdata[0]:.1f}% → %{customdata[1]:.1f}% (Δ%{x:+.2f}pp)<extra></extra>",
+    customdata: gmD.map(r => [r.gm_first, r.gm_last]).reverse(),
+  }], { xaxis: { title: "Gross Margin Δ (pp, latest − first)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, gmD.length * 24 + 60) });
+
+  const nmD = [...marginDelta].sort((a, b) => b.nm_delta - a.nm_delta);
+  plot("ov-nm-delta", [{
+    x: nmD.map(r => r.nm_delta).reverse(), y: nmD.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: nmD.map(r => r.nm_delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
+    text: nmD.map(r => (r.nm_delta >= 0 ? "+" : "") + r.nm_delta.toFixed(1) + "pp").reverse(), textposition: "outside",
+  }], { xaxis: { title: "Net Margin Δ (pp, latest − first)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, nmD.length * 24 + 60) });
 
   // ── ㊵ Market Cap 다년
   const mcapSeries = companies.map(co => {
