@@ -47,6 +47,13 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+@media print {
+  .tabs, .filter-bar, .boot { display: none !important; }
+  .tab-panel { display: block !important; page-break-after: always; }
+  .topbar { background: none; color: var(--c-text); box-shadow: none; }
+  body { font-size: 11px; background: white; }
+  .card { break-inside: avoid; }
+}
 
 main { padding: 18px 24px; }
 .tab-panel { display: none; }
