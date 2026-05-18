@@ -116,10 +116,12 @@ export function renderOverview(root) {
       div_total: ((num(r.final_dps_local_per_share) || 0) + (num(r.interim_dps_local_per_share) || 0)) || null,
       div_yield: (px != null && ((num(r.final_dps_local_per_share) || 0) + (num(r.interim_dps_local_per_share) || 0)) > 0)
         ? ((num(r.final_dps_local_per_share) || 0) + (num(r.interim_dps_local_per_share) || 0)) / px * 100 : null,
-      roe: num(r.roe_reported_pct),
-      roa: num(r.roa_reported_pct), net_margin: num(r.net_margin_reported_pct),
-      gross_margin: num(r.gross_margin_reported_pct),
-      debt_eq: num(r.debt_per_equity_x),
+      // Ratios: reported가 거의 비어있으므로 계산 fallback 항상 적용
+      roe: num(r.roe_reported_pct) ?? (np != null && num(r.total_equity_idr_bn) && num(r.total_equity_idr_bn) > 0 ? np / num(r.total_equity_idr_bn) * 100 : null),
+      roa: num(r.roa_reported_pct) ?? (np != null && num(r.total_assets_idr_bn) && num(r.total_assets_idr_bn) > 0 ? np / num(r.total_assets_idr_bn) * 100 : null),
+      net_margin: num(r.net_margin_reported_pct) ?? (np != null && revenue ? np / revenue * 100 : null),
+      gross_margin: num(r.gross_margin_reported_pct) ?? (num(r.gross_profit_idr_bn) != null && revenue ? num(r.gross_profit_idr_bn) / revenue * 100 : null),
+      debt_eq: num(r.debt_per_equity_x) ?? (num(r.gross_debt_idr_bn) != null && num(r.total_equity_idr_bn) && num(r.total_equity_idr_bn) > 0 ? num(r.gross_debt_idr_bn) / num(r.total_equity_idr_bn) : null),
       curr_ratio: num(r.current_ratio_x) ?? ((ca != null && cl) ? ca / cl : null),
       debt_assets: (num(r.gross_debt_idr_bn) != null && num(r.total_assets_idr_bn)) ? num(r.gross_debt_idr_bn) / num(r.total_assets_idr_bn) * 100 : null,
       yr: r.report_year,
