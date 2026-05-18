@@ -119,6 +119,18 @@ export function renderOverview(root) {
     if (/covenant breach|default/i.test(txt)) s += 20;
     r.risk_score = Math.min(100, s);
     r.risk_band = s >= 60 ? "High" : s >= 30 ? "Medium" : "Low";
+    // Quality Score 0-100 (5축, 각 0-20)
+    const scoreROE = (v) => v == null ? 0 : v >= 20 ? 20 : v >= 15 ? 17 : v >= 10 ? 13 : v >= 5 ? 9 : v >= 0 ? 5 : 0;
+    const scoreCash = (v) => v == null ? 0 : v >= 100 ? 20 : v >= 70 ? 16 : v >= 50 ? 12 : v >= 0 ? 6 : 0;
+    const scoreBS = (v) => v == null ? 0 : v < 0 ? 20 : v <= 1 ? 18 : v <= 2 ? 15 : v <= 3 ? 11 : v <= 4 ? 7 : v <= 6 ? 4 : 0;
+    const scoreYield = (e, d) => Math.min(20, Math.max(0, (e || 0) * 1.5 + (d || 0) * 2)); // earnings + div weighted
+    r.q_profit = scoreROE(r.roe);
+    r.q_cash = scoreCash(r.cash_conv);
+    r.q_bs = scoreBS(r.nd_ebitda);
+    r.q_yield = scoreYield(r.earnings_yield, r.div_yield);
+    r.q_size = r.revenue ? Math.min(20, Math.log10(r.revenue + 1) * 3) : 0;  // 규모 점수 (log scale)
+    r.quality_score = r.q_profit + r.q_cash + r.q_bs + r.q_yield + r.q_size;
+    r.quality_band = r.quality_score >= 70 ? "A" : r.quality_score >= 50 ? "B" : r.quality_score >= 30 ? "C" : "D";
   });
   const allYears = [...new Set(fin.map(r => r.yr))].sort();
   const annualYears = allYears.filter(y => !/Q\d/i.test(y));
@@ -271,8 +283,18 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Mills × Capacity scatter (회사별 mill 수 × 처리 능력 tph)</h3><div id="ov-mills" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑭ 종합 Ranking 테이블</h3>
-    <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + 권역)</h3><div id="ov-table"></div></div>
+    <h3 class="section-h">⑭ Composite Quality Score — 5축 종합 평가</h3>
+    <p class="notice">
+      5축: ①Profitability(ROE) ②Cash Generation(CFO/NP) ③Balance Sheet(ND/EBITDA) ④Shareholder Yield(Earnings+Div) ⑤Size(log Revenue) — 각 0-20점, 총 0-100
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>Quality Score 0–100 (A/B/C/D 등급)</h3><div id="ov-quality-bar" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Quality × Risk 4분면 (이상=고품질·저위험)</h3><div id="ov-qr-quad" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>Top 8 회사 Radar — 5축 동시 비교</h3><div id="ov-radar" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">⑮ 종합 Ranking 테이블</h3>
+    <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
   // ── 시계열 차트는 한 번만
@@ -735,6 +757,61 @@ export function renderOverview(root) {
       margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
 
+    // ── ⑭ Composite Quality Score
+    const qRows = [...rows].sort((a, b) => b.quality_score - a.quality_score);
+    const QBAND_COLOR = (b) => ({ A: "#2ca02c", B: "#1f77b4", C: "#ffbb78", D: "#d62728" }[b] || "#7f7f7f");
+    plot("ov-quality-bar", [{
+      x: qRows.map(r => r.quality_score).reverse(), y: qRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: qRows.map(r => QBAND_COLOR(r.quality_band)).reverse() },
+      text: qRows.map(r => `${r.quality_score.toFixed(0)} (${r.quality_band})`).reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Quality %{x:.1f}/100<extra></extra>",
+    }], { xaxis: { title: "Quality Score (0=낮음 · 100=최상)", range: [0, 110] }, margin: { l: 220, r: 100, t: 10, b: 40 }, height: Math.max(400, qRows.length * 22 + 80) });
+
+    // Quality × Risk 4분면
+    const qrRows = rows.filter(r => r.risk_score != null);
+    plot("ov-qr-quad", [{
+      x: qrRows.map(r => r.risk_score), y: qrRows.map(r => r.quality_score),
+      mode: "markers+text", type: "scatter",
+      text: qrRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: qrRows.map(r => Math.max(10, Math.min(50, Math.sqrt(r.revenue || 100) / 4))),
+        color: qrRows.map(r => QBAND_COLOR(r.quality_band)),
+        opacity: 0.75, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>Risk %{x}<br>Quality %{y:.1f}<extra></extra>",
+    }], {
+      xaxis: { title: "Risk Score (↓낮을수록 안전)", range: [0, 110] },
+      yaxis: { title: "Quality Score (↑높을수록 우수)", range: [0, 110] },
+      margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+      shapes: [
+        { type: "line", x0: 50, y0: 0, x1: 50, y1: 110, line: { color: "#ccc", dash: "dash", width: 1 } },
+        { type: "line", x0: 0, y0: 50, x1: 110, y1: 50, line: { color: "#ccc", dash: "dash", width: 1 } },
+      ],
+      annotations: [
+        { x: 25, y: 100, text: "이상: 고품질·저위험", showarrow: false, font: { color: "#2ca02c", size: 11 } },
+        { x: 90, y: 100, text: "성장형: 고품질·고위험", showarrow: false, font: { color: "#1f77b4", size: 11 } },
+        { x: 25, y: 5, text: "지루: 저품질·저위험", showarrow: false, font: { color: "#999", size: 11 } },
+        { x: 90, y: 5, text: "위험: 저품질·고위험", showarrow: false, font: { color: "#d62728", size: 11 } },
+      ],
+    });
+
+    // Top 8 Radar (5축)
+    const top8Q = qRows.slice(0, 8);
+    const radarTraces = top8Q.map(r => ({
+      type: "scatterpolar",
+      r: [r.q_profit, r.q_cash, r.q_bs, r.q_yield, r.q_size, r.q_profit],
+      theta: ["Profitability", "Cash Gen", "Balance Sheet", "Yield", "Size", "Profitability"],
+      fill: "toself",
+      name: r.short,
+      line: { color: colorMap[r.short] },
+    }));
+    plot("ov-radar", radarTraces, {
+      polar: { radialaxis: { visible: true, range: [0, 22] } },
+      showlegend: true, legend: { orientation: "h", y: -0.18, font: { size: 9 } },
+      margin: { l: 40, r: 40, t: 20, b: 60 }, height: 520,
+    });
+
     // 자본구조 stacked (equity + liab = assets), 회사별
     const csRows = rows.filter(r => r.equity != null && r.liab != null).sort((a, b) => (b.assets || 0) - (a.assets || 0));
     plot("ov-capstack", [
@@ -747,8 +824,8 @@ export function renderOverview(root) {
     });
 
     // ── 종합 ranking 테이블
-    const tableRows = [...rows].sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).map(r => ({
-      회사: r.short, 권역: r.region,
+    const tableRows = [...rows].sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0)).map(r => ({
+      회사: r.short, 권역: r.region, "Quality": r.quality_score, Band: r.quality_band, "Risk": r.risk_score,
       매출: r.revenue, 순이익: r.net_profit, EBITDA: r.ebitda,
       자산: r.assets, 부채: r.liab, 자본: r.equity, 시가총액: r.mcap,
       CFO: r.cfo, CapEx: r.capex, FCF: r.fcf,
@@ -762,6 +839,9 @@ export function renderOverview(root) {
     makeTable("ov-table", [
       { data: "회사", title: "회사" },
       { data: "권역", title: "권역" },
+      { data: "Quality", title: "Quality", render: pctFmt },
+      { data: "Band", title: "Band" },
+      { data: "Risk", title: "Risk", render: pctFmt },
       { data: "매출", title: "매출 bn", render: numFmt },
       { data: "순이익", title: "순이익 bn", render: numFmt },
       { data: "EBITDA", title: "EBITDA bn", render: numFmt },
