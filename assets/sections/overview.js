@@ -168,7 +168,19 @@ export function renderOverview(root) {
     <div class="card"><h3>권역별 매출 시계열 (stacked area)</h3><div id="ov-region-ts" class="plot plot-tall"></div></div>
     <div class="card"><h3>회사 → 권역 → 매출 Treemap (기준연도)</h3><div id="ov-region-tree" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑨ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑨ 성장률 (Growth) — YoY 매출·순이익 변화</h3>
+    <div class="filter-bar">
+      <label>비교 기간:</label>
+      <select id="ov-growth-pair"></select>
+      <span class="badge">YoY = (current − prior) / prior</span>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>매출 YoY 성장률 (%)</h3><div id="ov-grow-rev" class="plot plot-tall"></div></div>
+      <div class="card"><h3>순이익 YoY 성장률 (%) — Turnaround 포함</h3><div id="ov-grow-np" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>Growth × Margin 매트릭스 (성장 vs 수익성, 크기=매출, 색=권역)</h3><div id="ov-grow-margin" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">⑩ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + 권역)</h3><div id="ov-table"></div></div>
   `;
 
@@ -537,4 +549,71 @@ export function renderOverview(root) {
   yearSel.addEventListener("change", renderYearScoped);
   metricSel.addEventListener("change", renderYearScoped);
   renderYearScoped();
+
+  // ── ⑨ Growth (YoY) — annual years pair select
+  const pairSel = document.getElementById("ov-growth-pair");
+  const pairs = [];
+  for (let i = 1; i < annualYears.length; i++) pairs.push([annualYears[i-1], annualYears[i]]);
+  pairSel.innerHTML = pairs.map(([a, b], i) => `<option value="${i}" ${i === pairs.length - 1 ? "selected" : ""}>${a} → ${b}</option>`).join("");
+
+  const renderGrowth = () => {
+    const [fromY, toY] = pairs[Number(pairSel.value)];
+    const findFin = (co, yr) => fin.find(r => r.short === co && r.yr === yr);
+    const growthRows = companies.map(co => {
+      const a = findFin(co, fromY), b = findFin(co, toY);
+      if (!a || !b) return null;
+      const rev0 = a.revenue, rev1 = b.revenue;
+      const np0 = a.net_profit, np1 = b.net_profit;
+      const rev_g = (rev0 && rev1 != null) ? (rev1 / rev0 - 1) * 100 : null;
+      // np growth — 적자→흑자 case handling
+      let np_g = null;
+      if (np0 != null && np1 != null) {
+        if (Math.abs(np0) > 1) np_g = (np1 - np0) / Math.abs(np0) * 100;
+      }
+      return { short: co, region: b.region || a.region, rev0, rev1, np0, np1, rev_g, np_g, margin: b.net_margin, revenue: b.revenue };
+    }).filter(Boolean);
+
+    // 매출 성장 ranking
+    const rg = [...growthRows].filter(r => r.rev_g != null).sort((a, b) => b.rev_g - a.rev_g);
+    plot("ov-grow-rev", [{
+      x: rg.map(r => r.rev_g).reverse(), y: rg.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: rg.map(r => r.rev_g >= 0 ? "#2ca02c" : "#d62728").reverse() },
+      text: rg.map(r => r.rev_g.toFixed(1) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>매출: " + fromY + " → " + toY + " " + "%{x:+.1f}%<extra></extra>",
+    }], { xaxis: { title: `Revenue ${fromY} → ${toY} YoY (%)`, zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, rg.length * 22 + 80) });
+
+    // 순이익 성장
+    const npg = [...growthRows].filter(r => r.np_g != null).sort((a, b) => b.np_g - a.np_g);
+    plot("ov-grow-np", [{
+      x: npg.map(r => Math.max(-500, Math.min(500, r.np_g))).reverse(),  // clamp ±500
+      y: npg.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: npg.map(r => r.np_g >= 0 ? "#2ca02c" : "#d62728").reverse() },
+      text: npg.map(r => r.np_g >= 500 ? ">500%" : r.np_g <= -500 ? "<-500%" : r.np_g.toFixed(0) + "%").reverse(),
+      textposition: "outside",
+      hovertemplate: "%{y}<br>순이익: " + fromY + " " + "%{customdata[0]} bn → " + toY + " %{customdata[1]} bn<br>YoY %{customdata[2]:+.1f}%<extra></extra>",
+      customdata: npg.map(r => [Math.round(r.np0).toLocaleString(), Math.round(r.np1).toLocaleString(), r.np_g]).reverse(),
+    }], { xaxis: { title: `Net profit ${fromY} → ${toY} YoY (%), clamp ±500%`, zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, npg.length * 22 + 80) });
+
+    // Growth × Margin scatter
+    const gm = growthRows.filter(r => r.rev_g != null && r.margin != null);
+    plot("ov-grow-margin", [{
+      x: gm.map(r => r.rev_g), y: gm.map(r => r.margin),
+      mode: "markers+text", type: "scatter",
+      text: gm.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: gm.map(r => Math.max(10, Math.min(50, Math.sqrt(r.revenue || 100) / 4))),
+        color: gm.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.75, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>매출 YoY %{x:+.1f}%<br>순이익률 %{y:.1f}%<extra></extra>",
+    }], {
+      xaxis: { title: `Revenue YoY (%) — ${fromY}→${toY}`, zeroline: true },
+      yaxis: { title: "Net margin (%)", zeroline: true },
+      margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+  };
+  pairSel.addEventListener("change", renderGrowth);
+  renderGrowth();
 }
