@@ -44,9 +44,13 @@ function initNav() {
     a.addEventListener("click", (e) => {
       e.preventDefault();
       const tab = a.dataset.tab;
-      history.replaceState(null, "", `#${tab}`);
+      if (location.hash !== `#${tab}`) history.pushState(null, "", `#${tab}`);
       showTab(tab);
     });
+  });
+  window.addEventListener("hashchange", () => {
+    const h = location.hash.replace("#", "") || "overview";
+    if (RENDERERS[h]) showTab(h);
   });
   const hash = location.hash.replace("#", "") || "overview";
   showTab(RENDERERS[hash] ? hash : "overview");
