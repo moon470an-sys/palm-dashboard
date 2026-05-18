@@ -436,7 +436,17 @@ export function renderOverview(root) {
       <div class="card"><h3>Nucleus vs Plasma 비중 — Smallholder 통합도</h3><div id="ov-nuc-plasma" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㉓ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉓ OER & CPO Price — 공장 효율 + 판가 spread</h3>
+    <p class="notice">
+      OER (Oil Extraction Rate, %) = CPO / FFB 처리량. 업계 평균 21-23%. 평균 CPO 판매가(IDR/kg)는 회사별 마켓 포지셔닝 + 품질 + 계약 구조 차이.
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>OER (%) — 공장 추출 효율</h3><div id="ov-oer" class="plot plot-tall"></div></div>
+      <div class="card"><h3>평균 CPO 판매가 (IDR/kg)</h3><div id="ov-cpo-price" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>OER × Net Margin scatter (효율이 수익성에 영향?)</h3><div id="ov-oer-margin" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㉔ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1057,6 +1067,44 @@ export function renderOverview(root) {
       xaxis: { title: "Diversification (1 - HHI)" },
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // ── ㉓ OER & CPO Price
+    const oerRows = rows.filter(r => r.oer_pct != null && r.oer_pct > 0).sort((a, b) => b.oer_pct - a.oer_pct);
+    // oer_pct가 0-1 (소수) 또는 0-100 (퍼센트)로 들어올 수 있음 — 정규화
+    const oerNorm = (v) => v > 1 ? v : v * 100;
+    plot("ov-oer", [{
+      x: oerRows.map(r => oerNorm(r.oer_pct)).reverse(),
+      y: oerRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: oerRows.map(r => oerNorm(r.oer_pct) > 23 ? "#2ca02c" : oerNorm(r.oer_pct) > 20 ? "#1f77b4" : oerNorm(r.oer_pct) > 18 ? "#ffbb78" : "#d62728").reverse() },
+      text: oerRows.map(r => oerNorm(r.oer_pct).toFixed(2) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>OER %{x:.2f}%<extra></extra>",
+    }], { xaxis: { title: "Oil Extraction Rate (%) — 업계 23%+ 우수" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, oerRows.length * 22 + 60) });
+
+    const cpRows = rows.filter(r => r.cpo_price_kg != null && r.cpo_price_kg > 0).sort((a, b) => b.cpo_price_kg - a.cpo_price_kg);
+    plot("ov-cpo-price", [{
+      x: cpRows.map(r => r.cpo_price_kg).reverse(),
+      y: cpRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: cpRows.map(r => r.cpo_price_kg).reverse(), colorscale: "YlGn" },
+      text: cpRows.map(r => r.cpo_price_kg.toLocaleString()).reverse(), textposition: "outside",
+    }], { xaxis: { title: "평균 CPO 판매가 (IDR/kg)" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, cpRows.length * 22 + 60) });
+
+    const omRows = rows.filter(r => r.oer_pct != null && r.oer_pct > 0 && r.net_margin != null);
+    plot("ov-oer-margin", [{
+      x: omRows.map(r => oerNorm(r.oer_pct)), y: omRows.map(r => r.net_margin),
+      mode: "markers+text", type: "scatter",
+      text: omRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: omRows.map(r => Math.max(10, Math.min(48, Math.sqrt(r.cpo_t || 100) / 20))),
+        color: omRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>OER %{x:.2f}%<br>Net Margin %{y:.2f}%<extra></extra>",
+    }], {
+      xaxis: { title: "OER (%)" }, yaxis: { title: "Net Margin (%)", zeroline: true },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
 
     // ── ㉒ Tree Age & Replanting
