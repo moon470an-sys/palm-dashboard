@@ -49,6 +49,8 @@ export function renderOverview(root) {
       ...r, company: r.company, short: shortName(r.company),
       hq: cMeta.hq || "", core_region: cMeta.core_region || "", region: classifyRegion(cMeta.core_region),
       business_model: cMeta.business_model || "", primary_business: cMeta.primary_business || "",
+      key_red_flags: cMeta.key_red_flags || "", overall_comment: cMeta.overall_comment || "",
+      financial_risk_note: r.financial_risk_note || "", liquidity_note: r.liquidity_note || "",
       revenue, net_profit: np,
       gross_profit: num(r.gross_profit_idr_bn), ebit: num(r.ebit_idr_bn),
       ebitda: num(r.ebitda_reported_idr_bn ?? r.ebitda_calculated_idr_bn),
@@ -81,9 +83,26 @@ export function renderOverview(root) {
       yr: r.report_year,
     };
   });
-  // net_debt/EBITDA leverage (derive after fin is built)
+  // net_debt/EBITDA leverage + risk_score (derive after fin is built)
   fin.forEach(r => {
     r.nd_ebitda = (r.net_debt != null && r.ebitda && r.ebitda > 0) ? r.net_debt / r.ebitda : null;
+    // Risk Score 0-100 (높을수록 위험)
+    let s = 0;
+    if (r.net_profit != null && r.net_profit < 0) s += 30;
+    if (r.equity != null && r.equity < 0) s += 30;
+    if (r.nd_ebitda != null && r.nd_ebitda > 4) s += 25;
+    else if (r.nd_ebitda != null && r.nd_ebitda > 2) s += 10;
+    if (r.curr_ratio != null && r.curr_ratio < 1) s += 20;
+    else if (r.curr_ratio != null && r.curr_ratio < 1.5) s += 10;
+    if (r.debt_assets != null && r.debt_assets > 60) s += 15;
+    if (r.cfo != null && r.cfo < 0) s += 15;
+    // 텍스트 기반 hint (key_red_flags)
+    const txt = ((r.key_red_flags || "") + " " + (r.financial_risk_note || "") + " " + (r.liquidity_note || "")).toLowerCase();
+    if (/distress|severe|critical|going concern|insolvent/i.test(txt)) s += 25;
+    if (/cash burn|negative cfo|liquidity (concern|risk|tight)|tight liquidity/i.test(txt)) s += 15;
+    if (/covenant breach|default/i.test(txt)) s += 20;
+    r.risk_score = Math.min(100, s);
+    r.risk_band = s >= 60 ? "High" : s >= 30 ? "Medium" : "Low";
   });
   const allYears = [...new Set(fin.map(r => r.yr))].sort();
   const annualYears = allYears.filter(y => !/Q\d/i.test(y));
@@ -215,7 +234,17 @@ export function renderOverview(root) {
       <div class="card"><h3>DPS 지급 회사 (기준연도, 0 제외)</h3><div id="ov-dps" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑫ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑫ Risk & Red Flags — 자동 점수 + 메타 노트</h3>
+    <div class="grid-2">
+      <div class="card"><h3>Risk Score 0–100 (재무 지표 + 텍스트 hint 합산)</h3><div id="ov-risk-bar" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Risk × 매출 scatter (위험·규모 매트릭스)</h3><div id="ov-risk-scatter" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card">
+      <h3>회사별 Red Flags 카드 (key_red_flags + 재무 risk note) — 검색·정렬</h3>
+      <div id="ov-risk-table"></div>
+    </div>
+
+    <h3 class="section-h">⑬ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + 권역)</h3><div id="ov-table"></div></div>
   `;
 
@@ -574,6 +603,55 @@ export function renderOverview(root) {
       text: ndRows.map(r => r.nd_ebitda.toFixed(2) + "x").reverse(), textposition: "outside",
       hovertemplate: "%{y}<br>Net Debt/EBITDA: %{x:.2f}x<extra></extra>",
     }], { xaxis: { title: "Net Debt / EBITDA (x) — 음수=현금 초과 · 2x 이하 우수 · 4x+ 위험", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, ndRows.length * 22 + 80) });
+
+    // ── ⑫ Risk & Red Flags
+    const riskRows = [...rows].filter(r => r.risk_score != null).sort((a, b) => b.risk_score - a.risk_score);
+    const RISK_COLOR = (s) => s >= 60 ? "#d62728" : s >= 30 ? "#ffbb78" : "#2ca02c";
+    plot("ov-risk-bar", [{
+      x: riskRows.map(r => r.risk_score).reverse(), y: riskRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: riskRows.map(r => RISK_COLOR(r.risk_score)).reverse() },
+      text: riskRows.map(r => `${r.risk_score} · ${r.risk_band}`).reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Risk %{x}/100<extra></extra>",
+    }], { xaxis: { title: "Risk Score (0=안전 · 100=위험)", range: [0, 110] }, margin: { l: 220, r: 100, t: 10, b: 40 }, height: Math.max(400, riskRows.length * 22 + 80) });
+
+    const rsScatter = riskRows.filter(r => r.revenue != null);
+    plot("ov-risk-scatter", [{
+      x: rsScatter.map(r => r.risk_score), y: rsScatter.map(r => r.revenue),
+      mode: "markers+text", type: "scatter",
+      text: rsScatter.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: rsScatter.map(r => Math.max(10, Math.min(50, Math.sqrt(r.assets || 100) / 4))),
+        color: rsScatter.map(r => RISK_COLOR(r.risk_score)),
+        opacity: 0.75, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>Risk %{x}<br>매출 %{y:,.0f} bn<extra></extra>",
+    }], {
+      xaxis: { title: "Risk Score", range: [0, 110] },
+      yaxis: { title: "Revenue (IDR bn)", type: "log" },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    const riskTbl = riskRows.map(r => ({
+      회사: r.short, 권역: r.region,
+      Risk: r.risk_score, Band: r.risk_band,
+      매출: r.revenue, 순이익: r.net_profit,
+      "ND/EB": r.nd_ebitda, "CurR": r.curr_ratio,
+      red_flags: (r.key_red_flags || "").slice(0, 300),
+      재무_risk_note: (r.financial_risk_note || "").slice(0, 200),
+    }));
+    makeTable("ov-risk-table", [
+      { data: "회사", title: "회사" },
+      { data: "권역", title: "권역" },
+      { data: "Risk", title: "Risk", render: (d) => `<b style="color:${RISK_COLOR(d)}">${d}</b>` },
+      { data: "Band", title: "Band" },
+      { data: "매출", title: "매출 bn", render: (d) => d == null ? "-" : Number(d).toLocaleString(undefined, { maximumFractionDigits: 0 }) },
+      { data: "순이익", title: "순이익 bn", render: (d) => d == null ? "-" : Number(d).toLocaleString(undefined, { maximumFractionDigits: 0 }) },
+      { data: "ND/EB", title: "ND/EB", render: (d) => d == null ? "-" : Number(d).toFixed(2) },
+      { data: "CurR", title: "CurR", render: (d) => d == null ? "-" : Number(d).toFixed(2) },
+      { data: "red_flags", title: "Key Red Flags (요약)" },
+      { data: "재무_risk_note", title: "재무 risk note" },
+    ], riskTbl, { pageLength: 20, order: [[2, "desc"]] });
 
     // 자본구조 stacked (equity + liab = assets), 회사별
     const csRows = rows.filter(r => r.equity != null && r.liab != null).sort((a, b) => (b.assets || 0) - (a.assets || 0));
