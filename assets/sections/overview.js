@@ -8,6 +8,13 @@ const num = (v) => (v == null || v === "" || isNaN(Number(v))) ? null : Number(v
 
 // core_region 텍스트 → primary region 분류 (가장 먼저 언급된 지역 우선, 다지역이면 Diversified)
 const REGION_COLOR = { Sumatra: "#2ca02c", Kalimantan: "#ff7f0e", Java: "#1f77b4", Sulawesi: "#9467bd", Papua: "#d62728", Diversified: "#8c564b", Other: "#7f7f7f" };
+const BM_COLOR = { Upstream: "#2ca02c", Integrated: "#1f77b4", Downstream: "#ff7f0e", Other: "#7f7f7f", Unknown: "#cccccc" };
+function classifyBM(s) {
+  const t = (s || "").trim();
+  const m = t.match(/^([A-Za-z]+)/);
+  const w = m ? m[1] : "Unknown";
+  return ["Upstream", "Integrated", "Downstream", "Other"].includes(w) ? w : "Other";
+}
 function classifyRegion(coreRegion) {
   if (!coreRegion) return "Other";
   const t = coreRegion.toLowerCase();
@@ -59,6 +66,7 @@ export function renderOverview(root) {
       ...r, company: r.company, short: shortName(r.company),
       hq: cMeta.hq || "", core_region: cMeta.core_region || "", region: classifyRegion(cMeta.core_region),
       business_model: cMeta.business_model || "", primary_business: cMeta.primary_business || "",
+      bm_class: classifyBM(cMeta.business_model),
       key_red_flags: cMeta.key_red_flags || "", overall_comment: cMeta.overall_comment || "",
       financial_risk_note: r.financial_risk_note || "", liquidity_note: r.liquidity_note || "",
       planted_ha: planted, ffb_t: ffb, cpo_t: cpo,
@@ -464,7 +472,17 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Mill Capacity (tph) × FFB Production scatter — 자체 FFB가 mill capacity 충족?</h3><div id="ov-cap-prod" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉕ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉕ Business Model Cluster — Upstream / Integrated / Downstream / Other</h3>
+    <p class="notice">
+      회사 메타 business_model 필드 기준 4그룹: Upstream(plantation+mill), Integrated(+downstream refinery), Downstream(가공/유통 중심), Other(다업종/지원사업).
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>Cluster별 회사 수 + 매출 합 (기준연도)</h3><div id="ov-bm-bar" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Cluster별 평균 ROE / Net Margin / Quality</h3><div id="ov-bm-eff" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>Cluster × Region 매트릭스 — 회사 수 (양방향 분포)</h3><div id="ov-bm-region" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㉖ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1085,6 +1103,53 @@ export function renderOverview(root) {
       xaxis: { title: "Diversification (1 - HHI)" },
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
+    // ── ㉕ Business Model Cluster
+    const BM_LIST = ["Upstream", "Integrated", "Downstream", "Other"];
+    const bmAgg = {};
+    BM_LIST.forEach(b => { bmAgg[b] = { n: 0, rev: 0, roeSum: 0, roeN: 0, marginSum: 0, marginN: 0, qSum: 0, qN: 0 }; });
+    rows.forEach(r => {
+      const a = bmAgg[r.bm_class] || bmAgg.Other;
+      a.n++;
+      a.rev += r.revenue || 0;
+      if (r.roe != null) { a.roeSum += r.roe; a.roeN++; }
+      if (r.net_margin != null) { a.marginSum += r.net_margin; a.marginN++; }
+      if (r.quality_score != null) { a.qSum += r.quality_score; a.qN++; }
+    });
+    const bmActive = BM_LIST.filter(b => bmAgg[b].n > 0);
+
+    plot("ov-bm-bar", [
+      { x: bmActive, y: bmActive.map(b => bmAgg[b].rev), type: "bar", name: "매출 합 (bn)", marker: { color: bmActive.map(b => BM_COLOR[b]) }, yaxis: "y" },
+      { x: bmActive, y: bmActive.map(b => bmAgg[b].n), type: "scatter", mode: "lines+markers", name: "회사 수", line: { color: "#333", width: 2 }, yaxis: "y2" },
+    ], {
+      yaxis: { title: "매출 합 (IDR bn)" },
+      yaxis2: { title: "회사 수", overlaying: "y", side: "right" },
+      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 60, t: 10, b: 50 }, height: 480,
+    });
+
+    plot("ov-bm-eff", [
+      { x: bmActive, y: bmActive.map(b => bmAgg[b].roeN ? bmAgg[b].roeSum / bmAgg[b].roeN : null), type: "bar", name: "평균 ROE %", marker: { color: "#1f77b4" } },
+      { x: bmActive, y: bmActive.map(b => bmAgg[b].marginN ? bmAgg[b].marginSum / bmAgg[b].marginN : null), type: "bar", name: "평균 순이익률 %", marker: { color: "#2ca02c" } },
+      { x: bmActive, y: bmActive.map(b => bmAgg[b].qN ? bmAgg[b].qSum / bmAgg[b].qN : null), type: "bar", name: "평균 Quality", marker: { color: "#ff7f0e" } },
+    ], {
+      barmode: "group", yaxis: { title: "값 (%/score)", zeroline: true },
+      legend: { orientation: "h", y: -0.18 }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480,
+    });
+
+    // Cluster × Region grouped bar (region별 BM 회사 수)
+    const REGIONS_BM = ["Sumatra", "Kalimantan", "Java", "Sulawesi", "Papua", "Diversified", "Other"];
+    const crMatrix = {};
+    REGIONS_BM.forEach(rg => { crMatrix[rg] = {}; BM_LIST.forEach(b => { crMatrix[rg][b] = 0; }); });
+    rows.forEach(r => { crMatrix[r.region] = crMatrix[r.region] || {}; crMatrix[r.region][r.bm_class] = (crMatrix[r.region][r.bm_class] || 0) + 1; });
+    const regionsActiveBM = REGIONS_BM.filter(rg => Object.values(crMatrix[rg] || {}).some(v => v > 0));
+    plot("ov-bm-region", BM_LIST.map(b => ({
+      x: regionsActiveBM, y: regionsActiveBM.map(rg => crMatrix[rg][b] || 0),
+      type: "bar", name: b, marker: { color: BM_COLOR[b] },
+    })), {
+      barmode: "stack", yaxis: { title: "회사 수" },
+      legend: { orientation: "h", y: -0.18 },
+      margin: { l: 70, r: 20, t: 10, b: 60 }, height: 480,
     });
 
     // ── ㉔ Mill Utilization & Third-party FFB
