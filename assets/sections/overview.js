@@ -626,7 +626,17 @@ export function renderOverview(root) {
       <div class="card"><h3>매출 분위별 평균 (5분위)</h3><div id="ov-conc-quintile" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㊲ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊲ Net Debt Decomposition — Gross Debt vs Cash</h3>
+    <p class="notice">
+      Net Debt = Gross Debt − Cash. Cash가 Gross Debt 초과 시 Net Cash 상태 (negative net debt). 회사별 부채 vs 현금 양방향 시각화.
+    </p>
+    <div class="card"><h3>Gross Debt vs Cash 양방향 (회사별, 음수=Cash, 양수=Debt)</h3><div id="ov-nd-decomp" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Cash / Gross Debt (%) — 부채 대비 현금 보유</h3><div id="ov-cash-debt" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Net Cash vs Net Debt 분류 (회사 수)</h3><div id="ov-netcash-pie" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㊳ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1248,6 +1258,38 @@ export function renderOverview(root) {
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
+
+    // ── ㊲ Net Debt Decomposition
+    const ndRows2 = rows.filter(r => r.debt != null && r.cash != null).sort((a, b) => (b.debt - b.cash) - (a.debt - a.cash));
+    plot("ov-nd-decomp", [
+      { x: ndRows2.map(r => r.debt), y: ndRows2.map(r => r.short), type: "bar", orientation: "h", name: "Gross Debt (+)", marker: { color: "#d62728" } },
+      { x: ndRows2.map(r => -r.cash), y: ndRows2.map(r => r.short), type: "bar", orientation: "h", name: "Cash (−)", marker: { color: "#2ca02c" } },
+    ], {
+      barmode: "relative", xaxis: { title: "IDR bn (음수=Cash, 양수=Debt)", zeroline: true },
+      legend: { orientation: "h", y: -0.1 },
+      margin: { l: 220, r: 40, t: 10, b: 50 }, height: Math.max(400, ndRows2.length * 22 + 60),
+    });
+
+    const cdRows = rows.filter(r => r.cash_to_debt != null && r.cash_to_debt > 0).sort((a, b) => b.cash_to_debt - a.cash_to_debt);
+    plot("ov-cash-debt", [{
+      x: cdRows.map(r => Math.min(500, r.cash_to_debt)).reverse(), y: cdRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: cdRows.map(r => r.cash_to_debt >= 100 ? "#2ca02c" : r.cash_to_debt >= 30 ? "#1f77b4" : r.cash_to_debt >= 10 ? "#ffbb78" : "#d62728").reverse() },
+      text: cdRows.map(r => r.cash_to_debt > 500 ? ">500%" : r.cash_to_debt.toFixed(1) + "%").reverse(), textposition: "outside",
+    }], { xaxis: { title: "Cash / Gross Debt (%) — 100%↑ = Net Cash position" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cdRows.length * 24 + 60) });
+
+    // Net Cash vs Net Debt pie
+    const netCashN = rows.filter(r => r.net_debt != null && r.net_debt < 0).length;
+    const lowNDN = rows.filter(r => r.net_debt != null && r.net_debt >= 0 && r.nd_ebitda != null && r.nd_ebitda < 2).length;
+    const medND = rows.filter(r => r.nd_ebitda != null && r.nd_ebitda >= 2 && r.nd_ebitda < 4).length;
+    const highND = rows.filter(r => r.nd_ebitda != null && r.nd_ebitda >= 4).length;
+    plot("ov-netcash-pie", [{
+      labels: ["Net Cash", "Net Debt 저 (<2x EBITDA)", "Net Debt 중 (2-4x)", "Net Debt 고 (4x+)"],
+      values: [netCashN, lowNDN, medND, highND],
+      type: "pie", hole: 0.45,
+      marker: { colors: ["#2ca02c", "#1f77b4", "#ffbb78", "#d62728"] },
+      textinfo: "label+value+percent",
+    }], { margin: { t: 20, b: 20, l: 0, r: 0 }, height: 480 });
 
     // ── ㊱ Industry Concentration
     const concRows = rows.filter(r => r.revenue > 0).sort((a, b) => b.revenue - a.revenue);
