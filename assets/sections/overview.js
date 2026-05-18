@@ -54,7 +54,10 @@ export function renderOverview(root) {
       ebitda: num(r.ebitda_reported_idr_bn ?? r.ebitda_calculated_idr_bn),
       assets: num(r.total_assets_idr_bn), liab: num(r.total_liabilities_idr_bn),
       equity: num(r.total_equity_idr_bn), debt: num(r.gross_debt_idr_bn),
-      net_debt: num(r.net_debt_reported_idr_bn ?? r.net_debt_calculated_idr_bn),
+      net_debt: num(r.net_debt_reported_idr_bn ?? r.net_debt_calculated_idr_bn) ??
+                ((num(r.gross_debt_idr_bn) != null && num(r.cash_and_cash_equivalents_idr_bn) != null)
+                  ? num(r.gross_debt_idr_bn) - num(r.cash_and_cash_equivalents_idr_bn) : null),
+      cash: num(r.cash_and_cash_equivalents_idr_bn),
       cfo, capex: capex != null ? Math.abs(capex) : null, fcf,
       capex_intensity: (capex != null && revenue) ? Math.abs(capex) / revenue * 100 : null,
       cash_conv: (cfo != null && np && np > 0) ? cfo / np * 100 : null,  // CFO/NP %
@@ -74,8 +77,13 @@ export function renderOverview(root) {
       gross_margin: num(r.gross_margin_reported_pct),
       debt_eq: num(r.debt_per_equity_x),
       curr_ratio: num(r.current_ratio_x) ?? ((ca != null && cl) ? ca / cl : null),
+      debt_assets: (num(r.gross_debt_idr_bn) != null && num(r.total_assets_idr_bn)) ? num(r.gross_debt_idr_bn) / num(r.total_assets_idr_bn) * 100 : null,
       yr: r.report_year,
     };
+  });
+  // net_debt/EBITDA leverage (derive after fin is built)
+  fin.forEach(r => {
+    r.nd_ebitda = (r.net_debt != null && r.ebitda && r.ebitda > 0) ? r.net_debt / r.ebitda : null;
   });
   const allYears = [...new Set(fin.map(r => r.yr))].sort();
   const annualYears = allYears.filter(y => !/Q\d/i.test(y));
@@ -180,7 +188,17 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Growth × Margin 매트릭스 (성장 vs 수익성, 크기=매출, 색=권역)</h3><div id="ov-grow-margin" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑩ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑩ Balance Sheet 깊이 — 유동성 · 레버리지 · 부채/자산</h3>
+    <div class="grid-2">
+      <div class="card"><h3>Current Ratio (유동자산/유동부채) — 단기 유동성</h3><div id="ov-curr" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Debt / Total Assets (%)</h3><div id="ov-debt-assets" class="plot plot-tall"></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>Net Debt / EBITDA (x) — 레버리지 (낮을수록 안전)</h3><div id="ov-nd-eb" class="plot plot-tall"></div></div>
+      <div class="card"><h3>자본 구조 — Equity vs Liabilities (회사별 stacked)</h3><div id="ov-capstack" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">⑪ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + 권역)</h3><div id="ov-table"></div></div>
   `;
 
@@ -512,6 +530,45 @@ export function renderOverview(root) {
       marker: { colors: tmColors },
     }], { margin: { t: 10, l: 0, r: 0, b: 0 }, height: 520 });
 
+    // ── ⑩ Balance Sheet 깊이
+    const crRows = rows.filter(r => r.curr_ratio != null && r.curr_ratio > 0).sort((a, b) => b.curr_ratio - a.curr_ratio);
+    plot("ov-curr", [{
+      x: crRows.map(r => r.curr_ratio).reverse(), y: crRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: crRows.map(r => r.curr_ratio >= 2 ? "#2ca02c" : r.curr_ratio >= 1 ? "#ffbb78" : "#d62728").reverse() },
+      text: crRows.map(r => r.curr_ratio.toFixed(2) + "x").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Current ratio: %{x:.2f}x<extra></extra>",
+    }], { xaxis: { title: "Current Ratio (x) — 2.0+ 우수 · 1.0+ 정상 · <1.0 위험" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, crRows.length * 22 + 80) });
+
+    const daRows = rows.filter(r => r.debt_assets != null).sort((a, b) => b.debt_assets - a.debt_assets);
+    plot("ov-debt-assets", [{
+      x: daRows.map(r => r.debt_assets).reverse(), y: daRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: daRows.map(r => r.debt_assets).reverse(), colorscale: "Reds" },
+      text: daRows.map(r => r.debt_assets.toFixed(1) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Debt/Assets: %{x:.2f}%<extra></extra>",
+    }], { xaxis: { title: "Gross Debt / Total Assets (%)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(400, daRows.length * 22 + 80) });
+
+    const ndRows = rows.filter(r => r.nd_ebitda != null && Math.abs(r.nd_ebitda) < 30).sort((a, b) => a.nd_ebitda - b.nd_ebitda);
+    plot("ov-nd-eb", [{
+      x: ndRows.map(r => r.nd_ebitda).reverse(), y: ndRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: ndRows.map(r => r.nd_ebitda < 0 ? "#2ca02c" : r.nd_ebitda < 2 ? "#1f77b4" : r.nd_ebitda < 4 ? "#ffbb78" : "#d62728").reverse() },
+      text: ndRows.map(r => r.nd_ebitda.toFixed(2) + "x").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Net Debt/EBITDA: %{x:.2f}x<extra></extra>",
+    }], { xaxis: { title: "Net Debt / EBITDA (x) — 음수=현금 초과 · 2x 이하 우수 · 4x+ 위험", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(400, ndRows.length * 22 + 80) });
+
+    // 자본구조 stacked (equity + liab = assets), 회사별
+    const csRows = rows.filter(r => r.equity != null && r.liab != null).sort((a, b) => (b.assets || 0) - (a.assets || 0));
+    plot("ov-capstack", [
+      { x: csRows.map(r => r.short), y: csRows.map(r => r.equity), type: "bar", name: "Equity", marker: { color: "#2ca02c" } },
+      { x: csRows.map(r => r.short), y: csRows.map(r => r.liab), type: "bar", name: "Liabilities", marker: { color: "#d62728" } },
+    ], {
+      barmode: "stack", yaxis: { title: "IDR bn" },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
+    });
+
     // ── 종합 ranking 테이블
     const tableRows = [...rows].sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).map(r => ({
       회사: r.short, 권역: r.region,
@@ -519,7 +576,8 @@ export function renderOverview(root) {
       자산: r.assets, 부채: r.liab, 자본: r.equity, 시가총액: r.mcap,
       CFO: r.cfo, CapEx: r.capex, FCF: r.fcf,
       "P/E": r.pe, "P/B": r.pb, "DivY%": r.div_yield,
-      "순이익률(%)": r.net_margin, "ROE(%)": r.roe, "ROA(%)": r.roa, "D/E(x)": r.debt_eq,
+      "순이익률(%)": r.net_margin, "ROE(%)": r.roe, "ROA(%)": r.roa,
+      "D/E(x)": r.debt_eq, "CurR": r.curr_ratio, "ND/EB": r.nd_ebitda,
     }));
     const numFmt = (d) => d == null ? "-" : Number(d).toLocaleString(undefined, { maximumFractionDigits: 0 });
     const pctFmt = (d) => d == null ? "-" : Number(d).toFixed(2);
@@ -543,6 +601,8 @@ export function renderOverview(root) {
       { data: "ROE(%)", title: "ROE%", render: pctFmt },
       { data: "ROA(%)", title: "ROA%", render: pctFmt },
       { data: "D/E(x)", title: "D/E x", render: pctFmt },
+      { data: "CurR", title: "CurR x", render: pctFmt },
+      { data: "ND/EB", title: "ND/EBITDA", render: pctFmt },
     ], tableRows, { pageLength: 25 });
   };
 
