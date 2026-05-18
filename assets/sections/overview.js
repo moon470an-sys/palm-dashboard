@@ -62,6 +62,8 @@ export function renderOverview(root) {
       key_red_flags: cMeta.key_red_flags || "", overall_comment: cMeta.overall_comment || "",
       financial_risk_note: r.financial_risk_note || "", liquidity_note: r.liquidity_note || "",
       planted_ha: planted, ffb_t: ffb, cpo_t: cpo,
+      area_sumatra: num(op.sumatra_area_ha) || 0, area_kalimantan: num(op.kalimantan_area_ha) || 0,
+      area_sulawesi: num(op.sulawesi_area_ha) || 0, area_other: num(op.other_region_area_ha) || 0,
       mills_n: num(op.mills_count), mill_cap_tph: num(op.mill_capacity_tph),
       oer_pct: num(op.oer_reported_pct), cpo_price_kg: num(op.average_cpo_selling_price_local_per_kg),
       rev_per_ha: (revenue && planted) ? revenue * 1e9 / planted : null,  // IDR per ha
@@ -136,6 +138,16 @@ export function renderOverview(root) {
     r.q_size = r.revenue ? Math.min(20, Math.log10(r.revenue + 1) * 3) : 0;  // 규모 점수 (log scale)
     r.quality_score = r.q_profit + r.q_cash + r.q_bs + r.q_yield + r.q_size;
     r.quality_band = r.quality_score >= 70 ? "A" : r.quality_score >= 50 ? "B" : r.quality_score >= 30 ? "C" : "D";
+    // Geographic HHI (Herfindahl) — 4지역 점유율 제곱합 (1.0 = 단일지역, 0.25 = 균등 4분할)
+    const areaTotal = (r.area_sumatra || 0) + (r.area_kalimantan || 0) + (r.area_sulawesi || 0) + (r.area_other || 0);
+    if (areaTotal > 0) {
+      const shares = [r.area_sumatra, r.area_kalimantan, r.area_sulawesi, r.area_other].map(a => (a || 0) / areaTotal);
+      r.geo_hhi = shares.reduce((s, v) => s + v * v, 0);
+      r.geo_diversification = 1 - r.geo_hhi;  // 0=완전 집중, 0.75=완전 균등
+      r.area_total_reported = areaTotal;
+    } else {
+      r.geo_hhi = null; r.geo_diversification = null; r.area_total_reported = null;
+    }
   });
   const allYears = [...new Set(fin.map(r => r.yr))].sort();
   const annualYears = allYears.filter(y => !/Q\d/i.test(y));
@@ -324,7 +336,18 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>Margin × Turnover scatter (색=레버리지, 크기=ROE) — 효율 vs 회전</h3><div id="ov-dp-scatter" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑰ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑰ Geographic Concentration — 회사별 농장 지역 분산</h3>
+    <p class="notice">
+      각 회사의 plantation area를 Sumatra/Kalimantan/Sulawesi/Other 4지역으로 분해.
+      HHI(Herfindahl-Hirschman Index) = Σ(share²): 1.0 = 단일지역 집중, 0.25 = 균등 4분할.
+    </p>
+    <div class="card"><h3>회사별 지역 area 분포 — 100% stacked</h3><div id="ov-geo-stack" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Geographic HHI — 집중도 ranking (높을수록 단일 지역 집중)</h3><div id="ov-geo-hhi" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Diversification × ROE — 분산이 수익성에 영향?</h3><div id="ov-geo-roe" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">⑱ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -903,6 +926,48 @@ export function renderOverview(root) {
       xaxis: { title: "Net Margin (%) — 효율", zeroline: true },
       yaxis: { title: "Asset Turnover (x) — 회전", zeroline: true },
       margin: { l: 70, r: 50, t: 10, b: 50 }, height: 520, showlegend: false,
+    });
+
+    // ── ⑰ Geographic Concentration
+    const geoRows = rows.filter(r => r.area_total_reported > 0).sort((a, b) => b.area_total_reported - a.area_total_reported);
+    plot("ov-geo-stack", [
+      { x: geoRows.map(r => r.short), y: geoRows.map(r => r.area_sumatra / r.area_total_reported * 100), type: "bar", name: "Sumatra", marker: { color: "#2ca02c" } },
+      { x: geoRows.map(r => r.short), y: geoRows.map(r => r.area_kalimantan / r.area_total_reported * 100), type: "bar", name: "Kalimantan", marker: { color: "#ff7f0e" } },
+      { x: geoRows.map(r => r.short), y: geoRows.map(r => r.area_sulawesi / r.area_total_reported * 100), type: "bar", name: "Sulawesi", marker: { color: "#9467bd" } },
+      { x: geoRows.map(r => r.short), y: geoRows.map(r => r.area_other / r.area_total_reported * 100), type: "bar", name: "Other", marker: { color: "#7f7f7f" } },
+    ], {
+      barmode: "stack", yaxis: { title: "지역 점유 (%)", range: [0, 100] },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.35 },
+      margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
+    });
+
+    // HHI ranking
+    const hhiRows = [...geoRows].sort((a, b) => b.geo_hhi - a.geo_hhi);
+    plot("ov-geo-hhi", [{
+      x: hhiRows.map(r => r.geo_hhi).reverse(), y: hhiRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: hhiRows.map(r => r.geo_hhi > 0.8 ? "#d62728" : r.geo_hhi > 0.5 ? "#ffbb78" : "#2ca02c").reverse() },
+      text: hhiRows.map(r => r.geo_hhi.toFixed(2)).reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>HHI %{x:.3f}<extra></extra>",
+    }], { xaxis: { title: "Geographic HHI (0.25 균등 — 1.0 단일지역)", range: [0, 1.1] }, margin: { l: 220, r: 60, t: 10, b: 40 }, height: Math.max(400, hhiRows.length * 22 + 60) });
+
+    // Diversification × ROE scatter
+    const drRows = geoRows.filter(r => r.geo_diversification != null && r.roe != null);
+    plot("ov-geo-roe", [{
+      x: drRows.map(r => r.geo_diversification), y: drRows.map(r => r.roe),
+      mode: "markers+text", type: "scatter",
+      text: drRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: drRows.map(r => Math.max(10, Math.min(48, Math.sqrt(r.area_total_reported || 100) / 30))),
+        color: drRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>Diversification %{x:.3f}<br>ROE %{y:.2f}%<extra></extra>",
+    }], {
+      xaxis: { title: "Diversification (1 - HHI)" },
+      yaxis: { title: "ROE (%)", zeroline: true },
+      margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
 
     // ── 종합 ranking 테이블
