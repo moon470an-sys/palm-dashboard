@@ -344,18 +344,15 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>배당 분석 — Payout % / Div Total bn / FCF Coverage (3축 grouped)</h3><div id="ov-val-div" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">⑥ Industry Structure — 권역·BM·집중도·IPO Vintage 통합</h3>
+    <h3 class="section-h">⑥ Industry Structure — 권역·Business Model·집중도</h3>
     <p class="notice">
-      산업 구조 4축: 권역(Sumatra/Kalimantan/Java/etc) × Business Model(Upstream/Integrated/Downstream) × 매출 집중도 × IPO 시점.
+      권역(Sumatra/Kalimantan/Java/etc) × Business Model(Upstream/Integrated/Downstream) × 매출 집중도.
     </p>
     <div class="grid-2">
       <div class="card"><h3>Region × Business Model — 회사 수 매트릭스 (stacked)</h3><div id="ov-ind-matrix" class="plot plot-tall"></div></div>
       <div class="card"><h3>Region·BM 평균 효율 (ROE / Margin / Quality)</h3><div id="ov-ind-eff" class="plot plot-tall"></div></div>
     </div>
-    <div class="grid-2">
-      <div class="card"><h3>매출 집중도 — Cumulative Share Curve + Top5/10 reference</h3><div id="ov-ind-conc" class="plot plot-tall"></div></div>
-      <div class="card"><h3>IPO 연도 × ROE × Revenue (회사 vintage)</h3><div id="ov-ind-ipo" class="plot plot-tall"></div></div>
-    </div>
+    <div class="card"><h3>매출 집중도 — Cumulative Share Curve + Top5/10 reference</h3><div id="ov-ind-conc" class="plot plot-tall"></div></div>
     <div class="card"><h3>권역별 매출 시계열 (stacked area)</h3><div id="ov-ind-ts" class="plot plot-tall"></div></div>
 
     <h3 class="section-h">⑦ 성장률 (Growth) — YoY 매출·순이익 변화</h3>
@@ -425,19 +422,17 @@ export function renderOverview(root) {
       <div class="card"><h3>DPS 지급 회사 (기준연도, 0 제외)</h3><div id="ov-dps" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑪ Operations Deep Dive — 통합 (Planted · 지역 · 수령 · 공장 · 정제 · 효율)</h3>
+    <h3 class="section-h">⑪ 농장 규모 · 생산 Capa · 효율</h3>
     <p class="notice">
-      7개 분산 섹션 통합: Planted Area + 지역 분포 + Tree Maturity + Plasma + Mill 운영 + Downstream + 단위면적당 효율.
+      재무·농장·생산·효율 4축의 운영 분석: Planted ha + 지역 mix + 나무 성숙도 + Mill 처리능력 + CPO 수율.
+      ※ 정제(downstream)·수출비중·평균수령은 4-10사만 보고하여 차트에서 제외.
     </p>
-    <div class="card"><h3>회사별 Planted Area + 지역 mix (Sumatra/Kalimantan/Sulawesi/Other stacked)</h3><div id="ov-op-area" class="plot plot-tall"></div></div>
+    <div class="card"><h3>회사별 Planted Area + 지역 mix (Sumatra/Kalimantan/기타 stacked)</h3><div id="ov-op-area" class="plot plot-tall"></div></div>
     <div class="grid-2">
-      <div class="card"><h3>Tree Maturity & Plasma (Mature/Immature/Plasma %)</h3><div id="ov-op-tree" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Downstream Integration Score + Domestic/Export sales mix</h3><div id="ov-op-down" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Tree Maturity & Plasma — 생산기 vs 미성숙, 외부 smallholder 비중</h3><div id="ov-op-tree" class="plot plot-tall"></div></div>
+      <div class="card"><h3>생산 효율: CPO/Mature ha × OER % (크기=Mill capacity)</h3><div id="ov-op-prod" class="plot plot-tall"></div></div>
     </div>
-    <div class="grid-2">
-      <div class="card"><h3>생산 효율: CPO/Mature ha × OER % (크기=Mills capacity)</h3><div id="ov-op-prod" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Mill 운영: 처리능력(tph) × 자체 FFB (색=3rd party share)</h3><div id="ov-op-mill" class="plot plot-tall"></div></div>
-    </div>
+    <div class="card"><h3>Mill 운영 Capa: 처리능력 tph × 자체 FFB (색=3rd party share)</h3><div id="ov-op-mill" class="plot plot-tall"></div></div>
 
     <h3 class="section-h">⑫ Quality & Risk 종합 평가 (통합)</h3>
     <p class="notice">
@@ -819,21 +814,7 @@ export function renderOverview(root) {
       ],
     });
 
-    // 4. IPO Vintage scatter
-    const ipoRows = rows.filter(r => r.ipo_year != null && r.ipo_year >= 1990 && r.ipo_year <= 2026 && r.roe != null);
-    plot("ov-ind-ipo", [{
-      x: ipoRows.map(r => r.ipo_year), y: ipoRows.map(r => r.roe),
-      mode: "markers+text", type: "scatter",
-      text: ipoRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: ipoRows.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.revenue) || 100) / 4))),
-        color: ipoRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
-        opacity: 0.8, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>IPO %{x}<br>ROE %{y:.2f}%<extra></extra>",
-    }], { xaxis: { title: "IPO 연도" }, yaxis: { title: "ROE (%)", zeroline: true }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false });
-
-    // 5. 권역별 매출 시계열 (살림)
+    // 4. 권역별 매출 시계열
     const regionTsTraces = REGIONS.map(rg => {
       const y = allYears.map(yr => fin.filter(r => r.region === rg && r.yr === yr).reduce((s, r) => s + (r.revenue || 0), 0));
       return { x: allYears, y, name: rg, type: "scatter", mode: "lines", stackgroup: "rev", line: { color: REGION_COLOR[rg], width: 0 }, fillcolor: REGION_COLOR[rg] };
@@ -903,20 +884,6 @@ export function renderOverview(root) {
       { x: trRows.map(r => r.short), y: trRows.map(r => r.immature_share), type: "bar", name: "Immature %", marker: { color: "#ffbb78" } },
       { x: trRows.map(r => r.short), y: trRows.map(r => r.plasma_share), type: "bar", name: "Plasma %", marker: { color: "#1f77b4" } },
     ], { barmode: "group", yaxis: { title: "%", range: [0, 105] }, xaxis: { tickangle: -45, automargin: true }, legend: { orientation: "h", y: -0.35 }, margin: { l: 60, r: 20, t: 10, b: 130 }, height: 480 });
-
-    // 3. Downstream + Domestic/Export (회사별 4 bar)
-    const dsRows2 = rows.filter(r => r.downstream_score > 0 || r.domestic_pct != null || r.export_pct != null)
-      .sort((a, b) => (b.downstream_score || 0) - (a.downstream_score || 0));
-    plot("ov-op-down", [
-      { x: dsRows2.map(r => r.short), y: dsRows2.map(r => r.downstream_score), type: "bar", name: "Downstream Score (0-6)", marker: { color: "#9467bd" }, yaxis: "y" },
-      { x: dsRows2.map(r => r.short), y: dsRows2.map(r => r.domestic_pct), type: "scatter", mode: "markers", name: "Domestic %", marker: { color: "#1f77b4", size: 10 }, yaxis: "y2" },
-      { x: dsRows2.map(r => r.short), y: dsRows2.map(r => r.export_pct), type: "scatter", mode: "markers", name: "Export %", marker: { color: "#ff7f0e", size: 10 }, yaxis: "y2" },
-    ], {
-      yaxis: { title: "Downstream Score", range: [0, 7] },
-      yaxis2: { title: "Sales mix %", overlaying: "y", side: "right", range: [0, 105] },
-      xaxis: { tickangle: -45, automargin: true },
-      legend: { orientation: "h", y: -0.35 }, margin: { l: 60, r: 60, t: 10, b: 130 }, height: 480,
-    });
 
     // 4. 생산 효율: CPO/Mature ha × OER % (size=mill cap)
     const peScatter = rows.filter(r => r.cpo_per_mature_ha != null && r.oer_pct != null && r.oer_pct > 0);
