@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>🌴 Indonesia Palm Integrated Dashboard</title>
+  <meta name="description" content="ISPO + RSPO + BDSP + GAPKI + IDX Annual Report 통합 정적 대시보드. 각 탭 단독 source." />
+  <meta name="theme-color" content="#2ca02c" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E%F0%9F%8C%B4%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://cdn.plot.ly" crossorigin />
   <link rel="preconnect" href="https://cdn.datatables.net" crossorigin />
   <link rel="preconnect" href="https://unpkg.com" crossorigin />
@@ -49,7 +52,7 @@
     <div class="footer-meta" id="footer-meta" style="margin-top:6px;font-size:11px;color:#888;">DB: <span id="footer-db">-</span> · 갱신: <span id="footer-time">-</span></div>
   </footer>
 
-  <div class="boot"><div class="msg">Loading dashboard… <span id="boot-progress" style="font-size:13px;color:#666;"></span></div></div>
+  <div class="boot" role="status" aria-live="polite"><div class="msg">Loading dashboard… <span id="boot-progress" style="font-size:13px;color:#666;"></span></div></div>
 
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
