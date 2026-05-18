@@ -5,6 +5,15 @@ GitHub Pages 호환 (모든 데이터는 `data/json/` JSON, 서버 불필요).
 
 **구조 원칙: 각 탭은 단독 source 기반 (no cross-reference).**
 
+## 주요 기능
+
+- **종합 탭**: 34 IDX 상장사 재무 통합 — 4 group × 약 60 plot · 재무 derive fallback (ROE/ROA/EBITDA 등) · Q1 annualized vs 2025
+- **Annual Report 탭**: 5 sub-tab (Overview/Financials/Map/Asset/Production) · 회사/연도 필터
+- **ISPO 탭**: 1,378 인증서 + 90일/1년 만료 leaderboard · LS Top 10 dual-metric · 주별 CPO/PKS Capa
+- **RSPO 탭**: Indonesia 2,026 + 글로벌 9,343 · Parent Entity Top 15 · License Status 분포 · 만료 분석
+- **BDSP 탭**: 면적/생산/생산성 다층 시계열 (국가/주/군) · Top 20 효율 군 · YoY · 권역 stacked area
+- **GAPKI 탭**: 714 회원사 · 지역 분포 · 다지점 회사 (단독 source, no cross-ref)
+
 ## 6 탭 구성
 
 | 탭 | 설명 | 데이터 source |
