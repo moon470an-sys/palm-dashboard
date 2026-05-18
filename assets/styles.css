@@ -186,8 +186,10 @@ table.dt thead th { background: #f0f5ec; }
 }
 .sub-tabs a.active { color: var(--c-accent-2); border-bottom-color: var(--c-accent-2); font-weight: 600; }
 .sub-tabs a:hover { color: var(--c-text); }
-.ar-panel { display: none; padding: 8px 0; }
-.ar-panel.active { display: block; }
+/* Annual Report sub-section: 모두 표시 (sub-tab 클릭 시 scroll-anchor 역할) */
+.ar-panel { display: block; padding: 8px 0; scroll-margin-top: 80px; border-top: 1px solid var(--c-border); }
+.ar-panel:first-of-type { border-top: none; }
+.sub-tabs { position: sticky; top: 0; background: #fff; z-index: 5; padding-top: 4px; }
 
 /* AR overview cards (scoped — 우리의 일반 .card 와 분리) */
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }

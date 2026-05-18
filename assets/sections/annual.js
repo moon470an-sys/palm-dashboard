@@ -114,37 +114,32 @@ export function renderAnnual(root) {
     renderAllSubs();
   });
 
-  // sub-nav 클릭 → panel 전환 (map은 리사이즈 필요)
+  // sub-nav 클릭 → 해당 section으로 scroll (모든 panel은 항상 표시)
   document.querySelectorAll("#ar-sub-tabs a").forEach(a => {
     a.addEventListener("click", (e) => {
       e.preventDefault();
       const sub = a.dataset.sub;
       document.querySelectorAll("#ar-sub-tabs a").forEach(x => x.classList.toggle("active", x.dataset.sub === sub));
-      document.querySelectorAll(".ar-panel").forEach(p => p.classList.toggle("active", p.id === sub));
-      // Leaflet 지도는 보일 때 invalidate (window resize event 으로 모든 Leaflet 인스턴스 refresh)
-      if (sub === "ar-map") {
-        setTimeout(() => {
-          window.dispatchEvent(new Event("resize"));
-          // 기존 map.js 의 Leaflet 인스턴스를 #leaflet-map 에서 찾아 invalidate
-          const mapDiv = document.getElementById("leaflet-map");
-          if (mapDiv && mapDiv._leaflet_id != null) {
-            // try to find Leaflet map by iterating L._maps if available
-            for (const k in window) {
-              try {
-                if (window[k] && window[k]._container === mapDiv && typeof window[k].invalidateSize === "function") {
-                  window[k].invalidateSize();
-                }
-              } catch (e) {}
-            }
-          }
-          // fallback: 직접 re-render
-          renderAllSubs();
-        }, 150);
-      }
+      const target = document.getElementById(sub);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
 
   renderAllSubs();
+  // 초기 렌더 후 Leaflet 지도 invalidate (visible 되었으므로 크기 재계산)
+  setTimeout(() => {
+    window.dispatchEvent(new Event("resize"));
+    const mapDiv = document.getElementById("leaflet-map");
+    if (mapDiv) {
+      for (const k in window) {
+        try {
+          if (window[k] && window[k]._container === mapDiv && typeof window[k].invalidateSize === "function") {
+            window[k].invalidateSize();
+          }
+        } catch (e) {}
+      }
+    }
+  }, 200);
 }
 
 function escapeHtml(s) {
