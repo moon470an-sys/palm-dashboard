@@ -175,6 +175,18 @@ export function renderOverview(root) {
     r.div_total_bn = (r.div_total != null && shares != null) ? r.div_total * shares / 1000 : null;  // IDR bn
     r.payout_ratio = (r.div_total != null && r.eps != null && r.eps > 0) ? r.div_total / r.eps * 100 : null;  // DPS/EPS %
     r.fcf_div_coverage = (r.div_total_bn != null && r.div_total_bn > 0 && r.fcf != null) ? r.fcf / r.div_total_bn : null;  // FCF can cover N× dividend
+    // Capital allocation: CFO → CapEx + Div + Retained
+    if (r.cfo != null && r.cfo > 0) {
+      const capex = r.capex || 0;
+      const div = r.div_total_bn || 0;
+      const retained = r.cfo - capex - div;
+      r.cap_capex_share = capex / r.cfo * 100;
+      r.cap_div_share = div / r.cfo * 100;
+      r.cap_retained_share = retained / r.cfo * 100;
+      r.payout_total = (capex + div) / r.cfo * 100;  // total deployment %
+    } else {
+      r.cap_capex_share = null; r.cap_div_share = null; r.cap_retained_share = null; r.payout_total = null;
+    }
     // Risk Score 0-100 (높을수록 위험)
     let s = 0;
     if (r.net_profit != null && r.net_profit < 0) s += 30;
@@ -538,7 +550,18 @@ export function renderOverview(root) {
     </div>
     <div class="card"><h3>흑자 지속률 vs 평균 NP (영구 흑자 유지하면서 큰 이익 = 우량주)</h3><div id="ov-profit-quad" class="plot plot-tall"></div></div>
 
-    <h3 class="section-h">㉚ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉚ Capital Allocation Map — CFO를 어디에 쓰나</h3>
+    <p class="notice">
+      CFO = CapEx (성장 재투자) + Dividend (주주 환원) + Retained (Cash 누적). 100% stacked로 자본 사용 패턴 식별.
+      Reinvestment Rate (CapEx/CFO) ↑ = Growth firm · Return Rate (Div/CFO) ↑ = Mature/Income firm.
+    </p>
+    <div class="card"><h3>CFO 분해 (100% stacked) — CapEx / Dividend / Retained</h3><div id="ov-cap-alloc" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Reinvestment vs Return scatter — Growth vs Income</h3><div id="ov-reinv-return" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Total Deployment (CapEx+Div) / CFO % — Cash Burn 위험</h3><div id="ov-deploy" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㉛ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1160,6 +1183,49 @@ export function renderOverview(root) {
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
+
+    // ── ㉚ Capital Allocation
+    const caRows = rows.filter(r => r.cap_capex_share != null).sort((a, b) => (b.cfo || 0) - (a.cfo || 0));
+    plot("ov-cap-alloc", [
+      { x: caRows.map(r => r.short), y: caRows.map(r => r.cap_capex_share), type: "bar", name: "CapEx", marker: { color: "#ff7f0e" } },
+      { x: caRows.map(r => r.short), y: caRows.map(r => r.cap_div_share), type: "bar", name: "Dividend", marker: { color: "#1f77b4" } },
+      { x: caRows.map(r => r.short), y: caRows.map(r => Math.max(0, r.cap_retained_share)), type: "bar", name: "Retained (≥0)", marker: { color: "#2ca02c" } },
+    ], {
+      barmode: "stack", yaxis: { title: "% of CFO" },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.35 },
+      margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480,
+    });
+
+    const rrRows = rows.filter(r => r.cap_capex_share != null && r.cap_div_share != null);
+    plot("ov-reinv-return", [{
+      x: rrRows.map(r => r.cap_capex_share), y: rrRows.map(r => r.cap_div_share),
+      mode: "markers+text", type: "scatter",
+      text: rrRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: rrRows.map(r => Math.max(10, Math.min(48, Math.sqrt(Math.abs(r.cfo) || 100) / 4))),
+        color: rrRows.map(r => REGION_COLOR[r.region] || "#7f7f7f"),
+        opacity: 0.8, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>CapEx %{x:.1f}%<br>Div %{y:.1f}% (of CFO)<extra></extra>",
+    }], {
+      xaxis: { title: "Reinvestment (CapEx / CFO %) — Growth" },
+      yaxis: { title: "Return (Dividend / CFO %) — Income" },
+      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+      annotations: [
+        { x: 75, y: 5, text: "성장형 (재투자)", showarrow: false, font: { color: "#ff7f0e", size: 11 } },
+        { x: 10, y: 60, text: "배당주", showarrow: false, font: { color: "#1f77b4", size: 11 } },
+      ],
+    });
+
+    const dpRows2 = rows.filter(r => r.payout_total != null).sort((a, b) => b.payout_total - a.payout_total);
+    plot("ov-deploy", [{
+      x: dpRows2.map(r => Math.min(300, r.payout_total)).reverse(), y: dpRows2.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: dpRows2.map(r => r.payout_total > 100 ? "#d62728" : r.payout_total > 70 ? "#ffbb78" : "#2ca02c").reverse() },
+      text: dpRows2.map(r => r.payout_total > 300 ? ">300%" : r.payout_total.toFixed(0) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Deploy %{x:.1f}% (CapEx+Div / CFO)<extra></extra>",
+    }], { xaxis: { title: "Total Deployment / CFO (%) — 100%↑ 시 CFO 초과 사용" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, dpRows2.length * 24 + 60) });
 
     // ── ㉘ Dividend Analytics
     const poRows = rows.filter(r => r.payout_ratio != null && r.payout_ratio < 500).sort((a, b) => b.payout_ratio - a.payout_ratio);
