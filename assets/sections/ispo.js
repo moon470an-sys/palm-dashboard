@@ -20,7 +20,7 @@ export function renderIspo(root) {
 
   root.innerHTML = `
     <h2>📜 ISPO (Indonesian Sustainable Palm Oil)</h2>
-    <p class="notice">출처: <a href="https://ditjenbun.pertanian.go.id/" target="_blank" rel="noopener">Ditjenbun</a> 분기 PDF 4건 + LS-ISPO 14곳 공시 · ${fmtInt(cert.length)} 인증서 · ${fmtInt(co.length)} 회사 · ${ls.length} 인증기관</p>
+    <p class="notice">출처: <a href="https://ditjenbun.pertanian.go.id/" target="_blank" rel="noopener">Ditjenbun</a> 분기 PDF ${new Set(q.map(x=>x.snapshot)).size}건 + LS-ISPO 공시 · ${fmtInt(cert.length)} 인증서 · ${fmtInt(co.length)} 회사 · ${ls.length} 인증기관</p>
 
     <div class="kpis">
       ${kpiHTML("인증서 총수", fmtInt(cert.length), `유효 ${berlaku.length}`, "blue")}
