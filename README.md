@@ -19,20 +19,20 @@ GitHub Pages 호환 (모든 데이터는 `data/json/` JSON, 서버 불필요).
 ## 데이터 갱신
 
 ```powershell
-# 1. DB 최신화 (각 source 별 ETL)
-python scripts\rspo.py --fetch --country ID --category pc,trader,distributor,ish
-python scripts\rspo.py --match
-python scripts\gapki.py --fetch --match
-python scripts\bdsp_playwright.py --mode all-prov --proxy ...
-python scripts\bdsp_bulk_import.py
-python scripts\idx.py --fetch
-python scripts\news.py --fetch
+# 1. DB 최신화 (각 source 별 ETL — 부모 디렉토리 ../../scripts/)
+python ..\..\scripts\rspo.py --fetch --country ID --category pc,trader,distributor,ish
+python ..\..\scripts\rspo.py --match
+python ..\..\scripts\gapki.py --fetch --match
+python ..\..\scripts\bdsp_playwright.py --mode all-prov --proxy ...
+python ..\..\scripts\bdsp_bulk_import.py
+python ..\..\scripts\idx.py --fetch
+python ..\..\scripts\news.py --fetch
 
-# 2. DB → JSON export (dashboard/data/json/*.json)
-python scripts\export_json.py
+# 2. DB → JSON export (dashboard 내부 ETL)
+python etl\export_json.py
 
-# 3. 로컬 검증
-python -m http.server 8503 --directory dashboard
+# 3. 로컬 검증 (dashboard 디렉토리에서)
+python -m http.server 8503
 # → http://localhost:8503/
 ```
 
