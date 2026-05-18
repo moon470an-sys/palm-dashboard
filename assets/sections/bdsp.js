@@ -53,11 +53,15 @@ export function renderBdsp(root) {
   const kabLatestLuas = kab.filter(k => k.indikator === "luas_areal" && k.tahun === ly);
   const topKab = [...kabLatestLuas].sort((a, b) => b.nilai - a.nilai)[0];
 
+  // 주/군 unique count (notice 라벨용)
+  const nProv = new Set(prov.map(p => p.prov_name)).size;
+  const nKab = new Set(kab.map(k => k.kab_name)).size;
+
   root.innerHTML = `
     <h2>📈 BDSP (Basis Data Statistik Pertanian)</h2>
     <p class="notice">
       출처: <a href="https://bdsp2.pertanian.go.id/bdsp/" target="_blank" rel="noopener">bdsp2.pertanian.go.id/bdsp</a> (Pusdatin Kementan, 자동 Playwright 수집)
-      · 기간 ${fy}–${ly} · 지표 3종(면적·생산·생산성) × 국가/주(29)/군(104) 다층
+      · 기간 ${fy}–${ly} · 지표 3종(면적·생산·생산성) × 국가/주(${nProv})/군(${nKab}) 다층
     </p>
 
     <div class="kpis">
