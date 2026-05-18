@@ -87,8 +87,7 @@ export function renderOverview(root) {
       <div class="card"><h3>시가총액 Treemap (전사 · 누락 회사 제외)</h3><div id="ov-tree-mcap" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑥ Heatmap & Ranking 테이블</h3>
-    <div class="card"><h3>Heatmap: 회사 × 연도 × 매출 (IDR bn)</h3><div id="ov-heat" class="plot plot-tall"></div></div>
+    <h3 class="section-h">⑥ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 동시)</h3><div id="ov-table"></div></div>
   `;
 
@@ -112,25 +111,6 @@ export function renderOverview(root) {
     yaxis: { title: "Net profit (IDR bn)", zeroline: true },
     legend: { orientation: "h", y: -0.18, font: { size: 9 } },
     margin: { l: 70, r: 20, t: 10, b: 80 }, height: 480,
-  });
-
-  // ── Heatmap: 회사 × 연도 × 매출
-  const sortedYears = [...allYears];
-  const heatCos = [...companies].sort((a, b) => {
-    const ra = fin.find(r => r.short === a && r.yr === ly)?.revenue || 0;
-    const rb = fin.find(r => r.short === b && r.yr === ly)?.revenue || 0;
-    return rb - ra;
-  });
-  const z = heatCos.map(co => sortedYears.map(y => {
-    const r = fin.find(x => x.short === co && x.yr === y);
-    return r ? r.revenue : null;
-  }));
-  plot("ov-heat", [{
-    z, x: sortedYears, y: heatCos, type: "heatmap", colorscale: "Greens",
-    hovertemplate: "%{y}<br>%{x}: %{z:,.0f} bn<extra></extra>",
-    colorbar: { title: "IDR bn" },
-  }], {
-    yaxis: { autorange: "reversed" }, margin: { l: 230, r: 40, t: 10, b: 40 }, height: 620,
   });
 
   // ── 기준연도 변동 차트 (rerender 함수)

@@ -101,10 +101,7 @@ export function renderBdsp(root) {
       <span class="badge">행: ${fmtInt(nat.length + prov.length + kab.length)}</span>
     </div>
 
-    <div class="grid-2">
-      <div class="card"><h3>Top 8 주 시계열</h3><div id="bdsp-prov" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Heatmap 주 × 연도</h3><div id="bdsp-heatmap" class="plot plot-tall"></div></div>
-    </div>
+    <div class="card"><h3>Top 8 주 시계열</h3><div id="bdsp-prov" class="plot plot-tall"></div></div>
 
     <div class="grid-2">
       <div class="card"><h3>Top 20 군(Kabupaten) — 기준연도</h3><div id="bdsp-kab" class="plot plot-tall"></div></div>
@@ -199,17 +196,6 @@ export function renderBdsp(root) {
       return { x: series.map(s => s.tahun), y: series.map(s => s.nilai), name: p, type: "scatter", mode: "lines+markers" };
     });
     plot("bdsp-prov", provTraces, { yaxis: { title: info.unit }, legend: { orientation: "h", y: -0.18 } });
-
-    // Heatmap
-    const sortedProvs = Object.entries(latestMap).sort((a, b) => b[1] - a[1]).map(p => p[0]);
-    const z = sortedProvs.map(p => allYears.map(y => {
-      const v = provData.find(x => x.prov_name === p && x.tahun === y);
-      return v ? v.nilai : null;
-    }));
-    plot("bdsp-heatmap", [{
-      z, x: allYears, y: sortedProvs, type: "heatmap", colorscale: "Viridis",
-      colorbar: { title: info.unit },
-    }], { yaxis: { autorange: "reversed" }, margin: { l: 170, r: 40, t: 10, b: 40 }, height: 480 });
 
     // Top 20 kab
     const kabRows = kab.filter(k => k.indikator === indi && k.tahun === yr)
