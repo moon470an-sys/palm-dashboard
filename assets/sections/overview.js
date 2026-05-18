@@ -592,7 +592,17 @@ export function renderOverview(root) {
       <div class="card"><h3>총 누적 CapEx (전 기간 IDR bn) ranking</h3><div id="ov-capex-cum" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㉞ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉞ EBITDA Margin Trend — 마진 진화</h3>
+    <p class="notice">
+      EBITDA Margin 다년 변화로 비즈니스 효율 개선 vs 악화 추적. Top 8 라인 + 개선 폭 ranking + slope (first vs latest).
+    </p>
+    <div class="card"><h3>Top 8 EBITDA Margin 회사 시계열 (기준연도 상위)</h3><div id="ov-ebmt-top" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>EBITDA Margin 개선 폭 (latest − first pp)</h3><div id="ov-ebmt-delta" class="plot plot-tall"></div></div>
+      <div class="card"><h3>EBITDA Margin Slope — first vs latest</h3><div id="ov-ebmt-slope" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㉟ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1805,6 +1815,44 @@ export function renderOverview(root) {
   };
   wfSel.addEventListener("change", renderWaterfall);
   renderWaterfall();
+
+  // ── ㉞ EBITDA Margin Trend
+  const ebMt = companies.map(co => {
+    const series = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.m_ebitda != null).sort((a, b) => a.yr.localeCompare(b.yr));
+    if (series.length === 0) return null;
+    return { short: co, region: series[series.length - 1].region, series, last: series[series.length - 1].m_ebitda, first: series[0].m_ebitda };
+  }).filter(Boolean);
+
+  const ebTop8 = [...ebMt].filter(s => s.last != null).sort((a, b) => b.last - a.last).slice(0, 8);
+  plot("ov-ebmt-top", ebTop8.map(s => ({
+    x: s.series.map(r => r.yr), y: s.series.map(r => r.m_ebitda),
+    name: s.short, type: "scatter", mode: "lines+markers",
+    line: { color: colorMap[s.short], width: 2.5 }, marker: { color: colorMap[s.short], size: 8 },
+  })), {
+    yaxis: { title: "EBITDA Margin (%)", zeroline: true },
+    legend: { orientation: "h", y: -0.18 },
+    margin: { l: 70, r: 20, t: 10, b: 60 }, height: 480,
+  });
+
+  const ebDelta = ebMt.filter(s => s.series.length >= 2 && s.first != null && s.last != null)
+    .map(s => ({ ...s, delta: s.last - s.first })).sort((a, b) => b.delta - a.delta);
+  plot("ov-ebmt-delta", [{
+    x: ebDelta.map(r => r.delta).reverse(), y: ebDelta.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: ebDelta.map(r => r.delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
+    text: ebDelta.map(r => (r.delta >= 0 ? "+" : "") + r.delta.toFixed(1) + "pp").reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>Δ %{x:+.2f}pp<br>%{customdata[0]:.1f}% → %{customdata[1]:.1f}%<extra></extra>",
+    customdata: ebDelta.map(r => [r.first, r.last]).reverse(),
+  }], { xaxis: { title: "EBITDA Margin Δ (latest − first, pp)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, ebDelta.length * 24 + 60) });
+
+  plot("ov-ebmt-slope", ebDelta.map(r => ({
+    x: ["First", "Latest"], y: [r.first, r.last], name: r.short, type: "scatter",
+    mode: "lines+markers", line: { color: r.delta >= 0 ? "#2ca02c" : "#d62728", width: 1.5 },
+    marker: { size: 5 }, hovertemplate: r.short + "<br>%{x}: %{y:.2f}%<extra></extra>",
+  })), {
+    yaxis: { title: "EBITDA Margin (%)", zeroline: true }, showlegend: false,
+    margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480,
+  });
 
   // ── ㉝ CapEx Cycle
   const capexCum = companies.map(co => {
