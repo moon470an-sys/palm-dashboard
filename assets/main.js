@@ -74,10 +74,12 @@ const bootProgress = document.getElementById("boot-progress");
 const setBoot = (msg) => { if (bootProgress) bootProgress.textContent = msg; };
 
 (async () => {
+  const t0 = performance.now();
   try {
     setBoot("데이터 로드 중…");
     await loadAll();
-    setBoot("라이브러리 준비 중…");
+    const tLoad = performance.now() - t0;
+    setBoot(`라이브러리 준비 중… (data ${tLoad.toFixed(0)}ms)`);
     await waitForLibs();
     if (state.meta?.generated_at) {
       const ts = state.meta.generated_at.slice(0, 19).replace("T", " ");
@@ -98,4 +100,5 @@ const setBoot = (msg) => { if (bootProgress) bootProgress.textContent = msg; };
     return;
   }
   document.querySelector(".boot")?.remove();
+  console.log(`[boot] total ${((performance.now() - t0) / 1000).toFixed(2)}s`);
 })();
