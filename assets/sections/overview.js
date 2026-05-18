@@ -430,10 +430,14 @@ export function renderOverview(root) {
 
     <h3 class="section-h">⑪ 농장 규모 · 생산 Capa · 효율</h3>
     <p class="notice">
-      재무·농장·생산·효율 4축의 운영 분석: Planted ha + 지역 mix + 나무 성숙도 + Mill 처리능력 + CPO 수율.
-      ※ 정제(downstream)·수출비중·평균수령은 4-10사만 보고하여 차트에서 제외.
+      4축 운영 분석: Planted ha + 지역 mix + 나무 성숙도 + Mill 처리능력 + CPO/FFB 생산량 + 단위면적당 효율.
+      ※ 정제(downstream)·수출비중·평균수령은 4-10사만 보고하여 제외.
     </p>
-    <div class="card"><h3>회사별 Planted Area + 지역 mix (Sumatra/Kalimantan/기타 stacked)</h3><div id="ov-op-area" class="plot plot-tall"></div></div>
+    <div class="card"><h3>회사별 Planted Area + 지역 mix (Sumatra/Kalimantan/기타 stacked, 큰 순)</h3><div id="ov-op-area" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>FFB 생산 (ton, 자체) ranking</h3><div id="ov-op-ffb" class="plot plot-tall"></div></div>
+      <div class="card"><h3>CPO 생산 (ton) ranking — 정제 직전 단계</h3><div id="ov-op-cpo" class="plot plot-tall"></div></div>
+    </div>
     <div class="grid-2">
       <div class="card"><h3>Tree Maturity & Plasma — 생산기 vs 미성숙, 외부 smallholder 비중</h3><div id="ov-op-tree" class="plot plot-tall"></div></div>
       <div class="card"><h3>생산 효율: CPO/Mature ha × OER % (크기=Mill capacity)</h3><div id="ov-op-prod" class="plot plot-tall"></div></div>
@@ -884,6 +888,26 @@ export function renderOverview(root) {
       { x: opAreaRows.map(r => r.short), y: opAreaRows.map(r => r.area_sulawesi), type: "bar", name: "Sulawesi", marker: { color: "#9467bd" } },
       { x: opAreaRows.map(r => r.short), y: opAreaRows.map(r => r.area_other), type: "bar", name: "Other/미보고", marker: { color: "#7f7f7f" } },
     ], { barmode: "stack", yaxis: { title: "Planted Area (ha)" }, xaxis: { tickangle: -45, automargin: true }, legend: { orientation: "h", y: -0.35 }, margin: { l: 70, r: 20, t: 10, b: 130 }, height: 480 });
+
+    // 1b. FFB 생산 (자체) ranking
+    const ffbRows = rows.filter(r => r.ffb_t > 0).sort((a, b) => b.ffb_t - a.ffb_t);
+    plot("ov-op-ffb", [{
+      x: ffbRows.map(r => r.ffb_t).reverse(), y: ffbRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: ffbRows.map(r => REGION_COLOR[r.region] || "#7f7f7f").reverse() },
+      text: ffbRows.map(r => Math.round(r.ffb_t).toLocaleString()).reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>FFB %{x:,.0f} ton<extra></extra>",
+    }], { xaxis: { title: "FFB Production (ton)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, ffbRows.length * 22 + 60) });
+
+    // 1c. CPO 생산 ranking
+    const cpoRows = rows.filter(r => r.cpo_t > 0).sort((a, b) => b.cpo_t - a.cpo_t);
+    plot("ov-op-cpo", [{
+      x: cpoRows.map(r => r.cpo_t).reverse(), y: cpoRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: cpoRows.map(r => r.cpo_t).reverse(), colorscale: "YlOrRd" },
+      text: cpoRows.map(r => Math.round(r.cpo_t).toLocaleString()).reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>CPO %{x:,.0f} ton<extra></extra>",
+    }], { xaxis: { title: "CPO Production (ton)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, cpoRows.length * 22 + 60) });
 
     // 2. Tree Maturity & Plasma (Mature/Immature/Plasma 3-metric grouped)
     const trRows = rows.filter(r => r.mature_share != null || r.plasma_share != null).sort((a, b) => (b.mature_share || 0) - (a.mature_share || 0));
