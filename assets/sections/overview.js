@@ -636,7 +636,17 @@ export function renderOverview(root) {
       <div class="card"><h3>Net Cash vs Net Debt 분류 (회사 수)</h3><div id="ov-netcash-pie" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㊳ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㊳ Revenue Trend & Stability — 매출 시계열 변동</h3>
+    <p class="notice">
+      회사별 매출 다년 변화 + 변동 계수(CV) + CAGR. 안정/성장 회사 식별.
+    </p>
+    <div class="card"><h3>Top 12 매출 회사 시계열 (annual years)</h3><div id="ov-rev-top" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>Revenue CV (변동 계수) — 매출 안정성</h3><div id="ov-rev-cv" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Revenue CAGR (전 기간) — 장기 성장률</h3><div id="ov-rev-cagr" class="plot plot-tall"></div></div>
+    </div>
+
+    <h3 class="section-h">㊴ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1976,6 +1986,54 @@ export function renderOverview(root) {
   };
   wfSel.addEventListener("change", renderWaterfall);
   renderWaterfall();
+
+  // ── ㊳ Revenue Trend & Stability
+  const revAll = companies.map(co => {
+    const s = fin.filter(r => r.short === co && annualYears.includes(r.yr) && r.revenue != null && r.revenue > 0).sort((a, b) => a.yr.localeCompare(b.yr));
+    return { short: co, region: s[s.length - 1]?.region, s };
+  }).filter(r => r.s.length > 0);
+
+  const rTop12 = [...revAll].map(r => ({ ...r, last: r.s[r.s.length - 1].revenue })).sort((a, b) => b.last - a.last).slice(0, 12);
+  plot("ov-rev-top", rTop12.map(s => ({
+    x: s.s.map(r => r.yr), y: s.s.map(r => r.revenue),
+    name: s.short, type: "scatter", mode: "lines+markers",
+    line: { color: colorMap[s.short], width: 2 }, marker: { color: colorMap[s.short], size: 6 },
+  })), {
+    yaxis: { title: "Revenue (IDR bn)" },
+    legend: { orientation: "h", y: -0.18, font: { size: 9 } },
+    margin: { l: 70, r: 20, t: 10, b: 80 }, height: 480,
+  });
+
+  // CV per company
+  const cv = (a) => {
+    if (a.length < 2) return null;
+    const m = a.reduce((s, v) => s + v, 0) / a.length;
+    const sd = Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / (a.length - 1));
+    return Math.abs(m) > 0.01 ? sd / Math.abs(m) : null;
+  };
+  const rvCV = revAll.map(r => ({ short: r.short, region: r.region, cv: cv(r.s.map(x => x.revenue)) })).filter(x => x.cv != null).sort((a, b) => b.cv - a.cv);
+  plot("ov-rev-cv", [{
+    x: rvCV.map(r => r.cv).reverse(), y: rvCV.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: rvCV.map(r => r.cv > 0.5 ? "#d62728" : r.cv > 0.3 ? "#ffbb78" : r.cv > 0.15 ? "#1f77b4" : "#2ca02c").reverse() },
+    text: rvCV.map(r => r.cv.toFixed(2)).reverse(), textposition: "outside",
+  }], { xaxis: { title: "Revenue CV (StdDev/Mean) — 낮을수록 안정" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, rvCV.length * 24 + 60) });
+
+  // CAGR (first → last)
+  const cagrs = revAll.filter(r => r.s.length >= 2).map(r => {
+    const first = r.s[0].revenue, last = r.s[r.s.length - 1].revenue;
+    const years = r.s.length - 1;
+    const c = (first > 0 && last > 0 && years > 0) ? (Math.pow(last / first, 1 / years) - 1) * 100 : null;
+    return { short: r.short, region: r.region, cagr: c, first, last, years };
+  }).filter(r => r.cagr != null && isFinite(r.cagr)).sort((a, b) => b.cagr - a.cagr);
+  plot("ov-rev-cagr", [{
+    x: cagrs.map(r => r.cagr).reverse(), y: cagrs.map(r => r.short).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: cagrs.map(r => r.cagr >= 15 ? "#2ca02c" : r.cagr >= 5 ? "#1f77b4" : r.cagr >= 0 ? "#ffbb78" : "#d62728").reverse() },
+    text: cagrs.map(r => (r.cagr >= 0 ? "+" : "") + r.cagr.toFixed(1) + "%").reverse(), textposition: "outside",
+    hovertemplate: "%{y}<br>CAGR %{x:+.2f}%/yr<br>%{customdata[0]:,.0f} → %{customdata[1]:,.0f} bn (%{customdata[2]}yr)<extra></extra>",
+    customdata: cagrs.map(r => [r.first, r.last, r.years]).reverse(),
+  }], { xaxis: { title: "Revenue CAGR (%/yr) — 전 기간", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cagrs.length * 24 + 60) });
 
   // ── ㉞ EBITDA Margin Trend
   const ebMt = companies.map(co => {
