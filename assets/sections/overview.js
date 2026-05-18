@@ -187,6 +187,10 @@ export function renderOverview(root) {
     } else {
       r.cap_capex_share = null; r.cap_div_share = null; r.cap_retained_share = null; r.payout_total = null;
     }
+    // Cash position ratios
+    r.cash_to_mcap = (r.cash != null && r.mcap && r.mcap > 0) ? r.cash / r.mcap * 100 : null;  // Cash yield %
+    r.cash_ratio = (r.cash != null && r.ctl_bn && r.ctl_bn > 0) ? r.cash / r.ctl_bn : null;  // Cash / Current Liab
+    r.cash_to_debt = (r.cash != null && r.debt && r.debt > 0) ? r.cash / r.debt * 100 : null;  // Cash vs Gross Debt %
     // Risk Score 0-100 (높을수록 위험)
     let s = 0;
     if (r.net_profit != null && r.net_profit < 0) s += 30;
@@ -602,7 +606,17 @@ export function renderOverview(root) {
       <div class="card"><h3>EBITDA Margin Slope — first vs latest</h3><div id="ov-ebmt-slope" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㉟ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉟ Cash Position — Cash 보유 & 유동성 안전 지표</h3>
+    <p class="notice">
+      Cash / Market Cap = "Cash Yield" (시총 대비 보유 현금). Cash Ratio = Cash / Current Liab (단기 부채 즉시 상환 능력).
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>Cash Balance (IDR bn) ranking</h3><div id="ov-cash-bal" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Cash / Market Cap (%) — Cash Yield</h3><div id="ov-cash-mcap" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>Cash Ratio (Cash / Current Liab) — 즉시 상환 능력</h3><div id="ov-cash-ratio" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㊱ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1224,6 +1238,33 @@ export function renderOverview(root) {
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
+
+    // ── ㉟ Cash Position
+    const cbRows = rows.filter(r => r.cash != null && r.cash > 0).sort((a, b) => b.cash - a.cash);
+    plot("ov-cash-bal", [{
+      x: cbRows.map(r => r.cash).reverse(), y: cbRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: cbRows.map(r => r.cash).reverse(), colorscale: "Greens" },
+      text: cbRows.map(r => Math.round(r.cash).toLocaleString()).reverse(), textposition: "outside",
+    }], { xaxis: { title: "Cash & Equivalents (IDR bn)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, cbRows.length * 24 + 60) });
+
+    const cmRows = rows.filter(r => r.cash_to_mcap != null && r.cash_to_mcap > 0).sort((a, b) => b.cash_to_mcap - a.cash_to_mcap);
+    plot("ov-cash-mcap", [{
+      x: cmRows.map(r => Math.min(200, r.cash_to_mcap)).reverse(), y: cmRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: cmRows.map(r => r.cash_to_mcap >= 30 ? "#2ca02c" : r.cash_to_mcap >= 10 ? "#1f77b4" : "#ffbb78").reverse() },
+      text: cmRows.map(r => r.cash_to_mcap > 200 ? ">200%" : r.cash_to_mcap.toFixed(1) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Cash/Mcap %{x:.2f}%<extra></extra>",
+    }], { xaxis: { title: "Cash / Market Cap (%) — 30%↑ = 시총의 1/3 현금" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, cmRows.length * 24 + 60) });
+
+    const crRows2 = rows.filter(r => r.cash_ratio != null && r.cash_ratio > 0).sort((a, b) => b.cash_ratio - a.cash_ratio);
+    plot("ov-cash-ratio", [{
+      x: crRows2.map(r => Math.min(10, r.cash_ratio)).reverse(), y: crRows2.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: crRows2.map(r => r.cash_ratio >= 1 ? "#2ca02c" : r.cash_ratio >= 0.3 ? "#1f77b4" : r.cash_ratio >= 0.1 ? "#ffbb78" : "#d62728").reverse() },
+      text: crRows2.map(r => r.cash_ratio > 10 ? ">10x" : r.cash_ratio.toFixed(2) + "x").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Cash Ratio %{x:.2f}x<extra></extra>",
+    }], { xaxis: { title: "Cash Ratio (Cash / Current Liab) — 1.0+ 우수 · 0.3+ 정상" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, crRows2.length * 24 + 60) });
 
     // ── ㉚ Capital Allocation
     const caRows = rows.filter(r => r.cap_capex_share != null).sort((a, b) => (b.cfo || 0) - (a.cfo || 0));
