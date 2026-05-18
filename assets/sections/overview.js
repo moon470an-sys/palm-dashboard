@@ -12,20 +12,43 @@ const PALETTE = ["#2ca02c","#1f77b4","#ff7f0e","#d62728","#9467bd","#8c564b","#e
                  "#b2df8a","#fdbf6f","#cab2d6","#ffff99"];
 
 export function renderOverview(root) {
-  const fin = (state.ar.financials || []).map(r => ({
-    ...r, company: r.company, short: shortName(r.company),
-    revenue: num(r.revenue_idr_bn), net_profit: num(r.net_profit_idr_bn),
-    gross_profit: num(r.gross_profit_idr_bn), ebit: num(r.ebit_idr_bn),
-    ebitda: num(r.ebitda_reported_idr_bn ?? r.ebitda_calculated_idr_bn),
-    assets: num(r.total_assets_idr_bn), liab: num(r.total_liabilities_idr_bn),
-    equity: num(r.total_equity_idr_bn), debt: num(r.gross_debt_idr_bn),
-    cfo: num(r.cfo_idr_bn), capex: num(r.capex_idr_bn),
-    mcap: num(r.market_cap_idr_bn), roe: num(r.roe_reported_pct),
-    roa: num(r.roa_reported_pct), net_margin: num(r.net_margin_reported_pct),
-    gross_margin: num(r.gross_margin_reported_pct),
-    debt_eq: num(r.debt_per_equity_x), curr_ratio: num(r.current_ratio_x),
-    yr: r.report_year,
-  }));
+  const fin = (state.ar.financials || []).map(r => {
+    const revenue = num(r.revenue_idr_bn);
+    const cfo = num(r.cfo_idr_bn);
+    const capex = num(r.capex_idr_bn);
+    const fcf = num(r.fcf_idr_bn) ?? (cfo != null && capex != null ? cfo - Math.abs(capex) : null);
+    const np = num(r.net_profit_idr_bn);
+    const ca = num(r.current_assets_idr_bn);
+    const cl = num(r.current_liabilities_idr_bn);
+    const shares = num(r.shares_outstanding_mn);
+    const px = num(r.closing_price_local_per_share);
+    const mcapReported = num(r.market_cap_idr_bn);
+    // mcap (bn IDR) = shares (mn) * price / 1000
+    const mcap = mcapReported ?? (shares != null && px != null ? shares * px / 1000 : null);
+    return {
+      ...r, company: r.company, short: shortName(r.company),
+      revenue, net_profit: np,
+      gross_profit: num(r.gross_profit_idr_bn), ebit: num(r.ebit_idr_bn),
+      ebitda: num(r.ebitda_reported_idr_bn ?? r.ebitda_calculated_idr_bn),
+      assets: num(r.total_assets_idr_bn), liab: num(r.total_liabilities_idr_bn),
+      equity: num(r.total_equity_idr_bn), debt: num(r.gross_debt_idr_bn),
+      net_debt: num(r.net_debt_reported_idr_bn ?? r.net_debt_calculated_idr_bn),
+      cfo, capex: capex != null ? Math.abs(capex) : null, fcf,
+      capex_intensity: (capex != null && revenue) ? Math.abs(capex) / revenue * 100 : null,
+      cash_conv: (cfo != null && np && np > 0) ? cfo / np * 100 : null,  // CFO/NP %
+      fcf_margin: (fcf != null && revenue) ? fcf / revenue * 100 : null,
+      fcf_yield: (fcf != null && mcap) ? fcf / mcap * 100 : null,
+      mcap, eps: num(r.eps_local_per_share), nav: num(r.nav_per_share_local_per_share),
+      dps_final: num(r.final_dps_local_per_share), dps_interim: num(r.interim_dps_local_per_share),
+      px,
+      roe: num(r.roe_reported_pct),
+      roa: num(r.roa_reported_pct), net_margin: num(r.net_margin_reported_pct),
+      gross_margin: num(r.gross_margin_reported_pct),
+      debt_eq: num(r.debt_per_equity_x),
+      curr_ratio: num(r.current_ratio_x) ?? ((ca != null && cl) ? ca / cl : null),
+      yr: r.report_year,
+    };
+  });
   const allYears = [...new Set(fin.map(r => r.yr))].sort();
   const annualYears = allYears.filter(y => !/Q\d/i.test(y));
   const ly = annualYears[annualYears.length - 1] || allYears[allYears.length - 1];
@@ -87,7 +110,18 @@ export function renderOverview(root) {
       <div class="card"><h3>시가총액 Treemap (전사 · 누락 회사 제외)</h3><div id="ov-tree-mcap" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑥ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">⑥ Cash Flow & 효율성 (CFO · CapEx · FCF)</h3>
+    <div class="grid-2">
+      <div class="card"><h3>CFO vs CapEx — 회사별 (기준연도)</h3><div id="ov-cfocapex" class="plot plot-tall"></div></div>
+      <div class="card"><h3>FCF (= CFO − CapEx) 랭킹</h3><div id="ov-fcf-rank" class="plot plot-tall"></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3>CapEx Intensity (CapEx/매출 %) — 투자 강도</h3><div id="ov-capex-int" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Cash Conversion (CFO/Net Profit %) — 이익 → 현금 전환</h3><div id="ov-cash-conv" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>FCF Margin × FCF Yield scatter (회사별 · 기준연도)</h3><div id="ov-fcf-scatter" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">⑦ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 동시)</h3><div id="ov-table"></div></div>
   `;
 
@@ -242,11 +276,82 @@ export function renderOverview(root) {
       marker: { colors: tm.map(r => colorMap[r.short]) },
     }], { margin: { t: 10, l: 0, r: 0, b: 0 }, height: 480 });
 
+    // ── ⑥ Cash Flow & 효율성
+    // CFO vs CapEx grouped bar (정렬 by CFO desc)
+    const cfRows = rows.filter(r => r.cfo != null || r.capex != null)
+      .sort((a, b) => (b.cfo || 0) - (a.cfo || 0));
+    plot("ov-cfocapex", [
+      { x: cfRows.map(r => r.short), y: cfRows.map(r => r.cfo), type: "bar", name: "CFO", marker: { color: "#2ca02c" } },
+      { x: cfRows.map(r => r.short), y: cfRows.map(r => r.capex), type: "bar", name: "CapEx (절대값)", marker: { color: "#d62728" } },
+    ], {
+      barmode: "group", yaxis: { title: "IDR bn", zeroline: true },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.35 }, margin: { l: 60, r: 20, t: 10, b: 130 }, height: 480,
+    });
+
+    // FCF ranking
+    const fcfRows = rows.filter(r => r.fcf != null).sort((a, b) => b.fcf - a.fcf);
+    plot("ov-fcf-rank", [{
+      x: fcfRows.map(r => r.fcf).reverse(), y: fcfRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: fcfRows.map(r => r.fcf >= 0 ? "#2ca02c" : "#d62728").reverse() },
+      text: fcfRows.map(r => Math.round(r.fcf).toLocaleString()).reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>FCF: %{x:,.0f} bn<extra></extra>",
+    }], {
+      xaxis: { title: "FCF = CFO − |CapEx| (IDR bn)", zeroline: true },
+      margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(480, fcfRows.length * 22 + 80),
+    });
+
+    // CapEx Intensity (CapEx/Revenue %)
+    const ciRows = rows.filter(r => r.capex_intensity != null).sort((a, b) => b.capex_intensity - a.capex_intensity);
+    plot("ov-capex-int", [{
+      x: ciRows.map(r => r.capex_intensity).reverse(), y: ciRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: ciRows.map(r => r.capex_intensity).reverse(), colorscale: "Reds" },
+      text: ciRows.map(r => r.capex_intensity.toFixed(1) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>CapEx/Rev: %{x:.2f}%<extra></extra>",
+    }], {
+      xaxis: { title: "CapEx / Revenue (%)" },
+      margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(480, ciRows.length * 22 + 80),
+    });
+
+    // Cash Conversion (CFO/NP %)
+    const ccRows = rows.filter(r => r.cash_conv != null && Math.abs(r.cash_conv) < 1000)
+      .sort((a, b) => b.cash_conv - a.cash_conv);
+    plot("ov-cash-conv", [{
+      x: ccRows.map(r => r.cash_conv).reverse(), y: ccRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: ccRows.map(r => r.cash_conv >= 100 ? "#2ca02c" : (r.cash_conv >= 0 ? "#ffbb78" : "#d62728")).reverse() },
+      text: ccRows.map(r => r.cash_conv.toFixed(0) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>CFO/NP: %{x:.1f}%<extra></extra>",
+    }], {
+      xaxis: { title: "CFO / Net Profit (%) — 100% 이상이면 이익 → 현금 변환 우수" },
+      margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(480, ccRows.length * 22 + 80),
+    });
+
+    // FCF margin × FCF yield scatter
+    const fsRows = rows.filter(r => r.fcf_margin != null && r.fcf_yield != null);
+    plot("ov-fcf-scatter", [{
+      x: fsRows.map(r => r.fcf_margin), y: fsRows.map(r => r.fcf_yield),
+      mode: "markers+text", type: "scatter",
+      text: fsRows.map(r => r.short), textposition: "top center", textfont: { size: 9 },
+      marker: {
+        size: fsRows.map(r => Math.max(10, Math.min(50, Math.sqrt(r.mcap || 100) / 4))),
+        color: fsRows.map(r => colorMap[r.short]), opacity: 0.75, line: { color: "#fff", width: 1 },
+      },
+      hovertemplate: "%{text}<br>FCF margin %{x:.2f}%<br>FCF yield %{y:.2f}%<extra></extra>",
+    }], {
+      xaxis: { title: "FCF / Revenue (%)", zeroline: true },
+      yaxis: { title: "FCF / Market Cap (%) — Yield", zeroline: true },
+      margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+    });
+
     // ── 종합 ranking 테이블
     const tableRows = [...rows].sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).map(r => ({
       회사: r.short,
       매출: r.revenue, 순이익: r.net_profit, EBITDA: r.ebitda,
       자산: r.assets, 부채: r.liab, 자본: r.equity, 시가총액: r.mcap,
+      CFO: r.cfo, CapEx: r.capex, FCF: r.fcf,
       "순이익률(%)": r.net_margin, "ROE(%)": r.roe, "ROA(%)": r.roa, "D/E(x)": r.debt_eq,
     }));
     const numFmt = (d) => d == null ? "-" : Number(d).toLocaleString(undefined, { maximumFractionDigits: 0 });
@@ -260,6 +365,9 @@ export function renderOverview(root) {
       { data: "부채", title: "부채 bn", render: numFmt },
       { data: "자본", title: "자본 bn", render: numFmt },
       { data: "시가총액", title: "시총 bn", render: numFmt },
+      { data: "CFO", title: "CFO bn", render: numFmt },
+      { data: "CapEx", title: "CapEx bn", render: numFmt },
+      { data: "FCF", title: "FCF bn", render: numFmt },
       { data: "순이익률(%)", title: "순이익률%", render: pctFmt },
       { data: "ROE(%)", title: "ROE%", render: pctFmt },
       { data: "ROA(%)", title: "ROA%", render: pctFmt },
