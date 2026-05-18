@@ -170,6 +170,11 @@ export function renderOverview(root) {
     // Third-party FFB dependence
     r.third_party_share = (r.third_party_ffb_t != null && r.ffb_processed_t) ? r.third_party_ffb_t / r.ffb_processed_t * 100 : null;
     r.own_ffb_share = r.third_party_share != null ? 100 - r.third_party_share : null;
+    // Dividend analytics
+    const shares = num(r.shares_outstanding_mn);
+    r.div_total_bn = (r.div_total != null && shares != null) ? r.div_total * shares / 1000 : null;  // IDR bn
+    r.payout_ratio = (r.div_total != null && r.eps != null && r.eps > 0) ? r.div_total / r.eps * 100 : null;  // DPS/EPS %
+    r.fcf_div_coverage = (r.div_total_bn != null && r.div_total_bn > 0 && r.fcf != null) ? r.fcf / r.div_total_bn : null;  // FCF can cover N× dividend
     // Risk Score 0-100 (높을수록 위험)
     let s = 0;
     if (r.net_profit != null && r.net_profit < 0) s += 30;
@@ -512,7 +517,18 @@ export function renderOverview(root) {
       <div class="card"><h3>Long-term Liab 절대값 (IDR bn) ranking</h3><div id="ov-ltl-abs" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">㉘ 종합 Ranking 테이블</h3>
+    <h3 class="section-h">㉘ Dividend Analytics — 배당 정책 & 지속 가능성</h3>
+    <p class="notice">
+      Payout Ratio = DPS / EPS (%). 30-60% = 정상, 100%↑ = 이익 초과 배당 위험.
+      FCF / Div Coverage = FCF / 총 배당. 1.5x 이상이면 배당 지속 안정적.
+    </p>
+    <div class="grid-2">
+      <div class="card"><h3>Payout Ratio (DPS/EPS %) 랭킹</h3><div id="ov-payout" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Dividend Total (IDR bn) 랭킹 — 총 배당 규모</h3><div id="ov-div-bn" class="plot plot-tall"></div></div>
+    </div>
+    <div class="card"><h3>FCF / Dividend Coverage (x) — 배당 지속 가능성</h3><div id="ov-fcf-cov" class="plot plot-tall"></div></div>
+
+    <h3 class="section-h">㉙ 종합 Ranking 테이블</h3>
     <div class="card"><h3>종합 ranking — 기준연도 (모든 지표 + Quality)</h3><div id="ov-table"></div></div>
   `;
 
@@ -1134,6 +1150,34 @@ export function renderOverview(root) {
       yaxis: { title: "ROE (%)", zeroline: true },
       margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
     });
+
+    // ── ㉘ Dividend Analytics
+    const poRows = rows.filter(r => r.payout_ratio != null && r.payout_ratio < 500).sort((a, b) => b.payout_ratio - a.payout_ratio);
+    plot("ov-payout", [{
+      x: poRows.map(r => r.payout_ratio).reverse(), y: poRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: poRows.map(r => r.payout_ratio > 100 ? "#d62728" : r.payout_ratio >= 30 ? "#2ca02c" : r.payout_ratio >= 0 ? "#ffbb78" : "#9ca3af").reverse() },
+      text: poRows.map(r => r.payout_ratio.toFixed(0) + "%").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Payout %{x:.1f}%<extra></extra>",
+    }], { xaxis: { title: "Payout Ratio (DPS/EPS %) — 30-60% 정상, 100%+ 위험" }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, poRows.length * 24 + 60) });
+
+    const dbRows = rows.filter(r => r.div_total_bn != null && r.div_total_bn > 0).sort((a, b) => b.div_total_bn - a.div_total_bn);
+    plot("ov-div-bn", [{
+      x: dbRows.map(r => r.div_total_bn).reverse(), y: dbRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: "#1f77b4" },
+      text: dbRows.map(r => Math.round(r.div_total_bn).toLocaleString()).reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>Div Total %{x:,.0f} bn<extra></extra>",
+    }], { xaxis: { title: "Total Dividend (IDR bn)" }, margin: { l: 220, r: 80, t: 10, b: 40 }, height: Math.max(360, dbRows.length * 24 + 60) });
+
+    const fdRows = rows.filter(r => r.fcf_div_coverage != null && Math.abs(r.fcf_div_coverage) < 50).sort((a, b) => b.fcf_div_coverage - a.fcf_div_coverage);
+    plot("ov-fcf-cov", [{
+      x: fdRows.map(r => r.fcf_div_coverage).reverse(), y: fdRows.map(r => r.short).reverse(),
+      type: "bar", orientation: "h",
+      marker: { color: fdRows.map(r => r.fcf_div_coverage >= 2 ? "#2ca02c" : r.fcf_div_coverage >= 1 ? "#1f77b4" : r.fcf_div_coverage >= 0 ? "#ffbb78" : "#d62728").reverse() },
+      text: fdRows.map(r => r.fcf_div_coverage.toFixed(2) + "x").reverse(), textposition: "outside",
+      hovertemplate: "%{y}<br>FCF/Div %{x:.2f}x<extra></extra>",
+    }], { xaxis: { title: "FCF / Dividend (x) — 1x 이상 안전, 2x+ 우수", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, fdRows.length * 24 + 60) });
 
     // ── ㉗ Liability Maturity
     const mtRows = rows.filter(r => r.lt_share != null).sort((a, b) => (b.liab || 0) - (a.liab || 0));
