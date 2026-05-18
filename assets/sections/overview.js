@@ -573,7 +573,7 @@ export function renderOverview(root) {
       kpiHTML(`${yr} 매출 합`, fmtBn(sumRev), "IDR bn"),
       kpiHTML(`${yr} 순이익 합`, fmtBn(sumNp), `흑자 ${profitable}사`, sumNp >= 0 ? "blue" : "error"),
       kpiHTML(`${yr} 총자산 합`, fmtBn(sumAsset)),
-      kpiHTML(`${yr} 시가총액 합`, fmtBn(sumMcap), `${rows.filter(r => r.mcap != null).length}사`, "warn"),
+      kpiHTML(`${yr} 시가총액 합`, fmtBn(sumMcap), `${rows.filter(r => r.mcap != null).length}사`, "blue"),
       // 농장 KPI
       kpiHTML("🌴 Planted ha 합", sumPlanted > 0 ? `${(sumPlanted/1000).toFixed(0)}k ha` : "n/a", `${plantedN}사 보고`),
       kpiHTML("🛢 CPO 생산 합", sumCpo > 0 ? `${(sumCpo/1000).toFixed(0)}k ton` : "n/a", `${cpoN}사 보고`),
