@@ -424,16 +424,6 @@ export function renderOverview(root) {
       <div class="card"><h3>DPS 지급 회사 (기준연도, 0 제외)</h3><div id="ov-dps" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑫ Risk & Red Flags — 자동 점수 + 메타 노트</h3>
-    <div class="grid-2">
-      <div class="card"><h3>Risk Score 0–100 (재무 지표 + 텍스트 hint 합산)</h3><div id="ov-risk-bar" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Risk × 매출 scatter (위험·규모 매트릭스)</h3><div id="ov-risk-scatter" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card">
-      <h3>회사별 Red Flags 카드 (key_red_flags + 재무 risk note) — 검색·정렬</h3>
-      <div id="ov-risk-table"></div>
-    </div>
-
     <h3 class="section-h">⑬ Operations Deep Dive — 통합 (Planted · 지역 · 수령 · 공장 · 정제 · 효율)</h3>
     <p class="notice">
       7개 분산 섹션 통합: Planted Area + 지역 분포 + Tree Maturity + Plasma + Mill 운영 + Downstream + 단위면적당 효율.
@@ -448,29 +438,40 @@ export function renderOverview(root) {
       <div class="card"><h3>Mill 운영: 처리능력(tph) × 자체 FFB (색=3rd party share)</h3><div id="ov-op-mill" class="plot plot-tall"></div></div>
     </div>
 
-    <h3 class="section-h">⑭ Composite Quality Score — 5축 종합 평가</h3>
+    <h3 class="section-h">⑭ Quality & Risk 종합 평가 (통합)</h3>
     <p class="notice">
-      5축: ①Profitability(ROE) ②Cash Generation(CFO/NP) ③Balance Sheet(ND/EBITDA) ④Shareholder Yield(Earnings+Div) ⑤Size(log Revenue) — 각 0-20점, 총 0-100
+      Quality Score (5축: ROE·CFO/NP·ND/EBITDA·Yield·Size, 각 0-20) + Risk Score (재무 위험 + 텍스트 hint). 4분면으로 회사 포지셔닝 + Top 8 radar + Red Flags 노트.
     </p>
+    <div class="card"><h3>Quality × Risk 4분면 (이상=좌상단 고품질·저위험)</h3><div id="ov-qr-quad" class="plot plot-tall"></div></div>
     <div class="grid-2">
-      <div class="card"><h3>Quality Score 0–100 (A/B/C/D 등급)</h3><div id="ov-quality-bar" class="plot plot-tall"></div></div>
-      <div class="card"><h3>Quality × Risk 4분면 (이상=고품질·저위험)</h3><div id="ov-qr-quad" class="plot plot-tall"></div></div>
+      <div class="card"><h3>회사별 Quality vs Risk 동시 ranking</h3><div id="ov-qr-bar" class="plot plot-tall"></div></div>
+      <div class="card"><h3>Top 8 Quality 회사 5축 Radar</h3><div id="ov-radar" class="plot plot-tall"></div></div>
     </div>
-    <div class="card"><h3>Top 8 회사 Radar — 5축 동시 비교</h3><div id="ov-radar" class="plot plot-tall"></div></div>
+    <div class="card">
+      <h3>Red Flags 노트 (key_red_flags + 재무 risk note) — 검색·정렬</h3>
+      <div id="ov-risk-table"></div>
+    </div>
 
-    <h3 class="section-h">⑮ Peer Comparison — 회사 select × peer 중앙값 비교</h3>
+    <h3 class="section-h">⑮ Compare Tool — Peer 중앙값 + Percentile + 두 회사 비교 (통합)</h3>
+    <p class="notice">
+      회사 select → Peer 중앙값/Top quartile 비교 + 8지표 percentile bar. 회사 2 선택 시 두 회사 percentile overlay 비교.
+    </p>
     <div class="filter-bar">
-      <label>대상 회사:</label>
-      <select id="ov-peer-co"></select>
-      <label>비교 기준:</label>
-      <select id="ov-peer-base">
-        <option value="region" selected>같은 권역 peer</option>
-        <option value="all">전체 peer (34사)</option>
+      <label>회사 A:</label>
+      <select id="ov-cmp-co1"></select>
+      <label>회사 B (overlay):</label>
+      <select id="ov-cmp-co2"></select>
+      <label>Peer 기준:</label>
+      <select id="ov-cmp-peer">
+        <option value="region" selected>같은 권역</option>
+        <option value="all">전체 34사</option>
       </select>
-      <span class="badge" id="ov-peer-info"></span>
+      <span class="badge" id="ov-cmp-info"></span>
     </div>
-    <div class="card"><h3>지표별 회사 값 vs Peer 중앙값 (% 차이)</h3><div id="ov-peer-delta" class="plot plot-tall"></div></div>
-    <div class="card"><h3>지표별 절대값 비교 (회사 vs peer 중앙값 vs peer Top quartile)</h3><div id="ov-peer-abs" class="plot plot-tall"></div></div>
+    <div class="grid-2">
+      <div class="card"><h3>A vs Peer median Δ% (양수=A 우수)</h3><div id="ov-cmp-delta" class="plot plot-tall"></div></div>
+      <div class="card"><h3>A vs B Percentile overlay (0=낮음 100=최상)</h3><div id="ov-cmp-pct" class="plot plot-tall"></div></div>
+    </div>
 
     <h3 class="section-h">⑯ DuPont 분해 — ROE = 마진 × 자산회전 × 레버리지</h3>
     <p class="notice">
@@ -577,22 +578,6 @@ export function renderOverview(root) {
       8개 핵심 카테고리에서 기준연도 1위 회사 + Top 3 시각 카드. 각 카테고리별 강자 한눈에.
     </p>
     <div class="card"><h3>Award Cards</h3><div id="ov-awards" class="awards"></div></div>
-
-    <h3 class="section-h">㊿ Percentile Rank Matrix — 회사 강약 시각화</h3>
-    <p class="notice">
-      각 회사 7개 지표 (매출/ROE/마진/Quality/FCF margin/Div yield/CFO/NP) percentile rank (0-100). 막대가 채워질수록 강함. 회사 select로 비교.
-    </p>
-    <div class="filter-bar">
-      <label>회사 1:</label>
-      <select id="ov-pct-co1"></select>
-      <label>회사 2:</label>
-      <select id="ov-pct-co2"></select>
-    </div>
-    <div class="grid-2">
-      <div class="card"><h3>회사 1 percentile rank (지표별)</h3><div id="ov-pct-1" class="plot plot-tall"></div></div>
-      <div class="card"><h3>회사 2 percentile rank (지표별)</h3><div id="ov-pct-2" class="plot plot-tall"></div></div>
-    </div>
-    <div class="card"><h3>두 회사 percentile overlay 비교</h3><div id="ov-pct-overlay" class="plot plot-tall"></div></div>
 
     <h3 class="section-h">⓪ IPO Vintage & Company Age</h3>
     <p class="notice">
@@ -967,55 +952,6 @@ export function renderOverview(root) {
       hovertemplate: "%{text}<br>Cash/Mcap %{x:.1f}%<br>Cash Ratio %{y:.2f}x<extra></extra>",
     }], { xaxis: { title: "Cash / Market Cap (%)" }, yaxis: { title: "Cash / Current Liab (x)" }, margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false });
 
-    // ── ⑫ Risk & Red Flags
-    const riskRows = [...rows].filter(r => r.risk_score != null).sort((a, b) => b.risk_score - a.risk_score);
-    const RISK_COLOR = (s) => s >= 60 ? "#d62728" : s >= 30 ? "#ffbb78" : "#2ca02c";
-    plot("ov-risk-bar", [{
-      x: riskRows.map(r => r.risk_score).reverse(), y: riskRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: riskRows.map(r => RISK_COLOR(r.risk_score)).reverse() },
-      text: riskRows.map(r => `${r.risk_score} · ${r.risk_band}`).reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Risk %{x}/100<extra></extra>",
-    }], { xaxis: { title: "Risk Score (0=안전 · 100=위험)", range: [0, 110] }, margin: { l: 220, r: 100, t: 10, b: 40 }, height: Math.max(400, riskRows.length * 22 + 80) });
-
-    const rsScatter = riskRows.filter(r => r.revenue != null);
-    plot("ov-risk-scatter", [{
-      x: rsScatter.map(r => r.risk_score), y: rsScatter.map(r => r.revenue),
-      mode: "markers+text", type: "scatter",
-      text: rsScatter.map(r => r.short), textposition: "top center", textfont: { size: 9 },
-      marker: {
-        size: rsScatter.map(r => Math.max(10, Math.min(50, Math.sqrt(r.assets || 100) / 4))),
-        color: rsScatter.map(r => RISK_COLOR(r.risk_score)),
-        opacity: 0.75, line: { color: "#fff", width: 1 },
-      },
-      hovertemplate: "%{text}<br>Risk %{x}<br>매출 %{y:,.0f} bn<extra></extra>",
-    }], {
-      xaxis: { title: "Risk Score", range: [0, 110] },
-      yaxis: { title: "Revenue (IDR bn)", type: "log" },
-      margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
-    });
-
-    const riskTbl = riskRows.map(r => ({
-      회사: r.short, 권역: r.region,
-      Risk: r.risk_score, Band: r.risk_band,
-      매출: r.revenue, 순이익: r.net_profit,
-      "ND/EB": r.nd_ebitda, "CurR": r.curr_ratio,
-      red_flags: (r.key_red_flags || "").slice(0, 300),
-      재무_risk_note: (r.financial_risk_note || "").slice(0, 200),
-    }));
-    makeTable("ov-risk-table", [
-      { data: "회사", title: "회사" },
-      { data: "권역", title: "권역" },
-      { data: "Risk", title: "Risk", render: (d) => `<b style="color:${RISK_COLOR(d)}">${d}</b>` },
-      { data: "Band", title: "Band" },
-      { data: "매출", title: "매출 bn", render: (d) => d == null ? "-" : Number(d).toLocaleString(undefined, { maximumFractionDigits: 0 }) },
-      { data: "순이익", title: "순이익 bn", render: (d) => d == null ? "-" : Number(d).toLocaleString(undefined, { maximumFractionDigits: 0 }) },
-      { data: "ND/EB", title: "ND/EB", render: (d) => d == null ? "-" : Number(d).toFixed(2) },
-      { data: "CurR", title: "CurR", render: (d) => d == null ? "-" : Number(d).toFixed(2) },
-      { data: "red_flags", title: "Key Red Flags (요약)" },
-      { data: "재무_risk_note", title: "재무 risk note" },
-    ], riskTbl, { pageLength: 20, order: [[2, "desc"]] });
-
     // ── ⑬ Operations Deep Dive (통합)
     // 1. Planted Area + 지역 mix (회사별 stacked, planted_ha 큰 순)
     const opAreaRows = rows.filter(r => r.planted_ha > 0).sort((a, b) => b.planted_ha - a.planted_ha);
@@ -1078,16 +1014,10 @@ export function renderOverview(root) {
       hovertemplate: "%{text}<br>Mill cap %{x} tph<br>자체 FFB %{y:,.0f} ton<br>3rd party %{marker.color:.1f}%<extra></extra>",
     }], { xaxis: { title: "Mill Capacity (tph)", type: "log" }, yaxis: { title: "Own FFB Production (ton)", type: "log" }, margin: { l: 70, r: 50, t: 10, b: 50 }, height: 480, showlegend: false });
 
-    // ── ⑭ Composite Quality Score
+    // ── ⑭ Quality & Risk 종합 (통합)
     const qRows = [...rows].sort((a, b) => b.quality_score - a.quality_score);
     const QBAND_COLOR = (b) => ({ A: "#2ca02c", B: "#1f77b4", C: "#ffbb78", D: "#d62728" }[b] || "#7f7f7f");
-    plot("ov-quality-bar", [{
-      x: qRows.map(r => r.quality_score).reverse(), y: qRows.map(r => r.short).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: qRows.map(r => QBAND_COLOR(r.quality_band)).reverse() },
-      text: qRows.map(r => `${r.quality_score.toFixed(0)} (${r.quality_band})`).reverse(), textposition: "outside",
-      hovertemplate: "%{y}<br>Quality %{x:.1f}/100<extra></extra>",
-    }], { xaxis: { title: "Quality Score (0=낮음 · 100=최상)", range: [0, 110] }, margin: { l: 220, r: 100, t: 10, b: 40 }, height: Math.max(400, qRows.length * 22 + 80) });
+    const RISK_COLOR = (s) => s >= 60 ? "#d62728" : s >= 30 ? "#ffbb78" : "#2ca02c";
 
     // Quality × Risk 4분면
     const qrRows = rows.filter(r => r.risk_score != null);
@@ -1104,7 +1034,7 @@ export function renderOverview(root) {
     }], {
       xaxis: { title: "Risk Score (↓낮을수록 안전)", range: [0, 110] },
       yaxis: { title: "Quality Score (↑높을수록 우수)", range: [0, 110] },
-      margin: { l: 60, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
+      margin: { l: 60, r: 20, t: 10, b: 50 }, height: 520, showlegend: false,
       shapes: [
         { type: "line", x0: 50, y0: 0, x1: 50, y1: 110, line: { color: "#ccc", dash: "dash", width: 1 } },
         { type: "line", x0: 0, y0: 50, x1: 110, y1: 50, line: { color: "#ccc", dash: "dash", width: 1 } },
@@ -1115,6 +1045,17 @@ export function renderOverview(root) {
         { x: 25, y: 5, text: "지루: 저품질·저위험", showarrow: false, font: { color: "#999", size: 11 } },
         { x: 90, y: 5, text: "위험: 저품질·고위험", showarrow: false, font: { color: "#d62728", size: 11 } },
       ],
+    });
+
+    // Quality + Risk 동시 ranking (회사별 양방향 grouped bar)
+    plot("ov-qr-bar", [
+      { x: qRows.map(r => r.short), y: qRows.map(r => r.quality_score), type: "bar", name: "Quality", marker: { color: qRows.map(r => QBAND_COLOR(r.quality_band)) } },
+      { x: qRows.map(r => r.short), y: qRows.map(r => -(r.risk_score || 0)), type: "bar", name: "Risk (음수 표기)", marker: { color: qRows.map(r => RISK_COLOR(r.risk_score || 0)) } },
+    ], {
+      barmode: "relative", yaxis: { title: "Score (Quality ↑ / Risk ↓)", range: [-110, 110], zeroline: true },
+      xaxis: { tickangle: -45, automargin: true },
+      legend: { orientation: "h", y: -0.35 },
+      margin: { l: 60, r: 20, t: 10, b: 130 }, height: 520,
     });
 
     // Top 8 Radar (5축)
@@ -1132,6 +1073,29 @@ export function renderOverview(root) {
       showlegend: true, legend: { orientation: "h", y: -0.18, font: { size: 9 } },
       margin: { l: 40, r: 40, t: 20, b: 60 }, height: 520,
     });
+
+    // Red Flags 노트 테이블 (기존 ⑫에서 이동)
+    const riskTbl = [...rows].filter(r => r.risk_score != null).sort((a, b) => b.risk_score - a.risk_score).map(r => ({
+      회사: r.short, 권역: r.region,
+      Risk: r.risk_score, Band: r.risk_band, Quality: r.quality_score,
+      매출: r.revenue, 순이익: r.net_profit,
+      "ND/EB": r.nd_ebitda, "CurR": r.curr_ratio,
+      red_flags: (r.key_red_flags || "").slice(0, 300),
+      재무_risk_note: (r.financial_risk_note || "").slice(0, 200),
+    }));
+    makeTable("ov-risk-table", [
+      { data: "회사", title: "회사" },
+      { data: "권역", title: "권역" },
+      { data: "Risk", title: "Risk", render: (d) => `<b style="color:${RISK_COLOR(d)}">${d}</b>` },
+      { data: "Band", title: "Band" },
+      { data: "Quality", title: "Quality", render: (d) => d == null ? "-" : Number(d).toFixed(0) },
+      { data: "매출", title: "매출 bn", render: (d) => d == null ? "-" : Number(d).toLocaleString(undefined, { maximumFractionDigits: 0 }) },
+      { data: "순이익", title: "순이익 bn", render: (d) => d == null ? "-" : Number(d).toLocaleString(undefined, { maximumFractionDigits: 0 }) },
+      { data: "ND/EB", title: "ND/EB", render: (d) => d == null ? "-" : Number(d).toFixed(2) },
+      { data: "CurR", title: "CurR", render: (d) => d == null ? "-" : Number(d).toFixed(2) },
+      { data: "red_flags", title: "Key Red Flags (요약)" },
+      { data: "재무_risk_note", title: "재무 risk note" },
+    ], riskTbl, { pageLength: 20, order: [[2, "desc"]] });
 
     // ── ⑯ DuPont 3-factor
     // 3 ranking bar (margin / turnover / leverage), 정렬 by 각 지표 desc
@@ -1751,70 +1715,6 @@ export function renderOverview(root) {
     text: nmD.map(r => (r.nm_delta >= 0 ? "+" : "") + r.nm_delta.toFixed(1) + "pp").reverse(), textposition: "outside",
   }], { xaxis: { title: "Net Margin Δ (pp, latest − first)", zeroline: true }, margin: { l: 220, r: 80, t: 10, b: 50 }, height: Math.max(360, nmD.length * 24 + 60) });
 
-  // ── ㊿ Percentile Rank Matrix
-  const PCT_METRICS = [
-    { key: "revenue", label: "매출" },
-    { key: "roe", label: "ROE" },
-    { key: "net_margin", label: "Net Margin" },
-    { key: "quality_score", label: "Quality" },
-    { key: "fcf_margin", label: "FCF Margin" },
-    { key: "div_yield", label: "Div Yield" },
-    { key: "cfo", label: "CFO" },
-    { key: "net_profit", label: "Net Profit" },
-  ];
-  // percentile 계산: 전체 ly fin 중에서 회사 i의 rank
-  const lyRows = fin.filter(r => r.yr === ly);
-  const pctRank = (val, arr) => {
-    const sorted = arr.filter(v => v != null && !isNaN(v)).sort((a, b) => a - b);
-    if (sorted.length === 0 || val == null) return null;
-    let below = sorted.filter(v => v < val).length;
-    return below / sorted.length * 100;
-  };
-  const pctTable = {};
-  companies.forEach(co => {
-    const r = lyRows.find(x => x.short === co);
-    if (!r) return;
-    pctTable[co] = {};
-    PCT_METRICS.forEach(m => {
-      pctTable[co][m.key] = pctRank(r[m.key], lyRows.map(x => x[m.key]));
-    });
-  });
-
-  const pSel1 = document.getElementById("ov-pct-co1");
-  const pSel2 = document.getElementById("ov-pct-co2");
-  pSel1.innerHTML = companies.map((c, i) => `<option value="${c}" ${i === 0 ? "selected" : ""}>${c}</option>`).join("");
-  pSel2.innerHTML = companies.map((c, i) => `<option value="${c}" ${i === 1 ? "selected" : ""}>${c}</option>`).join("");
-
-  const drawPct = (elId, co) => {
-    const data = pctTable[co];
-    if (!data) { document.getElementById(elId).innerHTML = `<div class="award-empty">${co}: 데이터 없음</div>`; return; }
-    plot(elId, [{
-      x: PCT_METRICS.map(m => data[m.key] || 0),
-      y: PCT_METRICS.map(m => m.label).reverse(),
-      type: "bar", orientation: "h",
-      marker: { color: PCT_METRICS.map(m => (data[m.key] || 0) >= 75 ? "#2ca02c" : (data[m.key] || 0) >= 50 ? "#1f77b4" : (data[m.key] || 0) >= 25 ? "#ffbb78" : "#d62728").reverse() },
-      text: PCT_METRICS.map(m => data[m.key] != null ? data[m.key].toFixed(0) + "%" : "n/a").reverse(),
-      textposition: "outside",
-    }], { title: { text: co, font: { size: 13 } }, xaxis: { title: "Percentile (0-100)", range: [0, 110] }, margin: { l: 100, r: 60, t: 30, b: 40 }, height: 420 });
-  };
-  const drawOverlay = () => {
-    const co1 = pSel1.value, co2 = pSel2.value;
-    if (!pctTable[co1] || !pctTable[co2]) return;
-    plot("ov-pct-overlay", [
-      { x: PCT_METRICS.map(m => m.label), y: PCT_METRICS.map(m => pctTable[co1][m.key] || 0), type: "bar", name: co1, marker: { color: "#1f77b4" } },
-      { x: PCT_METRICS.map(m => m.label), y: PCT_METRICS.map(m => pctTable[co2][m.key] || 0), type: "bar", name: co2, marker: { color: "#ff7f0e" } },
-    ], { barmode: "group", yaxis: { title: "Percentile (0-100)", range: [0, 110] }, legend: { orientation: "h", y: -0.18 }, margin: { l: 60, r: 20, t: 10, b: 60 }, height: 480 });
-  };
-
-  const renderPctAll = () => {
-    drawPct("ov-pct-1", pSel1.value);
-    drawPct("ov-pct-2", pSel2.value);
-    drawOverlay();
-  };
-  pSel1.addEventListener("change", renderPctAll);
-  pSel2.addEventListener("change", renderPctAll);
-  renderPctAll();
-
   // ── ⑩ Multi-Year Trend Explorer (통합)
   const TREND_META = {
     revenue:     { label: "매출 (bn)", unit: "IDR bn", fmt: (v) => Math.round(v).toLocaleString(), bnLike: true },
@@ -2024,21 +1924,23 @@ export function renderOverview(root) {
     margin: { l: 70, r: 20, t: 10, b: 50 }, height: 480, showlegend: false,
   });
 
-  // ── ⑮ Peer Comparison
-  const peerCoSel = document.getElementById("ov-peer-co");
-  const peerBaseSel = document.getElementById("ov-peer-base");
-  const peerInfo = document.getElementById("ov-peer-info");
-  peerCoSel.innerHTML = companies.map(c => `<option value="${c}">${c}</option>`).join("");
+  // ── ⑮ Compare Tool (Peer + Percentile 통합)
+  const cmpSel1 = document.getElementById("ov-cmp-co1");
+  const cmpSel2 = document.getElementById("ov-cmp-co2");
+  const cmpPeer = document.getElementById("ov-cmp-peer");
+  const cmpInfo = document.getElementById("ov-cmp-info");
+  cmpSel1.innerHTML = companies.map((c, i) => `<option value="${c}" ${i === 0 ? "selected" : ""}>${c}</option>`).join("");
+  cmpSel2.innerHTML = companies.map((c, i) => `<option value="${c}" ${i === 1 ? "selected" : ""}>${c}</option>`).join("");
 
-  const PEER_METRICS = [
-    { key: "net_margin", label: "Net margin %", fmt: (v) => v.toFixed(2) + "%" },
-    { key: "roe", label: "ROE %", fmt: (v) => v.toFixed(2) + "%" },
-    { key: "roa", label: "ROA %", fmt: (v) => v.toFixed(2) + "%" },
-    { key: "fcf_margin", label: "FCF margin %", fmt: (v) => v.toFixed(2) + "%" },
-    { key: "cash_conv", label: "CFO/NP %", fmt: (v) => v.toFixed(0) + "%" },
-    { key: "nd_ebitda", label: "ND/EBITDA x", fmt: (v) => v.toFixed(2) + "x" },
-    { key: "div_yield", label: "Div Yield %", fmt: (v) => v.toFixed(2) + "%" },
-    { key: "quality_score", label: "Quality Score", fmt: (v) => v.toFixed(0) },
+  const CMP_METRICS = [
+    { key: "revenue", label: "Revenue (bn)", lower: false },
+    { key: "net_margin", label: "Net Margin %", lower: false },
+    { key: "roe", label: "ROE %", lower: false },
+    { key: "fcf_margin", label: "FCF Margin %", lower: false },
+    { key: "quality_score", label: "Quality Score", lower: false },
+    { key: "div_yield", label: "Div Yield %", lower: false },
+    { key: "nd_ebitda", label: "ND/EBITDA x", lower: true },
+    { key: "cfo", label: "CFO (bn)", lower: false },
   ];
 
   const median = (arr) => {
@@ -2047,71 +1949,51 @@ export function renderOverview(root) {
     const m = Math.floor(a.length / 2);
     return a.length % 2 ? a[m] : (a[m-1] + a[m]) / 2;
   };
-  const quantile = (arr, q) => {
-    const a = arr.filter(v => v != null && !isNaN(v)).sort((x, y) => x - y);
-    if (a.length === 0) return null;
-    const pos = (a.length - 1) * q;
-    const base = Math.floor(pos), rest = pos - base;
-    return a[base + 1] != null ? a[base] + rest * (a[base + 1] - a[base]) : a[base];
+  const pctRank = (val, arr) => {
+    const sorted = arr.filter(v => v != null && !isNaN(v)).sort((a, b) => a - b);
+    if (sorted.length === 0 || val == null) return null;
+    return sorted.filter(v => v < val).length / sorted.length * 100;
   };
 
-  const renderPeer = () => {
-    const co = peerCoSel.value;
-    const target = fin.find(r => r.short === co && r.yr === ly);
+  const renderCmp = () => {
+    const co1 = cmpSel1.value, co2 = cmpSel2.value;
+    const target = fin.find(r => r.short === co1 && r.yr === ly);
+    const target2 = fin.find(r => r.short === co2 && r.yr === ly);
     if (!target) return;
-    const peerPool = peerBaseSel.value === "region"
-      ? fin.filter(r => r.yr === ly && r.region === target.region && r.short !== co)
-      : fin.filter(r => r.yr === ly && r.short !== co);
-    peerInfo.textContent = `대상 ${co} (${target.region}) · Peer ${peerPool.length}사 · ${ly}`;
+    const peerPool = cmpPeer.value === "region"
+      ? fin.filter(r => r.yr === ly && r.region === target.region && r.short !== co1)
+      : fin.filter(r => r.yr === ly && r.short !== co1);
+    cmpInfo.textContent = `A=${co1} (${target.region}) · B=${co2} · Peer ${peerPool.length}사 · ${ly}`;
 
-    // Delta vs median (%)
-    const deltas = PEER_METRICS.map(m => {
+    // Delta vs peer median (양수=좋음, lower-better는 부호 반전)
+    const deltas = CMP_METRICS.map(m => {
       const med = median(peerPool.map(r => r[m.key]));
       const v = target[m.key];
-      if (v == null || med == null || med === 0) return { label: m.label, delta: null, raw: v, med };
-      const delta = m.key === "nd_ebitda" ? (med - v) / Math.abs(med) * 100 : (v - med) / Math.abs(med) * 100;
-      // ND/EBITDA는 낮을수록 좋으므로 부호 반전
-      return { label: m.label, delta, raw: v, med };
+      if (v == null || med == null || med === 0) return { label: m.label, delta: null };
+      const delta = m.lower ? (med - v) / Math.abs(med) * 100 : (v - med) / Math.abs(med) * 100;
+      return { label: m.label, delta };
     });
-
-    plot("ov-peer-delta", [{
+    plot("ov-cmp-delta", [{
       x: deltas.map(d => d.delta).reverse(), y: deltas.map(d => d.label).reverse(),
       type: "bar", orientation: "h",
       marker: { color: deltas.map(d => d.delta == null ? "#999" : d.delta >= 0 ? "#2ca02c" : "#d62728").reverse() },
       text: deltas.map(d => d.delta == null ? "n/a" : (d.delta >= 0 ? "+" : "") + d.delta.toFixed(0) + "%").reverse(),
       textposition: "outside",
-      hovertemplate: "%{y}<br>%{x:+.1f}% vs peer median<extra></extra>",
-    }], {
-      xaxis: { title: `${co} vs peer median (%) — 양수=좋음, ND/EBITDA는 부호 반전`, zeroline: true },
-      margin: { l: 160, r: 80, t: 10, b: 50 }, height: 380,
-    });
+    }], { xaxis: { title: `${co1} vs peer median (%) — 양수=좋음`, zeroline: true }, margin: { l: 160, r: 80, t: 10, b: 50 }, height: 420 });
 
-    // 절대값 비교: target, peer median, peer top quartile
-    const absBars = PEER_METRICS.map(m => {
-      const peerVals = peerPool.map(r => r[m.key]).filter(v => v != null);
-      // Top quartile: ND/EBITDA는 낮은 게 좋으니 25th percentile
-      const isLowerBetter = m.key === "nd_ebitda";
-      return {
-        label: m.label,
-        target: target[m.key],
-        med: median(peerVals),
-        top: quantile(peerVals, isLowerBetter ? 0.25 : 0.75),
-      };
-    });
-    plot("ov-peer-abs", [
-      { x: absBars.map(b => b.label), y: absBars.map(b => b.target), type: "bar", name: `${co}`, marker: { color: "#1f77b4" } },
-      { x: absBars.map(b => b.label), y: absBars.map(b => b.med), type: "bar", name: "Peer median", marker: { color: "#999" } },
-      { x: absBars.map(b => b.label), y: absBars.map(b => b.top), type: "bar", name: "Peer top quartile", marker: { color: "#2ca02c" } },
-    ], {
-      barmode: "group", yaxis: { title: "지표 값 (단위는 지표별 상이)", zeroline: true },
-      xaxis: { tickangle: -20, automargin: true },
-      legend: { orientation: "h", y: -0.2 },
-      margin: { l: 70, r: 20, t: 10, b: 100 }, height: 480,
-    });
+    // Percentile overlay (A vs B)
+    const lyRowsAll = fin.filter(r => r.yr === ly);
+    const pctA = CMP_METRICS.map(m => pctRank(target[m.key], lyRowsAll.map(x => x[m.key])));
+    const pctB = target2 ? CMP_METRICS.map(m => pctRank(target2[m.key], lyRowsAll.map(x => x[m.key]))) : CMP_METRICS.map(() => null);
+    plot("ov-cmp-pct", [
+      { x: CMP_METRICS.map(m => m.label), y: pctA, type: "bar", name: co1, marker: { color: "#1f77b4" } },
+      { x: CMP_METRICS.map(m => m.label), y: pctB, type: "bar", name: co2, marker: { color: "#ff7f0e" } },
+    ], { barmode: "group", yaxis: { title: "Percentile (0-100)", range: [0, 110] }, xaxis: { tickangle: -20, automargin: true }, legend: { orientation: "h", y: -0.2 }, margin: { l: 60, r: 20, t: 10, b: 90 }, height: 420 });
   };
-  peerCoSel.addEventListener("change", renderPeer);
-  peerBaseSel.addEventListener("change", renderPeer);
-  renderPeer();
+  cmpSel1.addEventListener("change", renderCmp);
+  cmpSel2.addEventListener("change", renderCmp);
+  cmpPeer.addEventListener("change", renderCmp);
+  renderCmp();
 
   // Top 10 EPS 시계열 (기준연도 EPS 상위)
   const lyEps = fin.filter(r => r.yr === ly && r.eps != null).sort((a, b) => b.eps - a.eps).slice(0, 10).map(r => r.short);
