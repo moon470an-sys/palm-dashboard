@@ -1,0 +1,1151 @@
+[
+  {
+    "ticker": "AALI",
+    "company": "PT Astra Agro Lestari Tbk",
+    "year": "2025",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "d06cd736-df50-45c0-84f6-d0df2eb75edf",
+    "pdf": "AALI_2025_AR.pdf",
+    "excel_revenue": 28654.648,
+    "excel_net_profit": 1471.714,
+    "excel_total_assets": 27047.104,
+    "excel_total_liabilities": 2889.47,
+    "excel_total_equity": 24157.634,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 28654.648,
+      "net_profit": 1471.714,
+      "total_assets": 27047.104,
+      "total_liabilities": 2889.47,
+      "total_equity": 24157.634,
+      "cash": 2755.715
+    },
+    "mismatches": [
+      "cash: xl=None nlm=2755.715"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "BISI",
+    "company": "PT BISI International Tbk",
+    "year": "2025",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "761f4f11-8ef3-431c-948c-8c4667f27e26",
+    "pdf": "BISI_2025_AR.pdf",
+    "excel_revenue": 1696.438,
+    "excel_net_profit": 190.294,
+    "excel_total_assets": 3738.296,
+    "excel_total_liabilities": 243.726,
+    "excel_total_equity": 3494.57,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 1696.438,
+      "net_profit": 190.294,
+      "total_assets": 3738.296,
+      "total_liabilities": 243.726,
+      "total_equity": 3494.57,
+      "cash": 166.707
+    },
+    "mismatches": [
+      "cash: xl=None nlm=166.707"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "BWPT",
+    "company": "PT Eagle High Plantations Tbk",
+    "year": "2025",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "45dfa9b5-ae6b-414c-916d-023a4e361d28",
+    "pdf": "BWPT_2025_AR.pdf",
+    "excel_revenue": 5761.296,
+    "excel_net_profit": 361.72,
+    "excel_total_assets": 10176.15,
+    "excel_total_liabilities": 7349.037,
+    "excel_total_equity": 2827.113,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 5761.296,
+      "net_profit": 361.72,
+      "total_assets": 10176.15,
+      "total_liabilities": 7349.037,
+      "total_equity": 2827.113,
+      "cash": 139.794
+    },
+    "mismatches": [
+      "cash: xl=None nlm=139.794"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "CBUT",
+    "company": "PT Citra Borneo Utama Tbk",
+    "year": "2025",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "7d67edfb-ef99-4c07-a50a-999ebe06fa72",
+    "pdf": "CBUT_2025_AR.pdf",
+    "excel_revenue": 13970.811,
+    "excel_net_profit": 106.175,
+    "excel_total_assets": 4117.814,
+    "excel_total_liabilities": 3007.199,
+    "excel_total_equity": 1110.615,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 13970.811,
+      "net_profit": 106.175,
+      "total_assets": 4117.814,
+      "total_liabilities": 3007.199,
+      "total_equity": 1110.615,
+      "cash": 284.835
+    },
+    "mismatches": [
+      "cash: xl=None nlm=284.835"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "SSMS",
+    "company": "PT Sawit Sumbermas Sarana Tbk",
+    "year": "2025",
+    "notebook": "94313b4b-3883-4c69-97f0-aed7a0820471",
+    "source_id": "536ca228-2a10-40b0-b79f-a600b9e731b6",
+    "pdf": "SSMS_2025_AR.pdf",
+    "excel_revenue": 14813.17,
+    "excel_net_profit": 1392.63,
+    "excel_total_assets": 13584.22,
+    "excel_total_liabilities": 10642.51,
+    "excel_total_equity": 2941.7,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 14813.17,
+      "net_profit": 1392.63,
+      "total_assets": 13583.97,
+      "total_liabilities": 10642.51,
+      "total_equity": 2941.46,
+      "cash": 874.06
+    },
+    "mismatches": [
+      "cash: xl=None nlm=874.06"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "TAPG",
+    "company": "PT Triputra Agro Persada Tbk",
+    "year": "2025",
+    "notebook": "94313b4b-3883-4c69-97f0-aed7a0820471",
+    "source_id": "1becc84e-448c-4ec7-89ee-4960bcdb73cf",
+    "pdf": "TAPG_2025_AR.pdf",
+    "excel_revenue": 11402.198,
+    "excel_net_profit": 3845.347,
+    "excel_total_assets": 14696.563,
+    "excel_total_liabilities": 3009.078,
+    "excel_total_equity": 11687.485,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 11402.198,
+      "net_profit": 3845.347,
+      "total_assets": 14696.563,
+      "total_liabilities": 3009.078,
+      "total_equity": 11687.485,
+      "cash": 1651.433
+    },
+    "mismatches": [
+      "cash: xl=None nlm=1651.433"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "TLDN",
+    "company": "PT Teladan Prima Agro Tbk",
+    "year": "2025",
+    "notebook": "94313b4b-3883-4c69-97f0-aed7a0820471",
+    "source_id": "20dfd4b7-cb13-48bd-9682-6244e8ae8b4f",
+    "pdf": "TLDN_2025_AR.pdf",
+    "excel_revenue": 5421.392,
+    "excel_net_profit": 1114.617,
+    "excel_total_assets": 6018.032,
+    "excel_total_liabilities": 2373.123,
+    "excel_total_equity": 3644.909,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 5421.39,
+      "net_profit": 1106.61,
+      "total_assets": 6018.03,
+      "total_liabilities": 2373.12,
+      "total_equity": 3644.91,
+      "cash": 334.39
+    },
+    "mismatches": [
+      "net_profit: xl=1114.617 nlm=1106.61 Δ=-8.01",
+      "cash: xl=None nlm=334.39"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "BTEK",
+    "company": "PT Bumi Teknokultura Unggul Tbk",
+    "year": "2025",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "3283ba49-1fef-4020-8937-c9317b72cbeb",
+    "pdf": "BTEK_2025_AR.pdf",
+    "excel_revenue": 72.019,
+    "excel_net_profit": -420.421,
+    "excel_total_assets": 3509.836,
+    "excel_total_liabilities": 3226.158,
+    "excel_total_equity": 283.678,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 72.019,
+      "net_profit": -420.421,
+      "total_assets": 3509.836,
+      "total_liabilities": 3226.158,
+      "total_equity": 283.678,
+      "cash": 19.843
+    },
+    "mismatches": [
+      "cash: xl=None nlm=19.843"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "CSRA",
+    "company": "PT Cisadane Sawit Raya Tbk.",
+    "year": "2025",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "0072aa35-f1cb-46f6-ae48-2db9a9276606",
+    "pdf": "CSRA_2025_AR.pdf",
+    "excel_revenue": 1889.27,
+    "excel_net_profit": 268.78,
+    "excel_total_assets": 2521.825,
+    "excel_total_liabilities": 1054.997,
+    "excel_total_equity": 1466.828,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 1889.27,
+      "net_profit": 268.78,
+      "total_assets": 2521.825,
+      "total_liabilities": 1054.997,
+      "total_equity": 1466.828,
+      "cash": 158.767
+    },
+    "mismatches": [
+      "cash: xl=None nlm=158.767"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "DSNG",
+    "company": "PT Dharma Satya Nusantara Tbk",
+    "year": "2025",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "41871048-8c83-4b84-bfbd-e6dcb472fef0",
+    "pdf": "DSNG_2025_AR.pdf",
+    "excel_revenue": 12314.712,
+    "excel_net_profit": 1840.49,
+    "excel_total_assets": 17617.196,
+    "excel_total_liabilities": 5974.326,
+    "excel_total_equity": 11642.87,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 12314.712,
+      "net_profit": 1840.49,
+      "total_assets": 17617.196,
+      "total_liabilities": 5974.326,
+      "total_equity": 11642.87,
+      "cash": 592.612
+    },
+    "mismatches": [
+      "cash: xl=None nlm=592.612"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "FAPA",
+    "company": "PT FAP Agri Tbk",
+    "year": "2025",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "db00dcfd-288e-4196-b67a-90528d8fd0e1",
+    "pdf": "FAPA_2025_AR.pdf",
+    "excel_revenue": 7581.424,
+    "excel_net_profit": 1076.438,
+    "excel_total_assets": 10277.055,
+    "excel_total_liabilities": 6386.711,
+    "excel_total_equity": 3890.344,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 7580.783,
+      "net_profit": 1065.395,
+      "total_assets": 10277.055,
+      "total_liabilities": 6386.711,
+      "total_equity": 3890.344,
+      "cash": 1062.376
+    },
+    "mismatches": [
+      "revenue: xl=7581.424 nlm=7580.783 Δ=-0.64",
+      "net_profit: xl=1076.438 nlm=1065.395 Δ=-11.04",
+      "cash: xl=None nlm=1062.376"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "FISH",
+    "company": "PT FKS Multi Agro Tbk",
+    "year": "2025",
+    "notebook": "f62f9828-579e-4617-86d7-7dfc25df10d8",
+    "source_id": "58ae1a4d-64c6-416b-8a39-2c9d3f8bb5f1",
+    "pdf": "FISH_2025_AR.pdf",
+    "excel_revenue": null,
+    "excel_net_profit": null,
+    "excel_total_assets": null,
+    "excel_total_liabilities": null,
+    "excel_total_equity": null,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": null,
+      "net_profit": null,
+      "total_assets": null,
+      "total_liabilities": null,
+      "total_equity": null,
+      "cash": null
+    },
+    "mismatches": [],
+    "ok": true
+  },
+  {
+    "ticker": "GUNA",
+    "company": "PT Gunanusa Eramandiri Tbk",
+    "year": "2025",
+    "notebook": "f62f9828-579e-4617-86d7-7dfc25df10d8",
+    "source_id": "52e14881-9990-4031-9fab-b7ca39a90e36",
+    "pdf": "GUNA_2025_AR.pdf",
+    "excel_revenue": 1758.05,
+    "excel_net_profit": 94.53,
+    "excel_total_assets": 1082.74,
+    "excel_total_liabilities": 357.41,
+    "excel_total_equity": 725.33,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 1758.05,
+      "net_profit": 94.53,
+      "total_assets": 1082.74,
+      "total_liabilities": 357.41,
+      "total_equity": 725.33,
+      "cash": 55.86
+    },
+    "mismatches": [
+      "cash: xl=None nlm=55.86"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "JARR",
+    "company": "PT Jhonlin Agro Raya Tbk",
+    "year": "2025",
+    "notebook": "f62f9828-579e-4617-86d7-7dfc25df10d8",
+    "source_id": "6f2204d7-a5c1-4e13-958c-7388b79395fc",
+    "pdf": "JARR_2025_AR.pdf",
+    "excel_revenue": 4276.884,
+    "excel_net_profit": 268.481,
+    "excel_total_assets": 4019.981,
+    "excel_total_liabilities": 2102.979,
+    "excel_total_equity": 1917.002,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 4278.885,
+      "net_profit": 268.481,
+      "total_assets": 4019.981,
+      "total_liabilities": 2102.979,
+      "total_equity": 1917.003,
+      "cash": 392.438
+    },
+    "mismatches": [
+      "revenue: xl=4276.884 nlm=4278.885 Δ=+2.00",
+      "cash: xl=None nlm=392.438"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "LSIP",
+    "company": "PT Perusahaan Perkebunan London Sumatra Indonesia Tbk",
+    "year": "2025",
+    "notebook": "f62f9828-579e-4617-86d7-7dfc25df10d8",
+    "source_id": "672b32b0-b53c-4374-9e67-155d1d20f726",
+    "pdf": "LSIP_2025_AR.pdf",
+    "excel_revenue": 5511.706,
+    "excel_net_profit": 1887.756,
+    "excel_total_assets": 15540.354,
+    "excel_total_liabilities": 1544.241,
+    "excel_total_equity": 13996.113,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 5511.706,
+      "net_profit": 1886.355,
+      "total_assets": 15540.077,
+      "total_liabilities": 1543.964,
+      "total_equity": 13996.113,
+      "cash": 7597.47
+    },
+    "mismatches": [
+      "net_profit: xl=1887.756 nlm=1886.355 Δ=-1.40",
+      "cash: xl=None nlm=7597.47"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "NSSS",
+    "company": "PT Nusantara Sawit Sejahtera Tbk",
+    "year": "2025",
+    "notebook": "d20af25e-dd29-44eb-9bcc-20d1809d8cfa",
+    "source_id": "a03e235e-e236-46e0-867e-d2d34b01c4e4",
+    "pdf": "NSSS_2025_AR.pdf",
+    "excel_revenue": 2013.801,
+    "excel_net_profit": 647.822,
+    "excel_total_assets": 4202.376,
+    "excel_total_liabilities": 2261.878,
+    "excel_total_equity": 1940.498,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 2013.801,
+      "net_profit": 647.822,
+      "total_assets": 4202.376,
+      "total_liabilities": 2261.878,
+      "total_equity": 1940.498,
+      "cash": 761.726
+    },
+    "mismatches": [
+      "cash: xl=None nlm=761.726"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "PNGO",
+    "company": "PT Pinago Utama Tbk",
+    "year": "2025",
+    "notebook": "d20af25e-dd29-44eb-9bcc-20d1809d8cfa",
+    "source_id": "36ec097d-5957-47f4-832e-e999a5214966",
+    "pdf": "PNGO_2025_AR.pdf",
+    "excel_revenue": 2303.919,
+    "excel_net_profit": 322.565,
+    "excel_total_assets": 1745.52,
+    "excel_total_liabilities": 575.14,
+    "excel_total_equity": 1170.38,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 2303.919,
+      "net_profit": 322.565,
+      "total_assets": 1745.52,
+      "total_liabilities": 575.14,
+      "total_equity": 1170.38,
+      "cash": 73.823
+    },
+    "mismatches": [
+      "cash: xl=None nlm=73.823"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "SGRO",
+    "company": "PT Sampoerna Agro Tbk",
+    "year": "2025",
+    "notebook": "d20af25e-dd29-44eb-9bcc-20d1809d8cfa",
+    "source_id": "a4a1d32c-f192-4cce-a7a3-6e06295e7c55",
+    "pdf": "SGRO_2025_AR.pdf",
+    "excel_revenue": 6447,
+    "excel_net_profit": 321,
+    "excel_total_assets": 9960,
+    "excel_total_liabilities": 4921,
+    "excel_total_equity": 5039,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 6446.671,
+      "net_profit": 321.2,
+      "total_assets": 9960.538,
+      "total_liabilities": 4921.224,
+      "total_equity": 5039.314,
+      "cash": 2899.008
+    },
+    "mismatches": [
+      "total_assets: xl=9960 nlm=9960.538 Δ=+0.54",
+      "cash: xl=None nlm=2899.008"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "SIMP",
+    "company": "PT Salim Ivomas Pratama Tbk",
+    "year": "2025",
+    "notebook": "d20af25e-dd29-44eb-9bcc-20d1809d8cfa",
+    "source_id": "cb68100f-22d0-414d-b453-ffa2ff6f335b",
+    "pdf": "SIMP_2025_AR.pdf",
+    "excel_revenue": 21056.904,
+    "excel_net_profit": 2821.257,
+    "excel_total_assets": 41376.126,
+    "excel_total_liabilities": 14781.452,
+    "excel_total_equity": 26594.674,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 21056.904,
+      "net_profit": 2821.257,
+      "total_assets": 41376.385,
+      "total_liabilities": 14781.711,
+      "total_equity": 26594.674,
+      "cash": 8347.1
+    },
+    "mismatches": [
+      "cash: xl=None nlm=8347.1"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "SMAR",
+    "company": "PT Sinar Mas Agro Resources and Technology Tbk",
+    "year": "2025",
+    "notebook": "d20af25e-dd29-44eb-9bcc-20d1809d8cfa",
+    "source_id": "7f71bf86-585e-4bfd-bf68-eb4b0534b192",
+    "pdf": "SMAR_2025_AR.pdf",
+    "excel_revenue": 86946.068,
+    "excel_net_profit": 2585.697,
+    "excel_total_assets": 45202.974,
+    "excel_total_liabilities": 22767.954,
+    "excel_total_equity": 22435.02,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 86946.068,
+      "net_profit": 2585.697,
+      "total_assets": 45202.974,
+      "total_liabilities": 22767.954,
+      "total_equity": 22435.02,
+      "cash": 2024.738
+    },
+    "mismatches": [
+      "cash: xl=None nlm=2024.738"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "UNSP",
+    "company": "PT Bakrie Sumatera Plantations Tbk",
+    "year": "2025",
+    "notebook": "94313b4b-3883-4c69-97f0-aed7a0820471",
+    "source_id": "486b1986-74d0-42a4-99d7-b2d5d57fbdfc",
+    "pdf": "UNSP_2025_AR.pdf",
+    "excel_revenue": 2557.26,
+    "excel_net_profit": 16.152,
+    "excel_total_assets": 3487.979,
+    "excel_total_liabilities": 8758.591,
+    "excel_total_equity": -5270.612,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 2557.26,
+      "net_profit": 16.152,
+      "total_assets": 3487.979,
+      "total_liabilities": 8758.591,
+      "total_equity": -5270.612,
+      "cash": 170.825
+    },
+    "mismatches": [
+      "cash: xl=None nlm=170.825"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "AALI",
+    "company": "PT Astra Agro Lestari Tbk",
+    "year": "2026 Q1",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "5d102044-d0cf-45c4-b33b-f297b247e838",
+    "pdf": "AALI_2026Q1.pdf",
+    "excel_revenue": 7501.811,
+    "excel_net_profit": 388.401,
+    "excel_total_assets": 27893.355,
+    "excel_total_liabilities": 3359.838,
+    "excel_total_equity": 24533.517,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 7501.811,
+      "net_profit": 373.407,
+      "total_assets": 27893.355,
+      "total_liabilities": 3359.838,
+      "total_equity": 24533.517,
+      "cash": 4703.854
+    },
+    "mismatches": [
+      "net_profit: xl=388.401 nlm=373.407 Δ=-14.99",
+      "cash: xl=None nlm=4703.854"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "ANDI",
+    "company": "PT Andira Agro Tbk",
+    "year": "2026 Q1",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "84e55563-5634-48e1-9610-57b33ad142cb",
+    "pdf": "ANDI_2026Q1.pdf",
+    "excel_revenue": 24.741,
+    "excel_net_profit": -7.186,
+    "excel_total_assets": 273.841,
+    "excel_total_liabilities": 162.398,
+    "excel_total_equity": 111.443,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 24.741,
+      "net_profit": -7.186,
+      "total_assets": 273.841,
+      "total_liabilities": 162.398,
+      "total_equity": 111.443,
+      "cash": 2.052
+    },
+    "mismatches": [
+      "cash: xl=None nlm=2.052"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "BISI",
+    "company": "PT BISI International Tbk",
+    "year": "2026 Q1",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "7f3c59af-eb18-4c2f-879a-abdb9fac8256",
+    "pdf": "BISI_2026Q1.pdf",
+    "excel_revenue": 387.083,
+    "excel_net_profit": 47.007,
+    "excel_total_assets": 3765.121,
+    "excel_total_liabilities": 221.678,
+    "excel_total_equity": 3543.443,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 387.083,
+      "net_profit": 47.007,
+      "total_assets": 3765.121,
+      "total_liabilities": 221.678,
+      "total_equity": 3543.443,
+      "cash": 224.18
+    },
+    "mismatches": [
+      "cash: xl=None nlm=224.18"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "BTEK",
+    "company": "PT Bumi Teknokultura Unggul Tbk",
+    "year": "2026 Q1",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "b72ff43c-87f8-4dbc-94d1-7d980f441322",
+    "pdf": "BTEK_2026Q1.pdf",
+    "excel_revenue": 4.647,
+    "excel_net_profit": -15.666,
+    "excel_total_assets": 3527.196,
+    "excel_total_liabilities": 3264.134,
+    "excel_total_equity": 263.063,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 4.647,
+      "net_profit": -15.666,
+      "total_assets": 3527.196,
+      "total_liabilities": 3264.134,
+      "total_equity": 263.063,
+      "cash": 13.233
+    },
+    "mismatches": [
+      "cash: xl=None nlm=13.233"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "BWPT",
+    "company": "PT Eagle High Plantations Tbk",
+    "year": "2026 Q1",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "17cbed64-f4ef-498f-9d74-655813ae79b5",
+    "pdf": "BWPT_2026Q1.pdf",
+    "excel_revenue": 1377.614,
+    "excel_net_profit": 84.957,
+    "excel_total_assets": 9183.422,
+    "excel_total_liabilities": 6199.86,
+    "excel_total_equity": 2912.07,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 1377.614,
+      "net_profit": 76.41,
+      "total_assets": 10085.928,
+      "total_liabilities": 7173.858,
+      "total_equity": 2912.07,
+      "cash": 297.161
+    },
+    "mismatches": [
+      "net_profit: xl=84.957 nlm=76.41 Δ=-8.55",
+      "total_assets: xl=9183.422 nlm=10085.928 Δ=+902.51",
+      "total_liabilities: xl=6199.86 nlm=7173.858 Δ=+974.00",
+      "cash: xl=None nlm=297.161"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "CBUT",
+    "company": "PT Citra Borneo Utama Tbk",
+    "year": "2026 Q1",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "647fbde3-d3bb-47ae-ab7a-75432f04f5c3",
+    "pdf": "CBUT_2026Q1.pdf",
+    "excel_revenue": 3377.149,
+    "excel_net_profit": 45.976,
+    "excel_total_assets": 4035.432,
+    "excel_total_liabilities": 2870.73,
+    "excel_total_equity": 1164.702,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 3377.149,
+      "net_profit": 45.976,
+      "total_assets": 4035.432,
+      "total_liabilities": 2870.73,
+      "total_equity": 1164.702,
+      "cash": 342.315
+    },
+    "mismatches": [
+      "cash: xl=None nlm=342.315"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "DSNG",
+    "company": "PT Dharma Satya Nusantara Tbk",
+    "year": "2026 Q1",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "150a08ea-b8de-424e-87fa-c7a23bed8347",
+    "pdf": "DSNG_2026Q1.pdf",
+    "excel_revenue": 2886.35,
+    "excel_net_profit": null,
+    "excel_total_assets": null,
+    "excel_total_liabilities": 5694.196,
+    "excel_total_equity": null,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 2886.35,
+      "net_profit": 421.35,
+      "total_assets": 17758.416,
+      "total_liabilities": 5694.196,
+      "total_equity": 12064.22,
+      "cash": 635.773
+    },
+    "mismatches": [
+      "net_profit: xl=None nlm=421.35",
+      "total_assets: xl=None nlm=17758.416",
+      "total_equity: xl=None nlm=12064.22",
+      "cash: xl=None nlm=635.773"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "FAPA",
+    "company": "PT FAP Agri Tbk",
+    "year": "2026 Q1",
+    "notebook": "960dcf63-00a0-45de-a739-afe8a368fbf0",
+    "source_id": "3701a498-8ef7-4e11-85ef-b9125e9ce1b4",
+    "pdf": "FAPA_2026Q1.pdf",
+    "excel_revenue": 2005.843,
+    "excel_net_profit": 263.038,
+    "excel_total_assets": 10342.871,
+    "excel_total_liabilities": 6189.489,
+    "excel_total_equity": 4153.382,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 2005.843,
+      "net_profit": 263.038,
+      "total_assets": 10342.871,
+      "total_liabilities": 6189.489,
+      "total_equity": 4153.382,
+      "cash": 1055.276
+    },
+    "mismatches": [
+      "cash: xl=None nlm=1055.276"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "GZCO",
+    "company": "PT Gozco Plantations Tbk",
+    "year": "2026 Q1",
+    "notebook": "f62f9828-579e-4617-86d7-7dfc25df10d8",
+    "source_id": "7d6b54fe-47af-4230-aa01-ee77df3c6fc8",
+    "pdf": "GZCO_2026Q1.pdf",
+    "excel_revenue": 139.426,
+    "excel_net_profit": -5.063,
+    "excel_total_assets": 2169.656,
+    "excel_total_liabilities": 943.159,
+    "excel_total_equity": 1226.497,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 139.426,
+      "net_profit": -5.063,
+      "total_assets": 2169.656,
+      "total_liabilities": 943.159,
+      "total_equity": 1226.497,
+      "cash": 98.23
+    },
+    "mismatches": [
+      "cash: xl=None nlm=98.23"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "JARR",
+    "company": "PT Jhonlin Agro Raya Tbk",
+    "year": "2026 Q1",
+    "notebook": "f62f9828-579e-4617-86d7-7dfc25df10d8",
+    "source_id": "34e411ea-f5e9-4fe4-88cc-16d62153403d",
+    "pdf": "JARR_2026Q1.pdf",
+    "excel_revenue": 776.514,
+    "excel_net_profit": 41.331,
+    "excel_total_assets": 3960.311,
+    "excel_total_liabilities": 2001.977,
+    "excel_total_equity": 1958.334,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 776.514,
+      "net_profit": 41.331,
+      "total_assets": 3960.311,
+      "total_liabilities": 2001.977,
+      "total_equity": 1958.334,
+      "cash": 463.049
+    },
+    "mismatches": [
+      "cash: xl=None nlm=463.049"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "JAWA",
+    "company": "PT Jaya Agra Wattie Tbk",
+    "year": "2026 Q1",
+    "notebook": "f62f9828-579e-4617-86d7-7dfc25df10d8",
+    "source_id": "939434c6-a7f8-4e4c-893c-7f48c859a3ca",
+    "pdf": "JAWA_2026Q1.pdf",
+    "excel_revenue": 354.572,
+    "excel_net_profit": -23.092,
+    "excel_total_assets": 3969.386,
+    "excel_total_liabilities": 2636.564,
+    "excel_total_equity": 1332.822,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 354.572,
+      "net_profit": -23.092,
+      "total_assets": 3969.386,
+      "total_liabilities": 2636.564,
+      "total_equity": 1332.822,
+      "cash": 17.723
+    },
+    "mismatches": [
+      "cash: xl=None nlm=17.723"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "LSIP",
+    "company": "PT Perusahaan Perkebunan London Sumatra Indonesia Tbk",
+    "year": "2026 Q1",
+    "notebook": "f62f9828-579e-4617-86d7-7dfc25df10d8",
+    "source_id": "5566a9aa-af72-4b6b-a67c-fb4def782471",
+    "pdf": "LSIP_2026Q1.pdf",
+    "excel_revenue": 1326.929,
+    "excel_net_profit": 394.103,
+    "excel_total_assets": null,
+    "excel_total_liabilities": null,
+    "excel_total_equity": 14389.2,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 1326.929,
+      "net_profit": 394.103,
+      "total_assets": 15810.671,
+      "total_liabilities": 1421.471,
+      "total_equity": 14389.2,
+      "cash": 7830.497
+    },
+    "mismatches": [
+      "total_assets: xl=None nlm=15810.671",
+      "total_liabilities: xl=None nlm=1421.471",
+      "cash: xl=None nlm=7830.497"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "NSSS",
+    "company": "PT Nusantara Sawit Sejahtera Tbk",
+    "year": "2026 Q1",
+    "notebook": "d20af25e-dd29-44eb-9bcc-20d1809d8cfa",
+    "source_id": "4144561e-d5c8-46f4-a698-e97e3cd63fc0",
+    "pdf": "NSSS_2026Q1.pdf",
+    "excel_revenue": 517.129,
+    "excel_net_profit": null,
+    "excel_total_assets": null,
+    "excel_total_liabilities": null,
+    "excel_total_equity": null,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 517.129,
+      "net_profit": 141.777,
+      "total_assets": 4236.504,
+      "total_liabilities": 2154.459,
+      "total_equity": 2082.045,
+      "cash": 831.819
+    },
+    "mismatches": [
+      "net_profit: xl=None nlm=141.777",
+      "total_assets: xl=None nlm=4236.504",
+      "total_liabilities: xl=None nlm=2154.459",
+      "total_equity: xl=None nlm=2082.045",
+      "cash: xl=None nlm=831.819"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "PGUN",
+    "company": "PT Pradiksi Gunatama Tbk",
+    "year": "2026 Q1",
+    "notebook": "d20af25e-dd29-44eb-9bcc-20d1809d8cfa",
+    "source_id": "fd89ceea-67e4-47b6-b2d3-2d470ead409c",
+    "pdf": "PGUN_2026Q1.pdf",
+    "excel_revenue": 166.543,
+    "excel_net_profit": 32.479,
+    "excel_total_assets": 2508.057,
+    "excel_total_liabilities": 557.135,
+    "excel_total_equity": 1950.921,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 166.543,
+      "net_profit": 32.479,
+      "total_assets": 2508.057,
+      "total_liabilities": 557.135,
+      "total_equity": 1950.921,
+      "cash": 17.711
+    },
+    "mismatches": [
+      "cash: xl=None nlm=17.711"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "PNGO",
+    "company": "PT Pinago Utama Tbk",
+    "year": "2026 Q1",
+    "notebook": "d20af25e-dd29-44eb-9bcc-20d1809d8cfa",
+    "source_id": "01769e75-1649-49ed-9bbc-3db78ea7dcc0",
+    "pdf": "PNGO_2026Q1.pdf",
+    "excel_revenue": 571.633,
+    "excel_net_profit": 39.712,
+    "excel_total_assets": 1688.657,
+    "excel_total_liabilities": 545.292,
+    "excel_total_equity": 1143.365,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 571.633,
+      "net_profit": 39.712,
+      "total_assets": 1688.657,
+      "total_liabilities": 545.292,
+      "total_equity": 1143.365,
+      "cash": 62.748
+    },
+    "mismatches": [
+      "cash: xl=None nlm=62.748"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "SGRO",
+    "company": "PT Sampoerna Agro Tbk",
+    "year": "2026 Q1",
+    "notebook": "d20af25e-dd29-44eb-9bcc-20d1809d8cfa",
+    "source_id": "3396df33-7fd5-4710-8eef-046ace5406f7",
+    "pdf": "SGRO_2026Q1.pdf",
+    "excel_revenue": 1256.531,
+    "excel_net_profit": 107.93,
+    "excel_total_assets": null,
+    "excel_total_liabilities": null,
+    "excel_total_equity": 5146.386,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 1256.531,
+      "net_profit": 107.93,
+      "total_assets": 8688.404,
+      "total_liabilities": 3542.018,
+      "total_equity": 5146.386,
+      "cash": 1641.703
+    },
+    "mismatches": [
+      "total_assets: xl=None nlm=8688.404",
+      "total_liabilities: xl=None nlm=3542.018",
+      "cash: xl=None nlm=1641.703"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "SIMP",
+    "company": "PT Salim Ivomas Pratama Tbk",
+    "year": "2026 Q1",
+    "notebook": "d20af25e-dd29-44eb-9bcc-20d1809d8cfa",
+    "source_id": "e1b1e9c2-ef2a-4e8a-9462-594c19a3c999",
+    "pdf": "SIMP_2026Q1.pdf",
+    "excel_revenue": null,
+    "excel_net_profit": 0.61,
+    "excel_total_assets": 41.868,
+    "excel_total_liabilities": 14.689,
+    "excel_total_equity": 27.179,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 4869.357,
+      "net_profit": 585.645,
+      "total_assets": 41868.001,
+      "total_liabilities": 14689.288,
+      "total_equity": 27178.713,
+      "cash": 9281.002
+    },
+    "mismatches": [
+      "revenue: xl=None nlm=4869.357",
+      "net_profit: xl=0.61 nlm=585.645 Δ=+585.03",
+      "total_assets: xl=41.868 nlm=41868.001 Δ=+41826.13",
+      "total_liabilities: xl=14.689 nlm=14689.288 Δ=+14674.60",
+      "total_equity: xl=27.179 nlm=27178.713 Δ=+27151.53",
+      "cash: xl=None nlm=9281.002"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "SMAR",
+    "company": "PT Sinar Mas Agro Resources and Technology Tbk",
+    "year": "2026 Q1",
+    "notebook": "d20af25e-dd29-44eb-9bcc-20d1809d8cfa",
+    "source_id": "f1458d60-4158-47a4-a70f-74da40d43d20",
+    "pdf": "SMAR_2026Q1.pdf",
+    "excel_revenue": 20734.239,
+    "excel_net_profit": 829.478,
+    "excel_total_assets": 45893.595,
+    "excel_total_liabilities": 22609.592,
+    "excel_total_equity": 23284.003,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 20734.239,
+      "net_profit": 829.478,
+      "total_assets": 45893.595,
+      "total_liabilities": 22609.592,
+      "total_equity": 23284.003,
+      "cash": 1915.304
+    },
+    "mismatches": [
+      "cash: xl=None nlm=1915.304"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "TAPG",
+    "company": "PT Triputra Agro Persada Tbk",
+    "year": "2026 Q1",
+    "notebook": "94313b4b-3883-4c69-97f0-aed7a0820471",
+    "source_id": "e5d2eb07-7c78-4caf-a348-bc0fb9c1959f",
+    "pdf": "TAPG_2026Q1.pdf",
+    "excel_revenue": 2492.197,
+    "excel_net_profit": 767.263,
+    "excel_total_assets": 15226.088,
+    "excel_total_liabilities": 2771.581,
+    "excel_total_equity": 12454.507,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 2492.197,
+      "net_profit": 767.263,
+      "total_assets": 15403.824,
+      "total_liabilities": 2949.317,
+      "total_equity": 12454.507,
+      "cash": 2797.577
+    },
+    "mismatches": [
+      "total_assets: xl=15226.088 nlm=15403.824 Δ=+177.74",
+      "total_liabilities: xl=2771.581 nlm=2949.317 Δ=+177.74",
+      "cash: xl=None nlm=2797.577"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "TLDN",
+    "company": "PT Teladan Prima Agro Tbk",
+    "year": "2026 Q1",
+    "notebook": "94313b4b-3883-4c69-97f0-aed7a0820471",
+    "source_id": "1b8dd258-4ff5-4e34-8cb1-55799b560347",
+    "pdf": "TLDN_2026Q1.pdf",
+    "excel_revenue": null,
+    "excel_net_profit": 181.772,
+    "excel_total_assets": 6280.971,
+    "excel_total_liabilities": 2454.29,
+    "excel_total_equity": 3826.68,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 1367.453,
+      "net_profit": 181.772,
+      "total_assets": 6287.075,
+      "total_liabilities": 2460.394,
+      "total_equity": 3826.68,
+      "cash": 695.169
+    },
+    "mismatches": [
+      "revenue: xl=None nlm=1367.453",
+      "total_assets: xl=6280.971 nlm=6287.075 Δ=+6.10",
+      "total_liabilities: xl=2454.29 nlm=2460.394 Δ=+6.10",
+      "cash: xl=None nlm=695.169"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "UNSP",
+    "company": "PT Bakrie Sumatera Plantations Tbk",
+    "year": "2026 Q1",
+    "notebook": "94313b4b-3883-4c69-97f0-aed7a0820471",
+    "source_id": "eed2e718-ff3f-4da1-ab5a-07e20841aa67",
+    "pdf": "UNSP_2026Q1.pdf",
+    "excel_revenue": 561.076,
+    "excel_net_profit": 3.241,
+    "excel_total_assets": 3584.043,
+    "excel_total_liabilities": 8853.232,
+    "excel_total_equity": -5269.189,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 0.561076,
+      "net_profit": 0.003241,
+      "total_assets": 3584.043,
+      "total_liabilities": 8853.232,
+      "total_equity": -5269.189,
+      "cash": 0.120585
+    },
+    "mismatches": [
+      "revenue: xl=561.076 nlm=0.561076 Δ=-560.51",
+      "net_profit: xl=3.241 nlm=0.003241 Δ=-3.24",
+      "cash: xl=None nlm=0.120585"
+    ],
+    "ok": false
+  },
+  {
+    "ticker": "WAPO",
+    "company": "PT Wahana Pronatural Tbk",
+    "year": "2026 Q1",
+    "notebook": "94313b4b-3883-4c69-97f0-aed7a0820471",
+    "source_id": "bf12651f-044d-4760-8c07-2417b01129ab",
+    "pdf": "WAPO_2026Q1.pdf",
+    "excel_revenue": 206.545940932,
+    "excel_net_profit": 0.616080414,
+    "excel_total_assets": 143.087842752,
+    "excel_total_liabilities": 82.172960838,
+    "excel_total_equity": 60.914881914,
+    "excel_cash": null,
+    "nlm": {
+      "revenue": 206.546,
+      "net_profit": 0.616,
+      "total_assets": 143.088,
+      "total_liabilities": 82.173,
+      "total_equity": 60.915,
+      "cash": 7.316
+    },
+    "mismatches": [
+      "cash: xl=None nlm=7.316"
+    ],
+    "ok": false
+  }
+]
